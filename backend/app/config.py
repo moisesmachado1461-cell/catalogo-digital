@@ -12,13 +12,18 @@ class Settings(BaseSettings):
 
     # Uploads e armazenamento
     upload_dir: str = "uploads"
-    storage_provider: str = "local"  # local | s3
+    storage_provider: str = "local"  # local | s3 | cloudinary
     s3_endpoint_url: str | None = None
     s3_region: str = "auto"
     s3_access_key_id: str | None = None
     s3_secret_access_key: str | None = None
     s3_bucket_name: str | None = None
     s3_public_base_url: str | None = None
+
+    # Cloudinary (alternativa simples para produção)
+    cloudinary_cloud_name: str | None = None
+    cloudinary_api_key: str | None = None
+    cloudinary_api_secret: str | None = None
 
     # Segurança / operação
     max_login_attempts: int = 5
@@ -71,14 +76,30 @@ class Settings(BaseSettings):
             ]
         )
 
+    @property
+    def cloudinary_configuration_complete(self) -> bool:
+        return all(
+            [
+                self.cloudinary_cloud_name,
+                self.cloudinary_api_key,
+                self.cloudinary_api_secret,
+            ]
+        )
+
     def validate_for_runtime(self) -> None:
-        if self.storage_provider_normalized not in {"local", "s3"}:
-            raise RuntimeError("STORAGE_PROVIDER deve ser 'local' ou 's3'.")
+        if self.storage_provider_normalized not in {"local", "s3", "cloudinary"}:
+            raise RuntimeError("STORAGE_PROVIDER deve ser 'local', 's3' ou 'cloudinary'.")
 
         if self.storage_provider_normalized == "s3" and not self.s3_configuration_complete:
             raise RuntimeError(
                 "STORAGE_PROVIDER=s3 exige S3_ENDPOINT_URL, S3_ACCESS_KEY_ID, "
                 "S3_SECRET_ACCESS_KEY, S3_BUCKET_NAME e S3_PUBLIC_BASE_URL."
+            )
+
+        if self.storage_provider_normalized == "cloudinary" and not self.cloudinary_configuration_complete:
+            raise RuntimeError(
+                "STORAGE_PROVIDER=cloudinary exige CLOUDINARY_CLOUD_NAME, "
+                "CLOUDINARY_API_KEY e CLOUDINARY_API_SECRET."
             )
 
         if not 0 <= self.sentry_traces_sample_rate <= 1:

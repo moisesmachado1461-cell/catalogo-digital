@@ -13,3 +13,4 @@ Pillow>=11.0
 psycopg[binary]>=3.2
 boto3>=1.35
 sentry-sdk[fastapi]>=2.19
+cloudinary

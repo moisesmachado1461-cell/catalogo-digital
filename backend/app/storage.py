@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote
 
 import boto3
+import cloudinary
+import cloudinary.uploader
 from botocore.config import Config
 
 from .config import settings
@@ -34,7 +37,7 @@ class LocalStorage:
             raise ValueError("Caminho de upload inválido")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
-        relative_url = f"/uploads/{key.replace('\\\\', '/')}"
+        relative_url = f"/uploads/{key.replace('\\', '/')}"
         return StoredObject(
             url=f"{base_url.rstrip('/')}{relative_url}",
             path=relative_url,
@@ -58,7 +61,7 @@ class S3CompatibleStorage:
         )
 
     def save(self, key: str, data: bytes, content_type: str, base_url: str) -> StoredObject:
-        del base_url  # não é necessário no armazenamento externo
+        del base_url
         normalized_key = key.replace("\\", "/").lstrip("/")
         self.client.put_object(
             Bucket=self.bucket,
@@ -75,10 +78,52 @@ class S3CompatibleStorage:
         )
 
 
+class CloudinaryStorage:
+    provider = "cloudinary"
+
+    def __init__(self) -> None:
+        cloudinary.config(
+            cloud_name=settings.cloudinary_cloud_name,
+            api_key=settings.cloudinary_api_key,
+            api_secret=settings.cloudinary_api_secret,
+            secure=True,
+        )
+
+    def save(self, key: str, data: bytes, content_type: str, base_url: str) -> StoredObject:
+        del base_url, content_type
+        normalized_key = key.replace("\\", "/").lstrip("/")
+        public_id = normalized_key.rsplit(".", 1)[0]
+
+        result = cloudinary.uploader.upload(
+            BytesIO(data),
+            resource_type="image",
+            public_id=public_id,
+            format="webp",
+            overwrite=False,
+            unique_filename=False,
+            use_filename=False,
+            invalidate=False,
+        )
+
+        secure_url = result.get("secure_url")
+        returned_public_id = result.get("public_id") or public_id
+        if not secure_url:
+            raise RuntimeError("Cloudinary não retornou uma URL segura para a imagem")
+
+        return StoredObject(
+            url=secure_url,
+            path=returned_public_id,
+            provider=self.provider,
+        )
+
+
 @lru_cache(maxsize=1)
 def get_storage():
-    if settings.storage_provider_normalized == "s3":
+    provider = settings.storage_provider_normalized
+    if provider == "s3":
         return S3CompatibleStorage()
+    if provider == "cloudinary":
+        return CloudinaryStorage()
     return LocalStorage()
 
 
@@ -88,6 +133,14 @@ def storage_health() -> dict:
         configured = settings.s3_configuration_complete
         return {
             "provider": "s3",
+            "persistent": configured,
+            "configured": configured,
+        }
+
+    if provider == "cloudinary":
+        configured = settings.cloudinary_configuration_complete
+        return {
+            "provider": "cloudinary",
             "persistent": configured,
             "configured": configured,
         }

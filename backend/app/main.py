@@ -47,7 +47,7 @@ from .storage import storage_health
 settings.validate_for_runtime()
 configure_observability()
 
-app = FastAPI(title=settings.app_name, version="18.0.0")
+app = FastAPI(title=settings.app_name, version="18.1.0")
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLogMiddleware)
 app.add_middleware(RequestIdMiddleware)
@@ -96,7 +96,7 @@ app.include_router(quotes_public_router)
 app.include_router(quotes_admin_router)
 
 # Mantemos a rota /uploads em desenvolvimento e para compatibilidade com arquivos
-# antigos. Novos uploads usam armazenamento S3/R2 quando STORAGE_PROVIDER=s3.
+# antigos. Novos uploads usam storage externo quando STORAGE_PROVIDER=s3 ou cloudinary.
 upload_root = Path(settings.upload_dir)
 if not upload_root.is_absolute():
     upload_root = (Path.cwd() / upload_root).resolve()
@@ -121,7 +121,7 @@ def health():
     payload = {
         "status": status_value,
         "environment": settings.environment,
-        "version": "18.0.0",
+        "version": "18.1.0",
         "database": "ok" if database_ok else "error",
         "storage": storage,
     }

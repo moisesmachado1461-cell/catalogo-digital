@@ -62,3 +62,8 @@ backend/backups
 ```
 
 Esses itens não devem ser enviados ao GitHub.
+
+
+## Fase 18.1 — Cloudinary
+
+A produção também pode usar Cloudinary para imagens com `STORAGE_PROVIDER=cloudinary`. Veja `docs/FASE_18_CLOUDINARY.md`.
