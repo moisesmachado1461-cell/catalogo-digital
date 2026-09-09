@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from io import BytesIO
 from uuid import uuid4
 
@@ -11,6 +12,7 @@ from ..dependencies import get_current_store_id
 from ..storage import get_storage
 
 router = APIRouter(prefix="/api/admin/uploads", tags=["uploads-admin"])
+logger = logging.getLogger("catalogo.uploads")
 
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MAX_PIXELS = 40_000_000
@@ -54,6 +56,21 @@ def _process_image(raw: bytes, kind: str) -> tuple[bytes, int, int]:
         raise HTTPException(status_code=415, detail="Arquivo de imagem inválido")
 
 
+def _safe_error_message(exc: Exception) -> str:
+    """Evita que credenciais apareçam nos logs do Render."""
+    message = str(exc) or exc.__class__.__name__
+    secrets = [
+        settings.cloudinary_api_secret,
+        settings.cloudinary_api_key,
+        settings.jwt_secret,
+        settings.database_url,
+    ]
+    for value in secrets:
+        if value:
+            message = message.replace(str(value), "[OCULTO]")
+    return message[:1200]
+
+
 @router.post("/images", status_code=status.HTTP_201_CREATED)
 async def upload_image(
     request: Request,
@@ -87,8 +104,28 @@ async def upload_image(
             base_url=base_url,
         )
     except Exception as exc:
-        # Não devolvemos detalhes/credenciais do provedor ao navegador.
-        raise HTTPException(status_code=503, detail="Não foi possível salvar a imagem no momento") from exc
+        logger.error(
+            "upload_storage_failed provider=%s store_id=%s kind=%s error_type=%s error=%s request_id=%s",
+            settings.storage_provider_normalized,
+            store_id,
+            kind,
+            exc.__class__.__name__,
+            _safe_error_message(exc),
+            getattr(request.state, "request_id", "-"),
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="Não foi possível salvar a imagem no momento",
+        ) from exc
+
+    logger.info(
+        "upload_storage_ok provider=%s store_id=%s kind=%s size_bytes=%s request_id=%s",
+        stored.provider,
+        store_id,
+        kind,
+        len(processed),
+        getattr(request.state, "request_id", "-"),
+    )
 
     return {
         "url": stored.url,
