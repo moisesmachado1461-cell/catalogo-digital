@@ -1,0 +1,132 @@
+from datetime import datetime, timezone
+
+from fastapi import HTTPException
+from sqlalchemy import func
+from sqlalchemy.orm import Session, selectinload
+
+from ..models.catalog import Product
+from ..models.services import Professional, Service
+from ..models.subscriptions import Plan, Subscription
+
+
+ACTIVE_STATUSES = {"TRIAL", "ACTIVE", "PAST_DUE"}
+
+
+def _aware(value):
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def get_effective_subscription(db: Session, store_id: int) -> Subscription | None:
+    rows = (
+        db.query(Subscription)
+        .options(selectinload(Subscription.plan))
+        .filter(Subscription.store_id == store_id)
+        .order_by(Subscription.created_at.desc(), Subscription.id.desc())
+        .all()
+    )
+    now = datetime.now(timezone.utc)
+    for row in rows:
+        if row.status not in ACTIVE_STATUSES:
+            continue
+        if row.status == "TRIAL" and row.trial_ends_at and _aware(row.trial_ends_at) < now:
+            continue
+        if row.current_period_end and _aware(row.current_period_end) < now:
+            continue
+        if row.plan and row.plan.is_active:
+            return row
+    return None
+
+
+def get_fallback_free_plan(db: Session) -> Plan | None:
+    return db.query(Plan).filter(Plan.code == "GRATUITO", Plan.is_active.is_(True)).first()
+
+
+def get_effective_plan(db: Session, store_id: int) -> tuple[Plan | None, Subscription | None]:
+    subscription = get_effective_subscription(db, store_id)
+    if subscription:
+        return subscription.plan, subscription
+    return get_fallback_free_plan(db), None
+
+
+def usage_for_store(db: Session, store_id: int) -> dict:
+    return {
+        "products": db.query(func.count(Product.id)).filter(Product.store_id == store_id, Product.is_active.is_(True)).scalar() or 0,
+        "services": db.query(func.count(Service.id)).filter(Service.store_id == store_id, Service.is_active.is_(True)).scalar() or 0,
+        "professionals": db.query(func.count(Professional.id)).filter(Professional.store_id == store_id, Professional.is_active.is_(True)).scalar() or 0,
+    }
+
+
+def plan_context(db: Session, store_id: int) -> dict:
+    plan, subscription = get_effective_plan(db, store_id)
+    usage = usage_for_store(db, store_id)
+    if not plan:
+        return {"plan": None, "subscription": None, "usage": usage, "limits": {}, "features": {}}
+    return {
+        "plan": {
+            "id": plan.id,
+            "name": plan.name,
+            "code": plan.code,
+            "description": plan.description,
+            "monthly_price": plan.monthly_price,
+            "yearly_price": plan.yearly_price,
+        },
+        "subscription": (
+            {
+                "id": subscription.id,
+                "status": subscription.status,
+                "billing_cycle": subscription.billing_cycle,
+                "starts_at": subscription.starts_at,
+                "current_period_start": subscription.current_period_start,
+                "current_period_end": subscription.current_period_end,
+                "trial_ends_at": subscription.trial_ends_at,
+                "provider": subscription.provider,
+            }
+            if subscription
+            else None
+        ),
+        "usage": usage,
+        "limits": plan.limits or {},
+        "features": plan.features or {},
+    }
+
+
+def enforce_limit(db: Session, store_id: int, resource: str, current_count: int | None = None):
+    plan, _subscription = get_effective_plan(db, store_id)
+    if not plan:
+        return
+    limit = (plan.limits or {}).get(resource, -1)
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = -1
+    if limit < 0:
+        return
+    if current_count is None:
+        current_count = usage_for_store(db, store_id).get(resource, 0)
+    if current_count >= limit:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Limite do plano atingido para {resource}: {current_count}/{limit}. Altere o plano para continuar.",
+        )
+
+
+
+def feature_enabled(db: Session, store_id: int, feature: str) -> bool:
+    plan, _subscription = get_effective_plan(db, store_id)
+    if not plan:
+        return True
+    return bool((plan.features or {}).get(feature, False))
+
+def require_feature(db: Session, store_id: int, feature: str):
+    plan, _subscription = get_effective_plan(db, store_id)
+    if not plan:
+        return
+    if not feature_enabled(db, store_id, feature):
+        raise HTTPException(
+            status_code=403,
+            detail=f"O recurso '{feature}' não está disponível no plano {plan.name}.",
+        )

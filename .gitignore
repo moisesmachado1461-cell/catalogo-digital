@@ -1,0 +1,22 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+*.sqlite3
+.pytest_cache/
+.vscode/
+.idea/
+.DS_Store
+
+uploads/
+backend/uploads/
+frontend/dist/
+
+# logs/temp
+*.log
+*.tmp

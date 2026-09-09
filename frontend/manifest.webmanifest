@@ -1,0 +1,14 @@
+{
+  "name": "Catálogo Digital",
+  "short_name": "Catálogo",
+  "description": "Catálogos, pedidos, serviços e agendamentos em uma plataforma multiempresa.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#7c3aed",
+  "lang": "pt-BR",
+  "icons": [
+    {"src": "icons/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta id="storeMetaDescription" name="description" content="Catálogo Digital">
+  <title>Loja — Catálogo Digital</title>
+  <meta name="theme-color" content="#7c3aed"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/app-icon.svg" type="image/svg+xml"><link rel="stylesheet" href="css/style.css">
+</head>
+<body class="store-page">
+<header class="topbar store-topbar">
+  <div class="container nav">
+    <a class="brand" href="index.html"><span class="brand-mark">CD</span><span>Catálogo Digital</span></a>
+    <div class="nav-links">
+      <a class="btn ghost hide-mobile" href="index.html">Explorar negócios</a>
+      <a class="btn ghost" href="admin.html">Área administrativa</a>
+    </div>
+  </div>
+</header>
+
+<section id="storeHero" class="store-hero store-hero-v2">
+  <div class="store-hero-overlay"></div>
+  <div class="container store-hero-inner">
+    <div id="storeLogo" class="store-logo store-logo-v2">CD</div>
+    <div class="store-hero-copy">
+      <span id="storeType" class="eyebrow store-eyebrow">Carregando...</span>
+      <h1 id="storeName">Carregando loja...</h1>
+      <p id="storeDescription">Aguarde enquanto carregamos os dados.</p>
+      <div id="storeHeroFacts" class="store-facts"></div>
+      <div id="storeHeroActions" class="hero-actions"></div>
+    </div>
+  </div>
+</section>
+
+<nav class="store-nav store-nav-v2">
+  <div class="container store-nav-inner" id="storeTabs"></div>
+</nav>
+
+<main class="store-main">
+  <div class="container">
+    <div id="errorBox" class="notice hidden"></div>
+
+    <section id="catalogSection" class="store-section hidden">
+      <div class="store-section-head">
+        <div><span class="section-kicker">Catálogo</span><h2>Encontre o que você precisa</h2><p>Pesquise, filtre e adicione produtos ao carrinho.</p></div>
+      </div>
+      <div class="toolbar toolbar-v2">
+        <div class="search-wrap"><span>⌕</span><input id="searchInput" class="input search" placeholder="Pesquisar produtos..."></div>
+        <select id="categoryFilter" class="select category-select"><option value="">Todas as categorias</option></select>
+      </div>
+      <div id="categoryChips" class="category-chips"></div>
+      <div class="shop-layout shop-layout-v2">
+        <div id="productGrid" class="product-grid product-grid-v2"></div>
+        <aside id="cartPanel" class="panel cart cart-v2">
+          <div class="cart-head"><div><span class="section-kicker">Seu pedido</span><h2>Carrinho</h2></div><span id="cartCountBadge" class="cart-count-badge">0</span></div>
+          <div id="cartItems"></div>
+          <div class="cart-total"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
+          <button id="checkoutBtn" class="btn primary full-btn">Finalizar pedido</button>
+          <small class="cart-safe">O valor final é validado pelo servidor.</small>
+        </aside>
+      </div>
+    </section>
+
+    <section id="servicesSection" class="store-section hidden">
+      <div class="store-section-head">
+        <div><span class="section-kicker">Serviços</span><h2>Escolha como podemos ajudar</h2><p>Veja os serviços disponíveis e avance para agendamento ou orçamento.</p></div>
+      </div>
+      <div id="serviceGrid" class="service-grid service-grid-v2"></div>
+      <div id="professionalsShowcase" class="professionals-showcase hidden"><div class="store-section-head compact-head"><div><span class="section-kicker">Equipe</span><h2>Quem vai cuidar de você</h2><p>Conheça os profissionais disponíveis para os serviços.</p></div></div><div id="professionalGrid" class="professional-grid"></div></div>
+    </section>
+
+    <section id="reservationsSection" class="store-section hidden">
+      <div class="store-section-head"><div><span class="section-kicker">Reservas</span><h2>Escolha o espaço ou acomodação</h2><p>Selecione um recurso e informe o período desejado.</p></div></div>
+      <div id="resourceGrid" class="service-grid service-grid-v2"></div>
+    </section>
+
+    <section id="rentalsSection" class="store-section hidden">
+      <div class="store-section-head"><div><span class="section-kicker">Locação</span><h2>Itens disponíveis para aluguel</h2><p>Escolha o item, período e quantidade. A disponibilidade é conferida pelo servidor.</p></div></div>
+      <div id="rentalGrid" class="service-grid service-grid-v2"></div>
+    </section>
+
+    <section id="contactSection" class="store-section hidden">
+      <div class="contact-card panel">
+        <div><span class="section-kicker">Contato</span><h2>Fale com a empresa</h2><p id="contactText" class="section-copy"></p><div id="contactActions" class="hero-actions"></div></div>
+        <div class="contact-visual"><span>Atendimento</span><strong id="contactStoreName">Sua empresa</strong><small>Use os canais oficiais exibidos nesta página.</small></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<button id="mobileCartBar" class="mobile-cart-bar hidden" type="button">
+  <span><b id="mobileCartCount">0 itens</b><small>Ver carrinho</small></span>
+  <strong id="mobileCartTotal">R$ 0,00</strong>
+</button>
+
+<div id="productConfigModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><div><span class="section-kicker">Personalizar produto</span><h2 id="productConfigTitle">Produto</h2></div><button class="close-btn" data-close="productConfigModal">×</button></div><form id="productConfigForm" class="stack-form" style="margin-top:18px"><input type="hidden" name="product_id"><div id="productConfigContent"></div><div class="cart-total"><span>Valor por unidade</span><strong id="productConfigPrice">R$ 0,00</strong></div><button class="btn primary full-btn" type="submit">Adicionar ao carrinho</button></form></div></div>
+
+<div id="checkoutModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><div><span class="section-kicker">Checkout</span><h2>Finalizar pedido</h2></div><button class="close-btn" data-close="checkoutModal">×</button></div><form id="checkoutForm" class="form-grid" style="margin-top:18px"><div class="field"><label>Nome</label><input class="input" name="name" required></div><div class="field"><label>Telefone</label><input class="input" name="phone"></div><div class="field full"><label>E-mail</label><input class="input" name="email" type="email"></div><div class="field"><label>Pagamento</label><select class="select payment-method-select" name="payment_method" required><option value="">Carregando opções...</option></select></div><div class="field"><label>Recebimento</label><select class="select" name="fulfillment_method"><option value="RETIRADA">Retirada</option><option value="ENTREGA">Entrega</option></select></div><div class="field full"><label>Cupom (opcional)</label><input class="input" name="coupon_code" placeholder="Ex.: BEMVINDO10"></div><div id="deliveryFields" class="field full hidden"><div class="form-grid"><div class="field full"><label>Endereço de entrega</label><input class="input" name="delivery_address"></div><div class="field"><label>Cidade</label><input class="input" name="delivery_city"></div><div class="field"><label>UF</label><input class="input" name="delivery_state" maxlength="2"></div><div class="field"><label>CEP</label><input class="input" name="delivery_zip_code"></div></div></div><div class="field full"><label>Observações</label><textarea class="textarea" name="notes" rows="3"></textarea></div><div class="field full"><div id="checkoutSummary" class="notice"></div></div><div class="field full"><button class="btn primary" type="submit">Criar pedido</button></div></form></div></div>
+
+<div id="appointmentModal" class="modal-backdrop"><div class="modal booking-modal"><div class="modal-head"><div><span class="section-kicker">Agendamento online</span><h2>Reserve seu horário</h2></div><button class="close-btn" data-close="appointmentModal">×</button></div>
+  <div class="booking-progress"><span class="active">1</span><i></i><span>2</span><i></i><span>3</span></div>
+  <form id="appointmentForm" class="stack-form" style="margin-top:18px"><input type="hidden" name="service_id"><input type="hidden" name="starts_at">
+    <div id="appointmentService" class="booking-service-summary"></div>
+    <section class="booking-step" data-booking-step="1">
+      <div class="field"><label>1. Escolha o profissional</label><div id="appointmentProfessionals" class="booking-professionals"></div><select class="select hidden" name="professional_id" required></select></div>
+      <div class="field"><label>2. Escolha a data</label><input class="input" name="date" type="date" required></div>
+      <div class="field"><label>3. Escolha o horário</label><div id="appointmentSlots" class="booking-slots"><span class="muted">Escolha profissional e data para ver os horários.</span></div></div>
+      <button class="btn primary full-btn" type="button" id="bookingNextBtn">Continuar</button>
+    </section>
+    <section class="booking-step hidden" data-booking-step="2">
+      <div id="bookingChosenSummary" class="booking-chosen"></div>
+      <div class="form-grid"><div class="field"><label>Seu nome</label><input class="input" name="name" required autocomplete="name"></div><div class="field"><label>WhatsApp / telefone</label><input class="input" name="phone" autocomplete="tel" required></div><div class="field full"><label>E-mail (opcional)</label><input class="input" name="email" type="email" autocomplete="email"></div><div class="field full"><label>Pagamento</label><select class="select payment-method-select" name="payment_method" required><option value="">Carregando opções...</option></select></div><div class="field full"><label>Observações (opcional)</label><textarea class="textarea" name="notes" rows="3" placeholder="Ex.: preferência de formato, alergia, observação importante..."></textarea></div></div>
+      <div class="booking-actions"><button class="btn ghost" type="button" id="bookingBackBtn">Voltar</button><button class="btn primary" type="submit">Confirmar agendamento</button></div>
+    </section>
+  </form>
+</div></div>
+
+<div id="appointmentSuccessModal" class="modal-backdrop"><div class="modal booking-success"><div class="success-icon">✓</div><span class="section-kicker">Reserva recebida</span><h2>Agendamento criado!</h2><p id="appointmentSuccessText" class="section-copy"></p><div id="appointmentProtocol" class="protocol-box"></div><div id="appointmentPaymentBox"></div><div class="booking-actions"><button class="btn ghost" data-close="appointmentSuccessModal">Fechar</button><a id="appointmentTrackLink" class="btn primary" href="#">Acompanhar agendamento</a></div></div></div>
+
+<div id="reservationModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><div><span class="section-kicker">Reserva online</span><h2 id="reservationTitle">Reservar</h2></div><button class="close-btn" data-close="reservationModal">×</button></div><form id="reservationForm" class="form-grid" style="margin-top:18px"><input type="hidden" name="resource_id"><div class="field"><label>Entrada / início</label><input class="input" name="starts_at" type="datetime-local" required></div><div class="field"><label>Saída / fim</label><input class="input" name="ends_at" type="datetime-local" required></div><div class="field"><label>Pessoas</label><input class="input" name="guests" type="number" min="1" value="1" required></div><div class="field"><label>Nome</label><input class="input" name="name" required></div><div class="field"><label>Telefone</label><input class="input" name="phone" required></div><div class="field"><label>E-mail</label><input class="input" name="email" type="email"></div><div class="field"><label>Pagamento</label><select class="select payment-method-select" name="payment_method" required><option value="">Carregando opções...</option></select></div><div class="field full"><label>Observações</label><textarea class="textarea" name="notes" rows="3"></textarea></div><div class="field full"><button class="btn primary" type="submit">Confirmar reserva</button></div></form></div></div>
+
+<div id="rentalModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><div><span class="section-kicker">Locação</span><h2 id="rentalTitle">Alugar item</h2></div><button class="close-btn" data-close="rentalModal">×</button></div><form id="rentalForm" class="form-grid" style="margin-top:18px"><input type="hidden" name="rental_item_id"><div class="field"><label>Retirada</label><input class="input" name="starts_at" type="datetime-local" required></div><div class="field"><label>Devolução</label><input class="input" name="ends_at" type="datetime-local" required></div><div class="field"><label>Quantidade</label><input class="input" name="quantity" type="number" min="1" value="1" required></div><div class="field"><label>Nome</label><input class="input" name="name" required></div><div class="field"><label>Telefone</label><input class="input" name="phone" required></div><div class="field"><label>E-mail</label><input class="input" name="email" type="email"></div><div class="field"><label>Pagamento</label><select class="select payment-method-select" name="payment_method" required><option value="">Carregando opções...</option></select></div><div id="rentalAvailability" class="field full notice">Informe o período para consultar disponibilidade.</div><div class="field full"><label>Observações</label><textarea class="textarea" name="notes" rows="3"></textarea></div><div class="field full"><button class="btn primary" type="submit">Solicitar locação</button></div></form></div></div>
+
+<div id="quoteModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><div><span class="section-kicker">Orçamento</span><h2>Solicitar orçamento</h2></div><button class="close-btn" data-close="quoteModal">×</button></div><form id="quoteForm" class="form-grid" style="margin-top:18px"><input type="hidden" name="service_id"><div class="field"><label>Nome</label><input class="input" name="name" required></div><div class="field"><label>Telefone</label><input class="input" name="phone"></div><div class="field full"><label>E-mail</label><input class="input" name="email" type="email"></div><div class="field full"><label>Título</label><input class="input" name="title" placeholder="Ex.: Instalação de luminárias" required></div><div class="field full"><label>Descreva o que precisa</label><textarea class="textarea" name="description" rows="5" required></textarea></div><div class="field"><label>Contato preferido</label><select class="select" name="preferred_contact"><option>WHATSAPP</option><option>PHONE</option><option>EMAIL</option></select></div><div class="field"><label>Cidade</label><input class="input" name="service_city"></div><div class="field full"><label>Endereço do serviço</label><input class="input" name="service_address"></div><div class="field full"><button class="btn primary" type="submit">Enviar solicitação</button></div></form></div></div>
+
+<div id="paymentModal" class="modal-backdrop"><div class="modal payment-modal"><div class="modal-head"><div><span class="section-kicker">Pagamento</span><h2 id="paymentModalTitle">Instruções de pagamento</h2></div><button class="close-btn" data-close="paymentModal">×</button></div><div id="paymentModalContent" class="payment-result" style="margin-top:18px"></div><div class="booking-actions"><button class="btn primary" data-close="paymentModal">Fechar</button></div></div></div>
+
+<div class="footer"><div class="container"><div class="footer-links"><a id="privacyStoreLink" href="privacidade.html">Privacidade</a><a href="termos.html">Termos de uso</a></div></div></div>
+<script src="js/runtime-config.js"></script><script src="js/api.js"></script>
+<script>document.getElementById('privacyStoreLink').href = `privacidade.html?slug=${encodeURIComponent(new URLSearchParams(location.search).get('slug') || '')}`;</script>
+<script src="js/loja.js"></script>
+<script src="js/pwa.js"></script></body>
+</html>
