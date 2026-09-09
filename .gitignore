@@ -20,3 +20,9 @@ frontend/dist/
 # logs/temp
 *.log
 *.tmp
+
+# backups locais gerados por scripts
+backend/backups/
+backups/
+*.dump
+*.backup

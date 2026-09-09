@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from io import BytesIO
-from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
@@ -9,6 +8,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from ..config import settings
 from ..dependencies import get_current_store_id
+from ..storage import get_storage
 
 router = APIRouter(prefix="/api/admin/uploads", tags=["uploads-admin"])
 
@@ -24,15 +24,6 @@ KIND_LIMITS = {
     "professional": (1200, 1200),
     "resource": (1600, 1200),
 }
-
-
-def _safe_upload_root() -> Path:
-    root = Path(settings.upload_dir)
-    if not root.is_absolute():
-        root = Path.cwd() / root
-    root = root.resolve()
-    root.mkdir(parents=True, exist_ok=True)
-    return root
 
 
 def _process_image(raw: bytes, kind: str) -> tuple[bytes, int, int]:
@@ -84,20 +75,25 @@ async def upload_image(
         raise HTTPException(status_code=413, detail="A imagem deve ter no máximo 8 MB")
 
     processed, width, height = _process_image(raw, kind)
-    relative_dir = Path(f"store_{store_id}") / kind
-    target_dir = _safe_upload_root() / relative_dir
-    target_dir.mkdir(parents=True, exist_ok=True)
-
     filename = f"{uuid4().hex}.webp"
-    target_path = target_dir / filename
-    target_path.write_bytes(processed)
-
-    relative_url = f"/uploads/{relative_dir.as_posix()}/{filename}"
+    key = f"store_{store_id}/{kind}/{filename}"
     base_url = settings.public_api_base_url or str(request.base_url).rstrip("/")
-    absolute_url = f"{base_url}{relative_url}"
+
+    try:
+        stored = get_storage().save(
+            key=key,
+            data=processed,
+            content_type="image/webp",
+            base_url=base_url,
+        )
+    except Exception as exc:
+        # Não devolvemos detalhes/credenciais do provedor ao navegador.
+        raise HTTPException(status_code=503, detail="Não foi possível salvar a imagem no momento") from exc
+
     return {
-        "url": absolute_url,
-        "path": relative_url,
+        "url": stored.url,
+        "path": stored.path,
+        "provider": stored.provider,
         "kind": kind,
         "width": width,
         "height": height,
