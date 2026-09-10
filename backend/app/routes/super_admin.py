@@ -268,3 +268,22 @@ def list_store_admins(
         }
         for user in users
     ]
+
+
+@router.post("/monitoring/sentry-test")
+def sentry_test(
+    _super_admin: User = Depends(get_current_super_admin),
+):
+    """Envia um evento controlado ao Sentry sem provocar erro 500."""
+    import sentry_sdk
+
+    event_id = sentry_sdk.capture_message(
+        "Catálogo Digital - teste de monitoramento",
+        level="info",
+    )
+    sentry_sdk.flush(timeout=3.0)
+    return {
+        "status": "sent",
+        "message": "Evento de teste enviado ao Sentry",
+        "event_id": str(event_id) if event_id else None,
+    }
