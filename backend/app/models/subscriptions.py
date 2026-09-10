@@ -49,6 +49,12 @@ class Subscription(Base):
     provider: Mapped[str] = mapped_column(String(40), default="MANUAL", nullable=False)
     external_customer_id: Mapped[str | None] = mapped_column(String(160), index=True)
     external_subscription_id: Mapped[str | None] = mapped_column(String(160), index=True)
+    provider_status: Mapped[str | None] = mapped_column(String(60))
+    external_plan_id: Mapped[str | None] = mapped_column(String(160))
+    external_price_id: Mapped[str | None] = mapped_column(String(160))
+    auto_renew: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    next_billing_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )

@@ -9,6 +9,7 @@ from .marketing import Coupon, CouponUsage, Promotion, PromotionItem
 from .reservations import Resource, Reservation, RentalItem, RentalReservation
 from .payments import Payment, PaymentSettings
 from .subscriptions import Plan, Subscription
+from .billing import BillingGatewayPrice, SubscriptionInvoice, BillingWebhookEvent
 from .security_privacy import AuditLog, PrivacyRequest
 
 __all__ = [
@@ -45,6 +46,9 @@ __all__ = [
     "PaymentSettings",
     "Plan",
     "Subscription",
+    "BillingGatewayPrice",
+    "SubscriptionInvoice",
+    "BillingWebhookEvent",
     "AuditLog",
     "PrivacyRequest",
 ]

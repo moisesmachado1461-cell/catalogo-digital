@@ -17,6 +17,8 @@ from .middleware_security import (
 from .observability import configure_observability
 from .routes.auth import router as auth_router
 from .routes.business import router as business_router
+from .routes.billing import admin_router as billing_admin_router
+from .routes.billing import super_router as billing_super_router
 from .routes.catalog import admin_router as catalog_admin_router
 from .routes.catalog import public_router as catalog_public_router
 from .routes.marketing import admin_router as marketing_admin_router
@@ -47,7 +49,7 @@ from .storage import storage_health
 settings.validate_for_runtime()
 configure_observability()
 
-app = FastAPI(title=settings.app_name, version="18.1.0")
+app = FastAPI(title=settings.app_name, version="19.1.0")
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLogMiddleware)
 app.add_middleware(RequestIdMiddleware)
@@ -74,6 +76,8 @@ app.include_router(reports_admin_router)
 app.include_router(plans_public_router)
 app.include_router(subscriptions_admin_router)
 app.include_router(subscriptions_super_router)
+app.include_router(billing_admin_router)
+app.include_router(billing_super_router)
 app.include_router(super_admin_router)
 app.include_router(uploads_admin_router)
 app.include_router(stores_public_router)
@@ -121,7 +125,7 @@ def health():
     payload = {
         "status": status_value,
         "environment": settings.environment,
-        "version": "18.1.0",
+        "version": "19.1.0",
         "database": "ok" if database_ok else "error",
         "storage": storage,
     }

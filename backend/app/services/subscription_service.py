@@ -84,6 +84,10 @@ def plan_context(db: Session, store_id: int) -> dict:
                 "current_period_end": subscription.current_period_end,
                 "trial_ends_at": subscription.trial_ends_at,
                 "provider": subscription.provider,
+                "provider_status": subscription.provider_status,
+                "auto_renew": subscription.auto_renew,
+                "cancel_at_period_end": subscription.cancel_at_period_end,
+                "next_billing_at": subscription.next_billing_at,
             }
             if subscription
             else None

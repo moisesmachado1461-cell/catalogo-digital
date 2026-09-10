@@ -43,6 +43,10 @@ def _subscription_dict(row: Subscription):
         "trial_ends_at": row.trial_ends_at,
         "canceled_at": row.canceled_at,
         "provider": row.provider,
+        "provider_status": row.provider_status,
+        "auto_renew": row.auto_renew,
+        "cancel_at_period_end": row.cancel_at_period_end,
+        "next_billing_at": row.next_billing_at,
         "created_at": row.created_at,
     }
 

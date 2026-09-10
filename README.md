@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 18
+# Catálogo Digital — Fase 19.1
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**18 — Produção: armazenamento persistente, observabilidade, proteção operacional e backup**
+**19.1 — Fundação da cobrança automática multi-gateway**
 
 A plataforma já está publicada com GitHub + Render + PostgreSQL. Esta fase fortalece a operação online e prepara uploads para armazenamento S3 compatível, como Cloudflare R2.
 
@@ -67,3 +67,8 @@ Esses itens não devem ser enviados ao GitHub.
 ## Fase 18.1 — Cloudinary
 
 A produção também pode usar Cloudinary para imagens com `STORAGE_PROVIDER=cloudinary`. Veja `docs/FASE_18_CLOUDINARY.md`.
+
+
+## Fase 19.1 — Cobrança multi-gateway
+
+A plataforma agora possui a fundação separada para cobrar a assinatura do SaaS, sem misturar com pagamentos de pedidos das lojas. Consulte `docs/FASE_19_1_COBRANCA_MULTI_GATEWAY.md`.

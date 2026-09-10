@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     api_public_url: str | None = None
     render_external_url: str | None = None
 
+    # Cobrança das assinaturas do próprio SaaS
+    billing_default_currency: str = "BRL"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
