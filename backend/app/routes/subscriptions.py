@@ -7,6 +7,7 @@ from ..database import get_db
 from ..dependencies import get_current_store_id, get_current_super_admin
 from ..models import Plan, Store, Subscription, User
 from ..schemas.subscriptions import PlanCreate, PlanUpdate, StoreSubscriptionUpdate
+from ..services.billing_service import add_billing_cycle
 from ..services.subscription_service import plan_context
 
 public_router = APIRouter(prefix="/api", tags=["plans-public"])
@@ -141,7 +142,14 @@ def set_store_subscription(
     for row in active_rows:
         row.status = "CANCELED"
         row.canceled_at = now
+        row.cancel_at_period_end = False
+        row.auto_renew = False
+        row.next_billing_at = None
+        row.provider_status = "REPLACED_BY_SUPER_ADMIN"
         row.updated_at = now
+
+    period_end = data.current_period_end or add_billing_cycle(now, data.billing_cycle)
+    next_billing_at = period_end if data.status in {"ACTIVE", "TRIAL", "PAST_DUE"} else None
 
     subscription = Subscription(
         store_id=store_id,
@@ -150,9 +158,12 @@ def set_store_subscription(
         billing_cycle=data.billing_cycle,
         starts_at=now,
         current_period_start=now,
-        current_period_end=data.current_period_end,
+        current_period_end=period_end,
         trial_ends_at=data.trial_ends_at,
         provider="MANUAL",
+        provider_status="MANUAL_ACTIVE" if data.status in {"ACTIVE", "TRIAL"} else data.status,
+        auto_renew=False,
+        next_billing_at=next_billing_at,
         created_at=now,
         updated_at=now,
     )

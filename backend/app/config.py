@@ -41,6 +41,8 @@ class Settings(BaseSettings):
 
     # Cobrança das assinaturas do próprio SaaS
     billing_default_currency: str = "BRL"
+    billing_invoice_lead_days: int = 7
+    billing_grace_days: int = 5
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -107,6 +109,10 @@ class Settings(BaseSettings):
 
         if not 0 <= self.sentry_traces_sample_rate <= 1:
             raise RuntimeError("SENTRY_TRACES_SAMPLE_RATE deve ficar entre 0 e 1.")
+        if not 0 <= self.billing_invoice_lead_days <= 60:
+            raise RuntimeError("BILLING_INVOICE_LEAD_DAYS deve ficar entre 0 e 60.")
+        if not 0 <= self.billing_grace_days <= 60:
+            raise RuntimeError("BILLING_GRACE_DAYS deve ficar entre 0 e 60.")
 
         if self.environment.lower() == "production":
             if self.jwt_secret in {"change-me", "", None} or len(self.jwt_secret) < 32:

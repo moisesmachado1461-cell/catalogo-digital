@@ -1,41 +1,29 @@
 # Status atual — Catálogo Digital
 
-## Versão
+Versão consolidada até a **Fase 19.2**.
 
-Fase 19.1 — Fundação da cobrança automática multi-gateway.
+## Concluído
 
-## Concluído antes desta fase
-
-- backend FastAPI + SQLAlchemy + Alembic;
-- frontend HTML/CSS/JavaScript;
-- multi-loja / multi-tenant;
-- catálogo, pedidos e estoque;
-- serviços e agendamentos;
-- orçamentos;
+- arquitetura SaaS multi-loja / multi-segmento;
+- catálogo, pedidos, estoque, serviços, agendamentos e orçamentos;
 - reservas e locações;
-- pagamentos dos clientes das lojas;
-- planos e assinaturas administrados pela plataforma;
-- segurança/LGPD;
-- relatórios;
+- pagamentos das lojas;
+- planos e assinaturas;
+- segurança/LGPD e relatórios;
 - responsividade/PWA;
-- Render + PostgreSQL;
-- Cloudinary;
-- Sentry;
-- backup lógico do banco.
+- GitHub + Render + PostgreSQL;
+- Cloudinary persistente;
+- backup lógico manual;
+- Sentry/observabilidade;
+- fundação multi-gateway;
+- motor interno de cobrança, vencimentos, faturas, tolerância, cancelamento e troca de plano.
 
-## Fase 19.1
+## Gateway real
 
-A cobrança da assinatura do SaaS passa a ter uma camada própria, separada dos pagamentos dos pedidos das lojas. A fundação aceita múltiplos provedores e registra preços externos, faturas e eventos de webhook de forma idempotente.
-
-Provedores previstos inicialmente:
-
-- Mercado Pago;
-- Pix Automático;
-- PicPay;
-- controle manual para administração interna.
-
-Nenhum gateway automático é marcado como disponível antes de existir uma integração real configurada.
+A conexão com Mercado Pago ficou desacoplada por indisponibilidade temporária de uma conta elegível. Ela poderá ser adicionada depois sem refazer o motor de cobrança. Pix Automático, PicPay e outros continuam previstos pela mesma arquitetura.
 
 ## Próximo passo
 
-Fase 19.2 — conectar o primeiro gateway real de assinatura recorrente e implementar checkout + webhook de produção.
+**Fase 19.3 — Meu plano e cobrança + gestão financeira no Super Admin.**
+
+Depois da Fase 19, iniciar a reformulação visual premium completa nas áreas do cliente, administrador e super administrador.

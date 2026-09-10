@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
@@ -45,3 +46,41 @@ class GatewayPriceUpdate(BaseModel):
     external_plan_id: str | None = Field(default=None, max_length=160)
     external_price_id: str | None = Field(default=None, max_length=160)
     is_active: bool | None = None
+
+
+class RenewalInvoiceCreate(BaseModel):
+    due_at: datetime | None = None
+    payment_method: str | None = Field(default=None, max_length=40)
+
+
+class PlanChangeInvoiceCreate(BaseModel):
+    plan_id: int = Field(gt=0)
+    billing_cycle: str = "MONTHLY"
+    due_at: datetime | None = None
+
+    @field_validator("billing_cycle")
+    @classmethod
+    def validate_cycle(cls, value: str):
+        value = value.strip().upper()
+        if value not in {"MONTHLY", "YEARLY"}:
+            raise ValueError("billing_cycle deve ser MONTHLY ou YEARLY")
+        return value
+
+
+class InvoiceStatusUpdate(BaseModel):
+    status: str
+    payment_method: str | None = Field(default=None, max_length=40)
+    failure_reason: str | None = Field(default=None, max_length=500)
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str):
+        value = value.strip().upper()
+        allowed = {"PENDING", "PAID", "FAILED", "CANCELED"}
+        if value not in allowed:
+            raise ValueError(f"status deve ser um de: {', '.join(sorted(allowed))}")
+        return value
+
+
+class SubscriptionCancelRequest(BaseModel):
+    at_period_end: bool = True

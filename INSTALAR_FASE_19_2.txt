@@ -1,0 +1,18 @@
+CATÁLOGO DIGITAL — FASE 19.2
+
+1. Extraia este ZIP.
+2. Copie TODO o conteúdo extraído.
+3. Cole na raiz da pasta catalogo-digital-github.
+4. Quando o Windows perguntar, escolha Substituir os arquivos no destino.
+5. No terminal do VS Code, na raiz do projeto, execute:
+
+   git status
+   git add .
+   git commit -m "Fase 19.2 - motor de cobranca e assinaturas"
+   git push
+
+6. Aguarde o Render concluir o deploy.
+7. Abra /api/health e confirme version 19.2.0.
+
+A migration 012_billing_engine será aplicada pelo start-render.sh durante o deploy.
+Esta fase não exige credenciais do Mercado Pago e não realiza cobrança bancária real.

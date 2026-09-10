@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import func
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..models.catalog import Product
 from ..models.services import Professional, Service
+from ..config import settings
 from ..models.subscriptions import Plan, Subscription
 
 
@@ -35,7 +36,11 @@ def get_effective_subscription(db: Session, store_id: int) -> Subscription | Non
         if row.status == "TRIAL" and row.trial_ends_at and _aware(row.trial_ends_at) < now:
             continue
         if row.current_period_end and _aware(row.current_period_end) < now:
-            continue
+            if row.status != "PAST_DUE":
+                continue
+            grace_end = _aware(row.current_period_end) + timedelta(days=settings.billing_grace_days)
+            if grace_end < now:
+                continue
         if row.plan and row.plan.is_active:
             return row
     return None

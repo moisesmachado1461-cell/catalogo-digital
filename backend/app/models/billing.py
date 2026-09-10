@@ -59,8 +59,11 @@ class SubscriptionInvoice(Base):
     subscription_id: Mapped[int | None] = mapped_column(
         ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    plan_id: Mapped[int | None] = mapped_column(ForeignKey("plans.id", ondelete="RESTRICT"), nullable=True, index=True)
     provider: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="PENDING", index=True)
+    invoice_type: Mapped[str] = mapped_column(String(24), nullable=False, default="RENEWAL", index=True)
+    billing_cycle: Mapped[str] = mapped_column(String(16), nullable=False, default="MONTHLY")
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="BRL")
     external_invoice_id: Mapped[str | None] = mapped_column(String(160), index=True)
@@ -68,9 +71,13 @@ class SubscriptionInvoice(Base):
     payment_method: Mapped[str | None] = mapped_column(String(40))
     checkout_url: Mapped[str | None] = mapped_column(String(700))
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    period_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     failure_reason: Mapped[str | None] = mapped_column(Text)
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow
@@ -78,6 +85,7 @@ class SubscriptionInvoice(Base):
 
     store = relationship("Store")
     subscription = relationship("Subscription")
+    plan = relationship("Plan")
 
 
 class BillingWebhookEvent(Base):
