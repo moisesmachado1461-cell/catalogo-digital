@@ -30,6 +30,7 @@
       <button class="side-btn active" data-super-section="dashboard">Dashboard</button>
       <button class="side-btn" data-super-section="stores">Lojas</button>
       <button class="side-btn" data-super-section="plans">Planos</button>
+      <button class="side-btn" data-super-section="billing">Cobrança</button>
     </nav>
     <button id="superLogoutBtn" class="side-btn" style="margin-top:18px;width:100%">Sair</button>
   </aside>
@@ -39,6 +40,7 @@
       <button class="tab-btn active" data-super-section="dashboard">Dashboard</button>
       <button class="tab-btn" data-super-section="stores">Lojas</button>
       <button class="tab-btn" data-super-section="plans">Planos</button>
+      <button class="tab-btn" data-super-section="billing">Cobrança</button>
     </div>
     <header class="admin-header">
       <div><small>Administração da plataforma</small><h1 id="superTitle">Dashboard</h1></div>
@@ -64,6 +66,27 @@
       <div class="panel">
         <div class="panel-head responsive-head"><div><h2>Planos</h2><small>Preços, limites e recursos comerciais.</small></div><button class="btn primary small" onclick="openPlanModal()">+ Plano</button></div>
         <div id="plansTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+
+    <section id="super-billing" class="admin-section">
+      <div class="billing-command-hero">
+        <div><span class="eyebrow">CENTRAL FINANCEIRA</span><h2>Cobrança das assinaturas</h2><p>Controle mensalidades do Catálogo Digital sem misturar com pagamentos dos clientes das lojas.</p></div>
+        <div class="billing-command-actions"><button class="btn ghost" type="button" onclick="loadBillingCenter()">Atualizar</button><button class="btn primary" type="button" onclick="processDueBilling()">Processar vencimentos</button></div>
+      </div>
+      <div id="billingStats" class="stats billing-stats"></div>
+      <div class="panel billing-provider-panel">
+        <div class="panel-head"><div><h2>Gateways</h2><small>A arquitetura está pronta; a disponibilidade real depende de credenciais e adaptador configurados.</small></div></div>
+        <div id="billingProviders" class="billing-provider-grid"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head responsive-head"><div><h2>Assinaturas</h2><small>Visão atual por loja, plano, vencimento e situação financeira.</small></div><div class="billing-filters"><input id="billingSearch" class="input" placeholder="Buscar loja ou plano" oninput="renderBillingSubscriptions()"><select id="billingStatusFilter" class="select" onchange="renderBillingSubscriptions()"><option value="">Todos os status</option><option value="ACTIVE">Ativa</option><option value="TRIAL">Teste</option><option value="PAST_DUE">Em atraso</option><option value="EXPIRED">Expirada</option><option value="CANCELED">Cancelada</option></select></div></div>
+        <div id="billingSubscriptionsTable" class="table-wrap"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head responsive-head"><div><h2>Faturas</h2><small>Histórico financeiro da mensalidade SaaS.</small></div><select id="invoiceStatusFilter" class="select billing-status-select" onchange="renderBillingInvoices()"><option value="">Todos os status</option><option value="PENDING">Pendente</option><option value="PAID">Pago</option><option value="FAILED">Falhou</option><option value="CANCELED">Cancelado</option></select></div>
+        <div id="billingInvoicesTable" class="table-wrap"></div>
       </div>
     </section>
   </main>

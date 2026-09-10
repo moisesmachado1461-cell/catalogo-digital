@@ -3,6 +3,9 @@ let superMe = null;
 let superStores = [];
 let businessCategories = [];
 let plans = [];
+let billingSubscriptions = [];
+let billingInvoices = [];
+let billingProviders = [];
 
 $s('#superLoginForm').onsubmit = async e => {
   e.preventDefault();
@@ -22,7 +25,7 @@ function switchSuperSection(id) {
   document.querySelectorAll('#superView .admin-section').forEach(s => s.classList.remove('active'));
   $s(`#super-${id}`)?.classList.add('active');
   document.querySelectorAll('[data-super-section]').forEach(b => b.classList.toggle('active', b.dataset.superSection === id));
-  const titles = {dashboard:'Dashboard',stores:'Lojas',plans:'Planos'};
+  const titles = {dashboard:'Dashboard',stores:'Lojas',plans:'Planos',billing:'Cobrança'};
   $s('#superTitle').textContent = titles[id] || id;
 }
 
@@ -33,7 +36,7 @@ async function startSuperAdmin() {
     $s('#superLoginView').classList.add('hidden');
     $s('#superView').classList.remove('hidden');
     await Promise.all([loadBusinessCategories(), loadPlans()]);
-    await Promise.all([loadSuperDashboard(), loadSuperStores()]);
+    await Promise.all([loadSuperDashboard(), loadSuperStores(), loadBillingCenter()]);
   } catch (err) {
     clearAuthToken();
     $s('#superLoginView').classList.remove('hidden');
@@ -184,6 +187,158 @@ $s('#superStoreForm').onsubmit = async e => {
     await Promise.all([loadSuperDashboard(), loadSuperStores()]);
     switchSuperSection('stores');
   } catch (err) { showToast(err.message, 'error'); }
+};
+
+
+function billingDate(value, fallback = '—') {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleDateString('pt-BR');
+}
+
+function billingLabel(value) {
+  return ({ACTIVE:'Ativa',TRIAL:'Teste',PAST_DUE:'Em atraso',EXPIRED:'Expirada',CANCELED:'Cancelada',PENDING:'Pendente',PAID:'Pago',FAILED:'Falhou'})[String(value || '').toUpperCase()] || String(value || '—');
+}
+
+function billingClass(value) {
+  const status=String(value||'').toUpperCase();
+  if(['ACTIVE','PAID'].includes(status)) return 'CONFIRMADO';
+  if(['PAST_DUE','FAILED','PENDING','TRIAL'].includes(status)) return 'PENDENTE';
+  return 'CANCELADO';
+}
+
+function billingProviderName(code) {
+  const key=String(code||'MANUAL').toUpperCase();
+  return billingProviders.find(p=>p.code===key)?.display_name || ({MANUAL:'Controle manual'})[key] || key.replaceAll('_',' ');
+}
+
+function billingCycle(value) { return String(value||'MONTHLY').toUpperCase()==='YEARLY' ? 'Anual' : 'Mensal'; }
+
+function currentBillingSubscriptions() {
+  const seen=new Set();
+  return billingSubscriptions.filter(row=>{
+    if(seen.has(row.store_id)) return false;
+    seen.add(row.store_id);
+    return true;
+  });
+}
+
+window.loadBillingCenter = async function() {
+  const [subscriptions, invoices, providers] = await Promise.all([
+    api('/api/super-admin/subscriptions'),
+    api('/api/super-admin/billing/invoices?limit=200'),
+    api('/api/super-admin/billing/providers'),
+  ]);
+  billingSubscriptions = subscriptions || [];
+  billingInvoices = invoices || [];
+  billingProviders = providers || [];
+  renderBillingStats();
+  renderBillingProviders();
+  renderBillingSubscriptions();
+  renderBillingInvoices();
+};
+
+function renderBillingStats() {
+  const root=$s('#billingStats'); if(!root) return;
+  const rows=currentBillingSubscriptions();
+  const active=rows.filter(r=>['ACTIVE','TRIAL'].includes(r.status)).length;
+  const late=rows.filter(r=>r.status==='PAST_DUE').length;
+  const open=billingInvoices.filter(r=>['PENDING','FAILED'].includes(r.status));
+  const paid=billingInvoices.filter(r=>r.status==='PAID');
+  const stats=[
+    ['Assinaturas ativas',active],
+    ['Em atraso',late],
+    ['A receber',money(open.reduce((sum,row)=>sum+Number(row.amount||0),0))],
+    ['Recebido',money(paid.reduce((sum,row)=>sum+Number(row.amount||0),0))],
+  ];
+  root.innerHTML=stats.map(([label,value])=>`<div class="stat-card billing-stat"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>`).join('');
+}
+
+function renderBillingProviders() {
+  const root=$s('#billingProviders'); if(!root) return;
+  root.innerHTML=billingProviders.map(provider=>`<div class="billing-provider-card ${provider.configured?'is-ready':''}">
+    <div><b>${escapeHtml(provider.display_name)}</b><small>${provider.automatic?'Cobrança automática':'Operação manual'}</small></div>
+    <span class="status ${provider.configured?'CONFIRMADO':'PENDENTE'}">${provider.configured?'Configurado':'Pendente'}</span>
+  </div>`).join('') || '<div class="empty">Nenhum provedor cadastrado.</div>';
+}
+
+window.renderBillingSubscriptions = function() {
+  const root=$s('#billingSubscriptionsTable'); if(!root) return;
+  const query=String($s('#billingSearch')?.value||'').trim().toLowerCase();
+  const status=String($s('#billingStatusFilter')?.value||'').toUpperCase();
+  const rows=currentBillingSubscriptions().filter(row=>{
+    const haystack=`${row.store_name||''} ${row.plan?.name||''} ${row.provider||''}`.toLowerCase();
+    return (!query || haystack.includes(query)) && (!status || row.status===status);
+  });
+  root.innerHTML=rows.length?`<table class="table billing-table"><thead><tr><th>Loja</th><th>Plano</th><th>Status</th><th>Cobrança</th><th>Próximo vencimento</th><th>Ações</th></tr></thead><tbody>${rows.map(row=>{
+    const paidPlan=Number(row.billing_cycle==='YEARLY'?row.plan?.yearly_price:row.plan?.monthly_price||0)>0;
+    const canManage=['ACTIVE','TRIAL','PAST_DUE'].includes(row.status);
+    return `<tr>
+      <td><b>${escapeHtml(row.store_name||`Loja #${row.store_id}`)}</b><br><small>Assinatura #${row.id}</small></td>
+      <td><b>${escapeHtml(row.plan?.name||'—')}</b><br><small>${billingCycle(row.billing_cycle)}</small></td>
+      <td><span class="status ${billingClass(row.status)}">${escapeHtml(billingLabel(row.status))}</span></td>
+      <td>${escapeHtml(billingProviderName(row.provider))}<br><small>${row.auto_renew?'Renovação automática':'Renovação manual'}</small></td>
+      <td>${billingDate(row.next_billing_at||row.current_period_end)}${row.cancel_at_period_end?'<br><small>Cancelará no fim do período</small>':''}</td>
+      <td><div class="billing-row-actions">${paidPlan&&canManage?`<button class="btn ghost small" onclick="createRenewalInvoice(${row.id})">Gerar fatura</button>`:''}${canManage?`<button class="btn ghost small" onclick="cancelBillingSubscription(${row.id},true)">Cancelar no vencimento</button><button class="btn danger small" onclick="cancelBillingSubscription(${row.id},false)">Cancelar agora</button>`:'<span class="muted-note">Sem ações</span>'}</div></td>
+    </tr>`;
+  }).join('')}</tbody></table>`:'<div class="empty">Nenhuma assinatura encontrada com os filtros atuais.</div>';
+};
+
+window.renderBillingInvoices = function() {
+  const root=$s('#billingInvoicesTable'); if(!root) return;
+  const status=String($s('#invoiceStatusFilter')?.value||'').toUpperCase();
+  const rows=billingInvoices.filter(row=>!status||row.status===status);
+  root.innerHTML=rows.length?`<table class="table billing-table"><thead><tr><th>Fatura</th><th>Loja</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Método</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(row=>`<tr>
+    <td><b>#${row.id}</b><br><small>${row.invoice_type==='PLAN_CHANGE'?'Troca de plano':'Renovação'}</small></td>
+    <td>${escapeHtml(row.store_name||`Loja #${row.store_id}`)}</td>
+    <td>${escapeHtml(row.plan_name||'—')}</td>
+    <td>${billingDate(row.due_at||row.created_at)}</td>
+    <td><b>${money(row.amount)}</b></td>
+    <td>${escapeHtml(row.payment_method||billingProviderName(row.provider))}</td>
+    <td><span class="status ${billingClass(row.status)}">${escapeHtml(billingLabel(row.status))}</span></td>
+    <td><div class="billing-row-actions">${['PENDING','FAILED'].includes(row.status)?`<button class="btn primary small" onclick="setInvoiceStatus(${row.id},'PAID')">Registrar pago</button><button class="btn ghost small" onclick="setInvoiceStatus(${row.id},'FAILED')">Marcar falha</button><button class="btn danger small" onclick="setInvoiceStatus(${row.id},'CANCELED')">Cancelar</button>`:'<span class="muted-note">Concluída</span>'}</div></td>
+  </tr>`).join('')}</tbody></table>`:'<div class="empty">Nenhuma fatura encontrada.</div>';
+};
+
+window.createRenewalInvoice = async function(subscriptionId) {
+  try {
+    await api(`/api/super-admin/billing/subscriptions/${subscriptionId}/renewal-invoice`,{method:'POST',body:JSON.stringify({payment_method:'MANUAL'})});
+    showToast('Fatura de renovação criada.');
+    await loadBillingCenter();
+  } catch(err){ showToast(err.message,'error'); }
+};
+
+window.setInvoiceStatus = async function(invoiceId,status) {
+  const action=status==='PAID'?'registrar esta fatura como paga':status==='FAILED'?'marcar esta cobrança como falha':'cancelar esta fatura';
+  if(!confirm(`Deseja ${action}?`)) return;
+  try {
+    const payload={status};
+    if(status==='PAID') payload.payment_method='MANUAL';
+    if(status==='FAILED') payload.failure_reason='Falha registrada manualmente pelo Super Admin';
+    await api(`/api/super-admin/billing/invoices/${invoiceId}/status`,{method:'PATCH',body:JSON.stringify(payload)});
+    showToast('Fatura atualizada.');
+    await Promise.all([loadBillingCenter(),loadSuperDashboard(),loadSuperStores()]);
+  } catch(err){ showToast(err.message,'error'); }
+};
+
+window.cancelBillingSubscription = async function(subscriptionId,atPeriodEnd=true) {
+  const text=atPeriodEnd?'cancelar ao final do período atual':'cancelar imediatamente';
+  if(!confirm(`Tem certeza que deseja ${text}?`)) return;
+  try {
+    await api(`/api/super-admin/billing/subscriptions/${subscriptionId}/cancel`,{method:'POST',body:JSON.stringify({at_period_end:atPeriodEnd})});
+    showToast(atPeriodEnd?'Cancelamento agendado.':'Assinatura cancelada.');
+    await Promise.all([loadBillingCenter(),loadSuperDashboard(),loadSuperStores()]);
+  } catch(err){ showToast(err.message,'error'); }
+};
+
+window.processDueBilling = async function() {
+  if(!confirm('Processar agora os vencimentos e regras de cobrança das assinaturas?')) return;
+  try {
+    const result=await api('/api/super-admin/billing/process-due',{method:'POST'});
+    showToast(`Processamento concluído: ${result.invoices_created||0} nova(s) fatura(s).`);
+    await Promise.all([loadBillingCenter(),loadSuperDashboard(),loadSuperStores()]);
+  } catch(err){ showToast(err.message,'error'); }
 };
 
 if (getAuthToken()) startSuperAdmin();

@@ -20,6 +20,7 @@ let rentals = [];
 let payments = [];
 let paymentSettings = null;
 let subscriptionInfo = null;
+let billingOverview = null;
 let privacyRequests = [];
 let auditLogs = [];
 let reportOverview = null;
@@ -443,7 +444,8 @@ window.downloadReportCsv = async function downloadReportCsv(type) {
 };
 
 window.loadSubscription = async function loadSubscription() {
-  subscriptionInfo = await api('/api/admin/subscription');
+  billingOverview = await api('/api/admin/billing/overview');
+  subscriptionInfo = billingOverview?.subscription || null;
   renderSubscription();
   renderDashboardReportPreview();
 };
@@ -463,32 +465,110 @@ function usageCard(label, key) {
   return `<div class="usage-card"><div class="usage-head"><span>${escapeHtml(label)}</span><b>${used} / ${unlimited ? '∞' : limit}</b></div><div class="usage-bar"><i style="width:${percent}%"></i></div></div>`;
 }
 
+function formatBillingDate(value, fallback = '—') {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleDateString('pt-BR');
+}
+
+function billingStatusLabel(value) {
+  return ({
+    ACTIVE:'Ativa', TRIAL:'Período de teste', PAST_DUE:'Pagamento em atraso', EXPIRED:'Expirada', CANCELED:'Cancelada',
+    PENDING:'Pendente', PAID:'Pago', FAILED:'Falhou'
+  })[String(value || '').toUpperCase()] || String(value || '—');
+}
+
+function billingStatusClass(value) {
+  const status = String(value || '').toUpperCase();
+  if (['ACTIVE','PAID'].includes(status)) return 'CONFIRMADO';
+  if (['PAST_DUE','FAILED'].includes(status)) return 'PENDENTE';
+  if (['CANCELED','EXPIRED'].includes(status)) return 'CANCELADO';
+  return 'PENDENTE';
+}
+
+function billingProviderLabel(value) {
+  const code = String(value || 'MANUAL').toUpperCase();
+  const provider = billingOverview?.providers?.find(item => item.code === code);
+  return provider?.display_name || ({MANUAL:'Controle manual'})[code] || code.replaceAll('_',' ');
+}
+
+function billingCycleLabel(value) {
+  return String(value || 'MONTHLY').toUpperCase() === 'YEARLY' ? 'Anual' : 'Mensal';
+}
+
 function renderSubscription() {
   const root = $('#subscriptionContent');
   if (!root || !subscriptionInfo) return;
   const plan = subscriptionInfo.plan;
   const sub = subscriptionInfo.subscription;
   const features = subscriptionInfo.features || {};
+  const invoices = billingOverview?.recent_invoices || [];
+  const policy = billingOverview?.billing_policy || {};
   const featureLabels = {
     coupons:'Cupons', promotions:'Promoções', custom_branding:'Personalização visual', reports:'Relatórios',
     priority_support:'Suporte prioritário', custom_domain:'Domínio personalizado', online_payments:'Pagamentos online'
   };
-  root.innerHTML = plan ? `<div class="plan-layout">
-    <div class="plan-hero-card">
-      <span class="eyebrow">PLANO ATUAL</span>
+  if (!plan) {
+    root.innerHTML = '<div class="empty">Nenhum plano configurado para esta loja.</div>';
+    return;
+  }
+
+  const cycle = sub?.billing_cycle || 'MONTHLY';
+  const price = cycle === 'YEARLY' ? plan.yearly_price : plan.monthly_price;
+  const latestInvoice = invoices[0] || null;
+  const automaticProvider = (billingOverview?.providers || []).find(item => item.code === sub?.provider && item.configured);
+  const paymentMethod = latestInvoice?.payment_method || (automaticProvider ? automaticProvider.display_name : 'Ainda não configurada');
+
+  root.innerHTML = `<div class="billing-admin-hero">
+    <div class="billing-plan-card">
+      <div class="billing-plan-top"><span class="eyebrow">PLANO ATUAL</span><span class="status ${billingStatusClass(sub?.status || 'ACTIVE')}">${escapeHtml(billingStatusLabel(sub?.status || 'ACTIVE'))}</span></div>
       <h3>${escapeHtml(plan.name)}</h3>
-      <div class="plan-price">${money(plan.monthly_price)}<small>/mês</small></div>
+      <div class="plan-price">${money(price)}<small>/${cycle === 'YEARLY' ? 'ano' : 'mês'}</small></div>
       <p>${escapeHtml(plan.description || 'Plano da sua loja no Catálogo Digital.')}</p>
-      <div class="badges"><span class="status ${sub?.status === 'ACTIVE' ? 'CONFIRMADO' : 'PENDENTE'}">${escapeHtml(sub?.status || 'GRATUITO')}</span><span class="badge">${escapeHtml(sub?.billing_cycle || 'MONTHLY')}</span></div>
+      <div class="billing-meta-grid">
+        <div><span>Ciclo</span><b>${escapeHtml(billingCycleLabel(cycle))}</b></div>
+        <div><span>Próxima cobrança</span><b>${formatBillingDate(sub?.next_billing_at || sub?.current_period_end)}</b></div>
+        <div><span>Cobrança</span><b>${escapeHtml(billingProviderLabel(sub?.provider))}</b></div>
+        <div><span>Forma de pagamento</span><b>${escapeHtml(paymentMethod)}</b></div>
+      </div>
     </div>
-    <div class="plan-usage">
-      <h3>Uso do plano</h3>
+    <div class="plan-usage billing-usage-card">
+      <div class="billing-card-title"><div><span class="eyebrow">CAPACIDADE</span><h3>Uso do plano</h3></div><small>Atualizado agora</small></div>
       ${usageCard('Produtos','products')}
       ${usageCard('Serviços','services')}
       ${usageCard('Profissionais','professionals')}
     </div>
   </div>
-  <div class="panel-soft"><h3>Recursos incluídos</h3><div class="feature-chips">${Object.entries(featureLabels).map(([key,label]) => `<span class="feature-chip ${features[key] ? 'enabled' : 'disabled'}">${features[key] ? '✓' : '—'} ${escapeHtml(label)}</span>`).join('')}</div><p class="section-copy" style="margin-top:14px">Alterações de plano são feitas pelo Super Admin nesta fase. A integração de cobrança automática será conectada em uma etapa posterior.</p></div>` : '<div class="empty">Nenhum plano configurado para esta loja.</div>';
+
+  <div class="billing-two-columns">
+    <div class="panel-soft billing-feature-panel">
+      <div class="billing-card-title"><div><span class="eyebrow">RECURSOS</span><h3>O que está incluído</h3></div></div>
+      <div class="feature-chips">${Object.entries(featureLabels).map(([key,label]) => `<span class="feature-chip ${features[key] ? 'enabled' : 'disabled'}">${features[key] ? '✓' : '—'} ${escapeHtml(label)}</span>`).join('')}</div>
+      <p class="section-copy billing-help-copy">A troca de plano continua sendo controlada pelo Super Admin enquanto os gateways automáticos não estão conectados.</p>
+    </div>
+    <div class="panel-soft billing-summary-panel">
+      <div class="billing-card-title"><div><span class="eyebrow">COBRANÇA</span><h3>Resumo financeiro</h3></div></div>
+      <div class="billing-summary-list">
+        <div><span>Período atual</span><b>${formatBillingDate(sub?.current_period_start)} → ${formatBillingDate(sub?.current_period_end)}</b></div>
+        <div><span>Tolerância após vencimento</span><b>${Number(policy.grace_days ?? 0)} dias</b></div>
+        <div><span>Faturas recentes</span><b>${invoices.length}</b></div>
+        <div><span>Renovação automática</span><b>${sub?.auto_renew ? 'Ativada' : 'Ainda não ativada'}</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-soft billing-history-panel">
+    <div class="billing-card-title"><div><span class="eyebrow">HISTÓRICO</span><h3>Cobranças da assinatura</h3></div><small>Últimas ${Math.min(invoices.length,20)} faturas</small></div>
+    <div class="table-wrap">${invoices.length ? `<table class="table billing-table"><thead><tr><th>Fatura</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Pagamento</th><th>Status</th></tr></thead><tbody>${invoices.map(invoice => `<tr>
+      <td><b>#${invoice.id}</b><br><small>${escapeHtml(invoice.invoice_type === 'PLAN_CHANGE' ? 'Troca de plano' : 'Renovação')}</small></td>
+      <td>${escapeHtml(invoice.plan_name || plan.name)}</td>
+      <td>${formatBillingDate(invoice.due_at || invoice.created_at)}</td>
+      <td><b>${money(invoice.amount)}</b></td>
+      <td>${escapeHtml(invoice.payment_method || billingProviderLabel(invoice.provider))}</td>
+      <td><span class="status ${billingStatusClass(invoice.status)}">${escapeHtml(billingStatusLabel(invoice.status))}</span></td>
+    </tr>`).join('')}</tbody></table>` : '<div class="empty small-empty">Ainda não há cobranças registradas para esta assinatura.</div>'}</div>
+  </div>`;
 }
 
 window.loadCategories = async function loadCategories() {

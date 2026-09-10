@@ -80,3 +80,7 @@ backend/catalogo.db
 backend/uploads
 backend/backups
 ```
+
+
+## Fase 19.3 — Plano e cobrança
+O Admin possui visão detalhada da própria assinatura e o Super Admin possui uma Central de Cobrança operacional. O primeiro gateway automático real permanece desacoplado e será conectado depois.

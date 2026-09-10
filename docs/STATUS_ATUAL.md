@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 19.2**.
+Versão consolidada até a **Fase 19.3**.
 
 ## Concluído
 
@@ -27,3 +27,10 @@ A conexão com Mercado Pago ficou desacoplada por indisponibilidade temporária 
 **Fase 19.3 — Meu plano e cobrança + gestão financeira no Super Admin.**
 
 Depois da Fase 19, iniciar a reformulação visual premium completa nas áreas do cliente, administrador e super administrador.
+
+
+## Fase 19.3 — Meu Plano e Central de Cobrança
+- Admin da loja: visão profissional do plano, uso, período, próxima cobrança, método e histórico de faturas.
+- Super Admin: central financeira com assinaturas, faturas, status, gateways, registro manual de pagamento, cancelamento e processamento de vencimentos.
+- Sem migration nesta fase.
+- Gateway real continua pendente até uma conta elegível estar disponível.

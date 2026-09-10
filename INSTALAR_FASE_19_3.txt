@@ -1,0 +1,12 @@
+FASE 19.3 — INTERFACE DE PLANO E COBRANÇA
+
+1. Copie o conteúdo deste ZIP para a raiz do projeto catalogo-digital-github.
+2. Substitua os arquivos quando o Windows perguntar.
+3. Rode: git status
+4. Rode: git add .
+5. Rode: git commit -m "Fase 19.3 - interface de plano e cobranca"
+6. Rode: git push
+7. Aguarde o Render voltar para Live.
+8. Confira /api/health e a versão 19.3.0.
+
+Não há migration nova nesta fase.
