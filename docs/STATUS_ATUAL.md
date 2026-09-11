@@ -34,3 +34,11 @@ Depois da Fase 19, iniciar a reformulação visual premium completa nas áreas d
 - Super Admin: central financeira com assinaturas, faturas, status, gateways, registro manual de pagamento, cancelamento e processamento de vencimentos.
 - Sem migration nesta fase.
 - Gateway real continua pendente até uma conta elegível estar disponível.
+
+
+## Fase 20 — Design System e identidade visual oficial
+
+- Fundação visual compartilhada criada.
+- Nova camada `design-system.css` aplicada a todas as páginas.
+- `ui-system.js` adiciona microinterações e feedbacks sem alterar regras de negócio.
+- Próximo: Fase 21 — reforma premium da área do cliente.

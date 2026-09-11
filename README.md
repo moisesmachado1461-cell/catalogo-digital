@@ -84,3 +84,8 @@ backend/backups
 
 ## Fase 19.3 — Plano e cobrança
 O Admin possui visão detalhada da própria assinatura e o Super Admin possui uma Central de Cobrança operacional. O primeiro gateway automático real permanece desacoplado e será conectado depois.
+
+
+## Fase 20 — Design System
+
+A base visual oficial do produto está em `frontend/css/design-system.css`, com comportamento compartilhado em `frontend/js/ui-system.js`. A versão do backend é 20.0.0.
