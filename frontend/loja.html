@@ -5,30 +5,41 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta id="storeMetaDescription" name="description" content="Catálogo Digital">
   <title>Loja — Catálogo Digital</title>
-  <meta name="theme-color" content="#6d5dfc"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/app-icon.svg" type="image/svg+xml"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/design-system.css">
+  <meta name="theme-color" content="#6d5dfc"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/app-icon.svg" type="image/svg+xml"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/design-system.css"><link rel="stylesheet" href="css/store-premium.css">
 </head>
 <body class="store-page">
-<header class="topbar store-topbar">
-  <div class="container nav">
-    <a class="brand" href="index.html"><span class="brand-mark">CD</span><span>Catálogo Digital</span></a>
-    <div class="nav-links">
-      <a class="btn ghost hide-mobile" href="index.html">Explorar negócios</a>
-      <a class="btn ghost" href="admin.html">Área administrativa</a>
+<header class="topbar store-topbar premium-store-topbar">
+  <div class="container nav store-header-nav">
+    <a class="store-header-brand" href="#storeHero" aria-label="Voltar ao início da loja">
+      <span id="headerStoreMark" class="store-header-mark">CD</span>
+      <span class="store-header-copy"><strong id="headerStoreName">Carregando...</strong><small id="headerStoreCategory">Catálogo Digital</small></span>
+    </a>
+    <div class="store-header-actions">
+      <button id="headerPrimaryAction" class="btn primary store-header-primary hidden" type="button">Ver catálogo</button>
+      <button id="headerContactAction" class="btn ghost hide-mobile hidden" type="button">Contato</button>
+      <a class="btn ghost store-login-link" href="admin.html">Entrar</a>
     </div>
   </div>
 </header>
 
 <section id="storeHero" class="store-hero store-hero-v2">
   <div class="store-hero-overlay"></div>
-  <div class="container store-hero-inner">
-    <div id="storeLogo" class="store-logo store-logo-v2">CD</div>
-    <div class="store-hero-copy">
-      <span id="storeType" class="eyebrow store-eyebrow">Carregando...</span>
-      <h1 id="storeName">Carregando loja...</h1>
-      <p id="storeDescription">Aguarde enquanto carregamos os dados.</p>
-      <div id="storeHeroFacts" class="store-facts"></div>
-      <div id="storeHeroActions" class="hero-actions"></div>
+  <div class="container store-hero-inner premium-hero-inner">
+    <div class="premium-hero-main">
+      <div id="storeLogo" class="store-logo store-logo-v2">CD</div>
+      <div class="store-hero-copy">
+        <span id="storeType" class="eyebrow store-eyebrow">Carregando...</span>
+        <h1 id="storeName">Carregando loja...</h1>
+        <p id="storeDescription">Aguarde enquanto carregamos os dados.</p>
+        <div id="storeHeroFacts" class="store-facts"></div>
+        <div id="storeHeroActions" class="hero-actions"></div>
+      </div>
     </div>
+    <aside id="storeHeroAside" class="store-hero-aside" aria-label="Destaques da experiência">
+      <span class="store-aside-kicker">Experiência digital</span>
+      <strong id="storeAsideTitle">Tudo em um só lugar</strong>
+      <div id="storeAsideItems" class="store-aside-items"></div>
+    </aside>
   </div>
 </section>
 
@@ -36,16 +47,24 @@
   <div class="container store-nav-inner" id="storeTabs"></div>
 </nav>
 
-<main class="store-main">
+<section class="store-experience-strip" aria-label="Diferenciais da loja">
+  <div class="container store-experience-grid" id="storeExperienceGrid">
+    <div class="experience-item"><strong>Atendimento digital</strong><span>Escolha com calma e conclua pelo site.</span></div>
+    <div class="experience-item"><strong>Experiência responsiva</strong><span>Funciona no celular, tablet e computador.</span></div>
+    <div class="experience-item"><strong>Canais oficiais</strong><span>Contato e informações reunidos em um só lugar.</span></div>
+  </div>
+</section>
+
+<main class="store-main premium-store-main">
   <div class="container">
     <div id="errorBox" class="notice hidden"></div>
 
     <section id="catalogSection" class="store-section hidden">
       <div class="store-section-head">
-        <div><span class="section-kicker">Catálogo</span><h2>Encontre o que você precisa</h2><p>Pesquise, filtre e adicione produtos ao carrinho.</p></div>
+        <div><span class="section-kicker">Catálogo</span><h2>Escolha seus produtos</h2><p>Uma vitrine organizada para você encontrar, comparar e comprar com facilidade.</p></div><div class="section-head-meta"><strong id="catalogResultsCount">0 produtos</strong><span>Atualizado pela loja</span></div>
       </div>
       <div class="toolbar toolbar-v2">
-        <div class="search-wrap"><span>⌕</span><input id="searchInput" class="input search" placeholder="Pesquisar produtos..."></div>
+        <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="searchInput" class="input search" placeholder="O que você está procurando?" aria-label="Pesquisar produtos"></div>
         <select id="categoryFilter" class="select category-select"><option value="">Todas as categorias</option></select>
       </div>
       <div id="categoryChips" class="category-chips"></div>
@@ -63,7 +82,7 @@
 
     <section id="servicesSection" class="store-section hidden">
       <div class="store-section-head">
-        <div><span class="section-kicker">Serviços</span><h2>Escolha como podemos ajudar</h2><p>Veja os serviços disponíveis e avance para agendamento ou orçamento.</p></div>
+        <div><span class="section-kicker">Serviços</span><h2>Cuidado e atendimento do seu jeito</h2><p>Compare serviços, conheça a equipe e avance para agendamento ou orçamento.</p></div><div class="section-head-meta"><strong id="serviceResultsCount">Serviços disponíveis</strong><span>Escolha a melhor opção</span></div>
       </div>
       <div id="serviceGrid" class="service-grid service-grid-v2"></div>
       <div id="professionalsShowcase" class="professionals-showcase hidden"><div class="store-section-head compact-head"><div><span class="section-kicker">Equipe</span><h2>Quem vai cuidar de você</h2><p>Conheça os profissionais disponíveis para os serviços.</p></div></div><div id="professionalGrid" class="professional-grid"></div></div>
@@ -125,7 +144,12 @@
 
 <div id="paymentModal" class="modal-backdrop"><div class="modal payment-modal"><div class="modal-head"><div><span class="section-kicker">Pagamento</span><h2 id="paymentModalTitle">Instruções de pagamento</h2></div><button class="close-btn" data-close="paymentModal">×</button></div><div id="paymentModalContent" class="payment-result" style="margin-top:18px"></div><div class="booking-actions"><button class="btn primary" data-close="paymentModal">Fechar</button></div></div></div>
 
-<div class="footer"><div class="container"><div class="footer-links"><a id="privacyStoreLink" href="privacidade.html">Privacidade</a><a href="termos.html">Termos de uso</a></div></div></div>
+<footer class="footer premium-store-footer">
+  <div class="container premium-footer-grid">
+    <div class="premium-footer-brand"><span id="footerStoreMark" class="store-header-mark">CD</span><div><strong id="footerStoreName">Sua loja</strong><small>Presença digital por Catálogo Digital</small></div></div>
+    <div class="footer-links"><a id="privacyStoreLink" href="privacidade.html">Privacidade</a><a href="termos.html">Termos de uso</a><a href="#storeHero">Voltar ao topo</a></div>
+  </div>
+</footer>
 <script src="js/runtime-config.js"></script><script src="js/api.js"></script>
 <script>document.getElementById('privacyStoreLink').href = `privacidade.html?slug=${encodeURIComponent(new URLSearchParams(location.search).get('slug') || '')}`;</script>
 <script src="js/loja.js"></script>

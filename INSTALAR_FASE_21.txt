@@ -1,0 +1,16 @@
+CATÁLOGO DIGITAL — FASE 21
+ÁREA DO CLIENTE PREMIUM
+
+1. Extraia o ZIP.
+2. Copie o conteúdo para a raiz do projeto.
+3. Substitua os arquivos quando solicitado.
+4. Rode:
+   git status
+   git add .
+   git commit -m "Fase 21 - area do cliente premium"
+   git push
+5. Aguarde o Render ficar Live.
+6. Confirme /api/health com version 21.0.0.
+7. Abra a loja pública e use Ctrl+F5.
+
+Não há migration nesta fase.

@@ -8,6 +8,48 @@ function initials(name = '') {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'CD';
 }
 
+function firstStoreSection() {
+  const caps = store?.capabilities || {};
+  if (caps.catalog) return { id: 'catalogSection', label: 'Ver produtos' };
+  if (caps.services) return { id: 'servicesSection', label: caps.appointments ? 'Agendar horário' : 'Ver serviços' };
+  if (caps.reservations) return { id: 'reservationsSection', label: 'Fazer reserva' };
+  if (caps.rentals) return { id: 'rentalsSection', label: 'Ver locações' };
+  return { id: 'contactSection', label: 'Falar com a empresa' };
+}
+
+function renderPremiumShell() {
+  const category = store.business_category?.name || store.business_model?.name || 'Negócio';
+  const logoHtml = store.logo_url
+    ? `<img alt="Logo de ${escapeHtml(store.name)}" src="${escapeHtml(assetUrl(store.logo_url))}">`
+    : escapeHtml(initials(store.name));
+  $('#headerStoreMark').innerHTML = logoHtml;
+  $('#footerStoreMark').innerHTML = logoHtml;
+  $('#headerStoreName').textContent = store.name;
+  $('#headerStoreCategory').textContent = category;
+  $('#footerStoreName').textContent = store.name;
+
+  const primary = firstStoreSection();
+  const primaryButton = $('#headerPrimaryAction');
+  primaryButton.textContent = primary.label;
+  primaryButton.classList.remove('hidden');
+  primaryButton.onclick = () => openStoreSection(primary.id);
+  const contactButton = $('#headerContactAction');
+  contactButton.classList.remove('hidden');
+  contactButton.onclick = () => openStoreSection('contactSection');
+
+  const caps = store.capabilities || {};
+  const aside = [];
+  if (caps.catalog) aside.push(['Catálogo organizado', 'Produtos, preços e opções reunidos em uma vitrine clara.']);
+  if (caps.appointments) aside.push(['Agendamento online', 'Escolha serviço, profissional, data e horário pelo próprio site.']);
+  else if (caps.services) aside.push(['Serviços em destaque', 'Veja detalhes e avance para o atendimento ideal.']);
+  if (caps.reservations) aside.push(['Reserva digital', 'Consulte opções e solicite sua reserva em poucos passos.']);
+  if (caps.rentals) aside.push(['Locação simplificada', 'Escolha o item e consulte disponibilidade pelo período desejado.']);
+  if (caps.payments) aside.push(['Pagamento orientado', 'As formas habilitadas pela empresa aparecem no momento certo.']);
+  aside.push(['Canais oficiais', 'Contato, endereço e informações da empresa no mesmo lugar.']);
+  $('#storeAsideItems').innerHTML = aside.slice(0, 3).map(([title, text]) => `<div class="store-aside-item"><span class="store-aside-dot"></span><div><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)}</small></div></div>`).join('');
+  $('#storeAsideTitle').textContent = caps.appointments ? 'Escolha e agende com facilidade' : (caps.catalog ? 'Escolha e compre com facilidade' : 'Tudo em um só lugar');
+}
+
 function setTheme() {
   const primary = store.primary_color || '#7C3AED';
   const secondary = store.secondary_color || '#4F46E5';
@@ -19,6 +61,7 @@ function setTheme() {
   $('#contactStoreName').textContent = store.name;
   $('#storeDescription').textContent = store.description || 'Bem-vindo ao nosso catálogo digital.';
   $('#storeType').textContent = store.business_category?.name || store.business_model?.name || 'Negócio';
+  renderPremiumShell();
 
   const logo = $('#storeLogo');
   if (store.logo_url) logo.innerHTML = `<img alt="Logo de ${escapeHtml(store.name)}" src="${escapeHtml(assetUrl(store.logo_url))}">`;
@@ -33,15 +76,15 @@ function setTheme() {
   }
 
   const facts = [];
-  if (store.city || store.state) facts.push(`📍 ${[store.city, store.state].filter(Boolean).join(' · ')}`);
-  if (store.phone) facts.push(`☎ ${store.phone}`);
-  if (store.business_model?.name) facts.push(`◆ ${store.business_model.name}`);
+  if (store.city || store.state) facts.push([store.city, store.state].filter(Boolean).join(' · '));
+  if (store.phone) facts.push(store.phone);
+  if (store.business_model?.name) facts.push(store.business_model.name);
   $('#storeHeroFacts').innerHTML = facts.map(item => `<span>${escapeHtml(item)}</span>`).join('');
 
   const caps = store.capabilities || {};
   const actions = [];
-  if (caps.catalog) actions.push(`<button class="btn store-cta" onclick="openStoreSection('catalogSection')">Ver produtos</button>`);
-  if (caps.services) actions.push(`<button class="btn store-cta" onclick="openStoreSection('servicesSection')">Ver serviços</button>`);
+  if (caps.catalog) actions.push(`<button class="btn store-cta" onclick="openStoreSection('catalogSection')">Explorar produtos</button>`);
+  if (caps.services) actions.push(`<button class="btn store-cta" onclick="openStoreSection('servicesSection')">${caps.appointments ? 'Agendar atendimento' : 'Explorar serviços'}</button>`);
   if (caps.reservations) actions.push(`<button class="btn store-cta" onclick="openStoreSection('reservationsSection')">Reservar</button>`);
   if (caps.rentals) actions.push(`<button class="btn store-cta" onclick="openStoreSection('rentalsSection')">Ver locações</button>`);
   if (store.whatsapp) {
@@ -207,6 +250,8 @@ function renderProducts() {
   const q = ($('#searchInput').value || '').toLowerCase().trim();
   const cat = $('#categoryFilter').value;
   const rows = catalog.products.filter(p => (!cat || String(p.category_id) === cat) && (!q || `${p.name} ${p.description || ''}`.toLowerCase().includes(q)));
+  const countLabel = $('#catalogResultsCount');
+  if (countLabel) countLabel.textContent = `${rows.length} ${rows.length === 1 ? 'produto' : 'produtos'}`;
   $('#productGrid').innerHTML = rows.length ? rows.map(p => {
     const inventory = p.inventory?.quantity;
     const unavailable = p.track_inventory && p.inventory && Number(inventory) <= 0 && !(p.variants || []).length;
@@ -315,6 +360,8 @@ $('#mobileCartBar').onclick = () => $('#cartPanel')?.scrollIntoView({ behavior: 
 async function loadServices() {
   serviceData = await api(`/api/public/stores/${encodeURIComponent(slug)}/services`);
   const caps = store.capabilities || {};
+  const serviceCount = $('#serviceResultsCount');
+  if (serviceCount) serviceCount.textContent = `${(serviceData.services || []).length} ${(serviceData.services || []).length === 1 ? 'serviço disponível' : 'serviços disponíveis'}`;
   $('#serviceGrid').innerHTML = serviceData.services.length ? serviceData.services.map(s => `<article class="service-card service-card-v2">
     <div class="service-media">${s.image_url ? `<img src="${escapeHtml(assetUrl(s.image_url))}" alt="${escapeHtml(s.name)}" loading="lazy">` : `<span>${initials(s.name)}</span>`}</div>
     <div class="card-body">

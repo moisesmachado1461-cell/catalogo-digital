@@ -42,3 +42,12 @@ Depois da Fase 19, iniciar a reformulação visual premium completa nas áreas d
 - Nova camada `design-system.css` aplicada a todas as páginas.
 - `ui-system.js` adiciona microinterações e feedbacks sem alterar regras de negócio.
 - Próximo: Fase 21 — reforma premium da área do cliente.
+
+
+## Fase 21 — Área do Cliente Premium
+
+- Loja pública reformulada com identidade própria, hero premium e cabeçalho orientado à marca da loja.
+- Produtos, serviços, carrinho, filtros, contato, modais e experiência mobile refinados.
+- Layout continua adaptado por capabilities para varejo, alimentação, serviços, reservas e locações.
+- Sem migration.
+- Próximo: Fase 22 — reformulação premium do Admin.

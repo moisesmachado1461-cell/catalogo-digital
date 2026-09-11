@@ -1,8 +1,8 @@
-const CACHE_NAME = 'catalogo-digital-v20-0';
+const CACHE_NAME = 'catalogo-digital-v21-0';
 const APP_SHELL = [
   './', './index.html', './loja.html', './admin.html', './super-admin.html',
   './agendamento.html', './privacidade.html', './termos.html',
-  './css/style.css', './css/design-system.css', './js/ui-system.js', './js/runtime-config.js', './js/api.js', './js/loja.js', './js/admin.js', './js/super-admin.js', './js/agendamento.js',
+  './css/style.css', './css/design-system.css', './css/store-premium.css', './js/ui-system.js', './js/runtime-config.js', './js/api.js', './js/loja.js', './js/admin.js', './js/super-admin.js', './js/agendamento.js',
   './manifest.webmanifest', './icons/app-icon.svg'
 ];
 

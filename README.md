@@ -89,3 +89,7 @@ O Admin possui visão detalhada da própria assinatura e o Super Admin possui um
 ## Fase 20 — Design System
 
 A base visual oficial do produto está em `frontend/css/design-system.css`, com comportamento compartilhado em `frontend/js/ui-system.js`. A versão do backend é 20.0.0.
+
+
+## Fase 21 — Área do Cliente Premium
+A experiência pública das lojas recebeu uma reformulação visual completa e responsiva, preservando os fluxos funcionais existentes.
