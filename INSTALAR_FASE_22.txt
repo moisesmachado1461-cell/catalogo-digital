@@ -1,0 +1,14 @@
+CATÁLOGO DIGITAL — FASE 22 — ADMIN PREMIUM
+
+1. Extraia o ZIP.
+2. Copie o conteúdo para a raiz do projeto.
+3. Substitua os arquivos quando solicitado.
+4. Execute: git status
+5. Execute: git add .
+6. Execute: git commit -m "Fase 22 - admin premium"
+7. Execute: git push
+8. Aguarde o Render voltar para Live.
+9. Confira /api/health — versão esperada: 22.0.0.
+10. Abra admin.html e use Ctrl+F5 para limpar o cache visual.
+
+Não há migration de banco nesta fase.

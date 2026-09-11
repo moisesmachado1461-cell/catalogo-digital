@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 19.2
+# Catálogo Digital — Fase 22
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**19.2 — Motor interno de cobrança e ciclo de assinaturas**
+**22.0 — Admin Premium**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -93,3 +93,21 @@ A base visual oficial do produto está em `frontend/css/design-system.css`, com 
 
 ## Fase 21 — Área do Cliente Premium
 A experiência pública das lojas recebeu uma reformulação visual completa e responsiva, preservando os fluxos funcionais existentes.
+
+
+## Fase 22 — Admin Premium
+
+O painel do administrador da loja foi reformulado com foco em uso diário, clareza e acabamento comercial:
+
+- login profissional e responsivo;
+- sidebar organizada por grupos;
+- ícones locais para navegação funcional;
+- cabeçalho com identidade do administrador;
+- cartão de boas-vindas e resumo contextual;
+- alertas operacionais de pedidos, agenda, estoque e pagamentos;
+- métricas com hierarquia visual aprimorada;
+- ações rápidas com contexto;
+- tabelas, formulários, modais e responsividade refinados;
+- cache PWA atualizado para a versão 22.
+
+Nenhuma regra de negócio ou isolamento multi-tenant foi removido. Não há migration nesta fase.

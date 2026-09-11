@@ -4,50 +4,81 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Painel — Catálogo Digital</title>
-  <meta name="theme-color" content="#6d5dfc"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/app-icon.svg" type="image/svg+xml"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/design-system.css">
+  <meta name="theme-color" content="#6d5dfc"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/app-icon.svg" type="image/svg+xml"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/design-system.css"><link rel="stylesheet" href="css/admin-premium.css">
 </head>
 <body>
-<section id="loginView" class="auth-page">
-  <div class="panel login-box">
-    <div class="brand"><span class="brand-mark">CD</span>Catálogo Digital</div>
-    <h1>Entrar no painel</h1>
-    <p>Gerencie sua loja sem precisar usar a documentação da API.</p>
-    <form id="loginForm" class="stack-form">
-      <div class="field"><label>E-mail</label><input class="input" name="email" type="email" required placeholder="admin@sualoja.com"></div>
-      <div class="field"><label>Senha</label><input class="input" name="password" type="password" required></div>
-      <button class="btn primary" type="submit">Entrar</button>
-    </form>
-    <div class="notice" style="margin-top:18px">Demo mercado: admin@mercadobompreco.com · Admin@12345</div>
-    <a href="index.html" class="btn ghost full-btn">Voltar ao início</a>
+<section id="loginView" class="auth-page admin-login-page">
+  <div class="admin-login-shell">
+    <div class="admin-login-showcase" aria-hidden="true">
+      <div class="admin-login-orb admin-login-orb-a"></div><div class="admin-login-orb admin-login-orb-b"></div>
+      <div class="brand admin-login-brand"><span class="brand-mark">CD</span>Catálogo Digital</div>
+      <div class="admin-login-copy">
+        <span class="eyebrow">PAINEL DE GESTÃO</span>
+        <h2>Seu negócio organizado em um só lugar.</h2>
+        <p>Produtos, agenda, pedidos, clientes, relatórios e configurações com uma experiência simples e profissional.</p>
+      </div>
+      <div class="admin-login-preview">
+        <div class="login-preview-stat"><span>Operação</span><b>Visão completa</b><small>Dados essenciais em destaque</small></div>
+        <div class="login-preview-stat"><span>Produtividade</span><b>Ações rápidas</b><small>Menos cliques no dia a dia</small></div>
+        <div class="login-preview-stat"><span>Segurança</span><b>Acesso protegido</b><small>Dados isolados por loja</small></div>
+      </div>
+    </div>
+    <div class="panel login-box admin-login-box">
+      <div class="admin-login-mobile-brand brand"><span class="brand-mark">CD</span>Catálogo Digital</div>
+      <span class="eyebrow">BEM-VINDO DE VOLTA</span>
+      <h1>Entrar no painel</h1>
+      <p>Use os dados da sua loja para acessar o painel administrativo.</p>
+      <form id="loginForm" class="stack-form">
+        <div class="field"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="username" required placeholder="admin@sualoja.com"></div>
+        <div class="field"><label>Senha</label><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="Sua senha"></div>
+        <button class="btn primary admin-login-submit" type="submit">Entrar no painel</button>
+      </form>
+      <div class="notice admin-demo-note">Ambiente de demonstração disponível para testes internos.</div>
+      <a href="index.html" class="btn ghost full-btn">Voltar ao site</a>
+    </div>
   </div>
 </section>
 
 <section id="adminView" class="admin-shell hidden">
-  <aside class="sidebar">
-    <a class="brand" href="index.html"><span class="brand-mark">CD</span>Catálogo Digital</a>
+  <aside class="sidebar admin-sidebar-premium">
+    <a class="brand sidebar-brand" href="index.html"><span class="brand-mark">CD</span><span>Catálogo Digital<small>Painel da loja</small></span></a>
     <div class="side-store">
-      <b id="sideStoreName">Sua loja</b><br>
-      <small id="sideStoreModel">Carregando...</small>
+      <div id="sideStoreAvatar" class="side-store-avatar">CD</div>
+      <div class="side-store-copy"><b id="sideStoreName">Sua loja</b><small id="sideStoreModel">Carregando...</small></div>
+      <span class="side-online" title="Sistema online"></span>
     </div>
     <nav id="sideMenu" class="side-menu"></nav>
-    <button id="logoutBtn" class="side-btn logout-side">Sair</button>
+    <div class="sidebar-footer">
+      <div class="sidebar-help"><span class="sidebar-help-icon">?</span><div><b>Precisa de ajuda?</b><small>Consulte as configurações e sua assinatura.</small></div></div>
+      <button id="logoutBtn" class="side-btn logout-side"><span class="side-icon" aria-hidden="true">↪</span><span>Sair</span></button>
+    </div>
   </aside>
 
   <main class="admin-main">
     <div class="mobile-admin-menu" id="mobileMenu"></div>
-    <header class="admin-header">
-      <div>
-        <small id="adminBreadcrumb">Painel administrativo</small>
+    <header class="admin-header admin-header-premium">
+      <div class="admin-heading">
+        <div class="admin-breadcrumb-row"><span class="admin-status-dot"></span><small id="adminBreadcrumb">Painel administrativo</small></div>
         <h1 id="adminTitle">Dashboard</h1>
       </div>
       <div class="header-actions">
-        <button id="refreshBtn" class="btn ghost small" type="button">Atualizar</button>
-        <a id="openStoreBtn" class="btn ghost" target="_blank">Ver loja</a>
+        <button id="refreshBtn" class="btn ghost small admin-icon-btn" type="button" title="Atualizar dados"><span aria-hidden="true">↻</span><span>Atualizar</span></button>
+        <a id="openStoreBtn" class="btn ghost" target="_blank"><span>Ver loja</span><span aria-hidden="true">↗</span></a>
+        <div class="admin-user-chip"><div id="adminUserAvatar" class="admin-user-avatar">A</div><div><b id="adminUserName">Administrador</b><small>Administrador da loja</small></div></div>
       </div>
     </header>
 
     <section id="dashboard" class="admin-section active">
-      <div id="stats" class="stats"></div>
+      <div class="admin-welcome-card">
+        <div class="admin-welcome-copy">
+          <span class="eyebrow">VISÃO GERAL</span>
+          <h2 id="dashboardGreeting">Bem-vindo ao seu painel</h2>
+          <p id="dashboardGreetingCopy">Acompanhe o que precisa de atenção e acesse as principais ações da sua loja.</p>
+          <div class="admin-welcome-meta"><span id="dashboardPlanBadge" class="admin-plan-badge">Plano ativo</span><span id="dashboardToday">Hoje</span></div>
+        </div>
+        <div id="dashboardAttention" class="admin-attention"></div>
+      </div>
+      <div id="stats" class="stats admin-stats-premium"></div>
       <div class="dashboard-grid">
         <div class="panel">
           <div class="panel-head"><h2>Resumo da loja</h2></div>

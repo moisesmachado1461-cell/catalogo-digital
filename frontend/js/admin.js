@@ -52,6 +52,88 @@ const labels = {
 
 const weekdayLabels = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
+const adminMenuGroups = [
+  { title: 'Visão geral', ids: ['dashboard', 'reports'] },
+  { title: 'Vendas e catálogo', ids: ['categories', 'products', 'orders', 'inventory', 'coupons', 'promotions'] },
+  { title: 'Serviços e agenda', ids: ['services', 'professionals', 'appointments', 'quotes'] },
+  { title: 'Reservas e locação', ids: ['resources', 'reservations', 'rentalItems', 'rentals'] },
+  { title: 'Financeiro', ids: ['payments', 'subscription'] },
+  { title: 'Gestão', ids: ['privacy', 'settings'] },
+];
+
+const adminIconPaths = {
+  dashboard: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+  reports: '<path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/>',
+  categories: '<path d="M4 4h6v6H4z"/><path d="M14 4h6v6h-6z"/><path d="M4 14h6v6H4z"/><path d="M14 14h6v6h-6z"/>',
+  products: '<path d="M6 7h12l1 13H5L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
+  orders: '<path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  inventory: '<path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/>',
+  coupons: '<path d="M4 7a3 3 0 0 0 0 6v4h16v-4a3 3 0 0 0 0-6V3H4v4Z"/><path d="M12 6v2M12 11v2M12 16v2"/>',
+  promotions: '<path d="m20 12-8 8-8-8 8-8 8 8Z"/><path d="M9 9h.01M15 15h.01"/><path d="m15 9-6 6"/>',
+  services: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/>',
+  professionals: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  appointments: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m9 15 2 2 4-4"/>',
+  quotes: '<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  resources: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 8h8v8H8z"/>',
+  reservations: '<path d="M5 3v3M19 3v3"/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>',
+  rentalItems: '<path d="M4 8h16v11H4z"/><path d="M8 8V5h8v3"/><path d="M9 13h6"/>',
+  rentals: '<path d="M3 12h18"/><path d="m16 7 5 5-5 5"/><path d="m8 17-5-5 5-5"/>',
+  payments: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
+  subscription: '<path d="M12 2 5 5v6c0 5 3 9 7 11 4-2 7-6 7-11V5l-7-3Z"/><path d="m9 12 2 2 4-4"/>',
+  privacy: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.1A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.1A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.4.3.7.6 1 .6h.1v4h-.1c-.4 0-.8.2-1 .6Z"/>',
+  default: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+};
+
+function adminIcon(id) {
+  const path = adminIconPaths[id] || adminIconPaths.default;
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+}
+
+function initials(value, fallback = 'CD') {
+  const parts = String(value || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return fallback;
+  return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
+}
+
+function renderAdminIdentity() {
+  const userName = me?.name || me?.full_name || 'Administrador';
+  const storeName = store?.name || 'Sua loja';
+  const planName = subscriptionInfo?.plan?.name || store?.subscription?.plan?.name || 'Gratuito';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const userEl = $('#adminUserName');
+  const userAvatar = $('#adminUserAvatar');
+  const storeAvatar = $('#sideStoreAvatar');
+  if (userEl) userEl.textContent = userName;
+  if (userAvatar) userAvatar.textContent = initials(userName, 'A');
+  if (storeAvatar) storeAvatar.textContent = initials(storeName);
+  const greet = $('#dashboardGreeting');
+  if (greet) greet.textContent = `${greeting}, ${userName.split(' ')[0]}!`;
+  const greetCopy = $('#dashboardGreetingCopy');
+  if (greetCopy) greetCopy.textContent = `Aqui está um resumo de ${storeName}. Veja o que precisa de atenção e continue sua operação.`;
+  const badge = $('#dashboardPlanBadge');
+  if (badge) badge.textContent = `Plano ${planName}`;
+  const today = $('#dashboardToday');
+  if (today) today.textContent = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }).format(new Date());
+}
+
+function renderDashboardAttention() {
+  const root = $('#dashboardAttention');
+  if (!root) return;
+  const alerts = [];
+  const pendingOrders = orders.filter(item => ['NOVO', 'PENDENTE', 'CONFIRMADO'].includes(String(item.status || '').toUpperCase())).length;
+  const pendingAppointments = appointments.filter(item => ['PENDENTE', 'CONFIRMADO'].includes(String(item.status || '').toUpperCase())).length;
+  const lowStock = inventory.filter(item => Number(item.quantity || 0) <= Number(item.min_quantity || item.minimum_quantity || 0)).length;
+  const pendingPayments = payments.filter(item => String(item.status || '').toUpperCase() === 'PENDENTE').length;
+  if (store?.capabilities?.catalog) alerts.push({ level: pendingOrders ? 'warning' : '', title: `${pendingOrders} pedido${pendingOrders === 1 ? '' : 's'} em andamento`, note: pendingOrders ? 'Acompanhe e atualize os status.' : 'Nenhum pedido aguardando ação.' });
+  if (store?.capabilities?.appointments) alerts.push({ level: pendingAppointments ? 'warning' : '', title: `${pendingAppointments} agendamento${pendingAppointments === 1 ? '' : 's'} ativo${pendingAppointments === 1 ? '' : 's'}`, note: pendingAppointments ? 'Revise sua agenda de atendimento.' : 'Agenda sem pendências.' });
+  if (store?.capabilities?.catalog) alerts.push({ level: lowStock ? 'danger' : '', title: `${lowStock} item${lowStock === 1 ? '' : 's'} com estoque baixo`, note: lowStock ? 'Considere repor o estoque.' : 'Estoque dentro dos limites.' });
+  if (store?.capabilities?.payments && alerts.length < 3) alerts.push({ level: pendingPayments ? 'warning' : '', title: `${pendingPayments} pagamento${pendingPayments === 1 ? '' : 's'} pendente${pendingPayments === 1 ? '' : 's'}`, note: pendingPayments ? 'Há pagamentos aguardando confirmação.' : 'Financeiro em dia.' });
+  if (!alerts.length) alerts.push({ level: '', title: 'Operação em dia', note: 'Nenhuma pendência importante detectada.' });
+  root.innerHTML = alerts.slice(0, 3).map(item => `<div class="attention-item ${item.level}"><span class="attention-dot"></span><div class="attention-copy"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.note)}</small></div></div>`).join('');
+}
+
 function nullable(value) {
   const text = String(value ?? '').trim();
   return text === '' ? null : text;
@@ -196,7 +278,9 @@ async function startAdmin() {
     $('#sideStoreModel').textContent = store.business_model?.name || 'Negócio';
     $('#openStoreBtn').href = `loja.html?slug=${encodeURIComponent(store.slug)}`;
     buildMenu();
+    renderAdminIdentity();
     await loadAll();
+    renderAdminIdentity();
     renderSettings();
   } catch (error) {
     clearAuthToken();
@@ -228,12 +312,16 @@ function buildMenu() {
   if (planFeatures.reports) items.push('reports');
   items.push('subscription', 'privacy', 'settings');
 
-  $('#sideMenu').innerHTML = items
-    .map((id, index) => `<button class="side-btn ${index === 0 ? 'active' : ''}" data-section="${id}">${labels[id]}</button>`)
+  $('#sideMenu').innerHTML = adminMenuGroups
+    .map(group => {
+      const groupItems = group.ids.filter(id => items.includes(id));
+      if (!groupItems.length) return '';
+      return `<div class="side-menu-group"><div class="side-menu-label">${escapeHtml(group.title)}</div>${groupItems.map(id => `<button class="side-btn ${id === 'dashboard' ? 'active' : ''}" data-section="${id}"><span class="side-icon">${adminIcon(id)}</span><span class="side-label">${labels[id]}</span></button>`).join('')}</div>`;
+    })
     .join('');
 
   $('#mobileMenu').innerHTML = items
-    .map((id, index) => `<button class="tab-btn ${index === 0 ? 'active' : ''}" data-section="${id}">${labels[id]}</button>`)
+    .map((id, index) => `<button class="tab-btn ${index === 0 ? 'active' : ''}" data-section="${id}"><span class="side-icon">${adminIcon(id)}</span><span>${labels[id]}</span></button>`)
     .join('');
 
   $$('[data-section]').forEach((button) => {
@@ -248,6 +336,8 @@ window.switchSection = function switchSection(id) {
   target.classList.add('active');
   $$('[data-section]').forEach((button) => button.classList.toggle('active', button.dataset.section === id));
   $('#adminTitle').textContent = labels[id] || id;
+  const breadcrumb = $('#adminBreadcrumb');
+  if (breadcrumb) breadcrumb.textContent = id === 'dashboard' ? 'Painel administrativo' : `Painel / ${labels[id] || id}`;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -293,9 +383,17 @@ function renderStats() {
   if (caps.rentals) rows.push(['Locações', rentals.length]);
   if (caps.payments) rows.push(['Pagamentos pendentes', payments.filter(item => item.status === 'PENDENTE').length]);
 
+  const metricIds = {
+    'Produtos ativos':'products','Pedidos':'orders','Itens em estoque':'inventory','Serviços ativos':'services',
+    'Agendamentos':'appointments','Orçamentos':'quotes','Cupons ativos':'coupons','Promoções ativas':'promotions',
+    'Reservas':'reservations','Locações':'rentals','Pagamentos pendentes':'payments'
+  };
   $('#stats').innerHTML = rows.length
-    ? rows.slice(0, 4).map(([label, value]) => `<div class="stat-card"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>`).join('')
+    ? rows.slice(0, 4).map(([label, value]) => `<div class="stat-card"><span class="metric-icon">${adminIcon(metricIds[label] || 'dashboard')}</span><span>${escapeHtml(label)}</span><strong>${value}</strong><span class="metric-note">Atualizado agora</span></div>`).join('')
     : '<div class="empty">Nenhuma métrica disponível ainda.</div>';
+
+  renderDashboardAttention();
+  renderAdminIdentity();
 
   $('#summaryContent').innerHTML = `
     <p>Você está administrando <b>${escapeHtml(store.name)}</b>.</p>
@@ -309,20 +407,20 @@ function renderQuickActions() {
   const caps = store.capabilities || {};
   const planFeatures = subscriptionInfo?.features || store.subscription?.features || {};
   const actions = [];
-  if (caps.catalog) actions.push(['Novo produto', "openProductModal()"], ['Ver pedidos', "switchSection('orders')"]);
-  if (caps.coupons && planFeatures.coupons) actions.push(['Novo cupom', "openCouponModal()"]);
-  if (caps.promotions && planFeatures.promotions) actions.push(['Nova promoção', "openPromotionModal()"]);
-  if (caps.services) actions.push(['Novo serviço', "openServiceModal()"]);
-  if (caps.appointments) actions.push(['Novo profissional', "openProfessionalModal()"], ['Agendamentos', "switchSection('appointments')"]);
-  if (caps.quotes) actions.push(['Orçamentos', "switchSection('quotes')"]);
-  if (caps.reservations) actions.push(['Novo recurso', "openResourceModal()"], ['Reservas', "switchSection('reservations')"]);
-  if (caps.rentals) actions.push(['Novo item de locação', "openRentalItemModal()"], ['Locações', "switchSection('rentals')"]);
-  if (caps.payments) actions.push(['Pagamentos', "switchSection('payments')"]);
-  if (planFeatures.reports) actions.push(['Relatórios', "switchSection('reports')"]);
-  actions.push(['Meu plano', "switchSection('subscription')"], ['Privacidade', "switchSection('privacy')"], ['Personalizar loja', "switchSection('settings')"]);
+  if (caps.catalog) actions.push(['Novo produto', "openProductModal()", 'products', 'Cadastre um item no catálogo'], ['Ver pedidos', "switchSection('orders')", 'orders', 'Acompanhe vendas e status']);
+  if (caps.coupons && planFeatures.coupons) actions.push(['Novo cupom', "openCouponModal()", 'coupons', 'Crie um desconto']);
+  if (caps.promotions && planFeatures.promotions) actions.push(['Nova promoção', "openPromotionModal()", 'promotions', 'Destaque uma oferta']);
+  if (caps.services) actions.push(['Novo serviço', "openServiceModal()", 'services', 'Adicione um atendimento']);
+  if (caps.appointments) actions.push(['Novo profissional', "openProfessionalModal()", 'professionals', 'Organize sua equipe'], ['Agendamentos', "switchSection('appointments')", 'appointments', 'Veja sua agenda']);
+  if (caps.quotes) actions.push(['Orçamentos', "switchSection('quotes')", 'quotes', 'Responda solicitações']);
+  if (caps.reservations) actions.push(['Novo recurso', "openResourceModal()", 'resources', 'Cadastre um recurso'], ['Reservas', "switchSection('reservations')", 'reservations', 'Controle disponibilidades']);
+  if (caps.rentals) actions.push(['Novo item de locação', "openRentalItemModal()", 'rentalItems', 'Cadastre para aluguel'], ['Locações', "switchSection('rentals')", 'rentals', 'Acompanhe retiradas']);
+  if (caps.payments) actions.push(['Pagamentos', "switchSection('payments')", 'payments', 'Confira recebimentos']);
+  if (planFeatures.reports) actions.push(['Relatórios', "switchSection('reports')", 'reports', 'Analise resultados']);
+  actions.push(['Meu plano', "switchSection('subscription')", 'subscription', 'Assinatura e limites'], ['Personalizar loja', "switchSection('settings')", 'settings', 'Ajuste identidade e dados']);
 
-  $('#quickActions').innerHTML = actions
-    .map(([label, action]) => `<button class="quick-action" type="button" onclick="${action}">${escapeHtml(label)} <span>→</span></button>`)
+  $('#quickActions').innerHTML = actions.slice(0, 8)
+    .map(([label, action, icon, note]) => `<button class="quick-action" type="button" onclick="${action}"><span class="quick-action-main"><span class="quick-action-icon">${adminIcon(icon)}</span><span class="quick-action-copy"><b>${escapeHtml(label)}</b><small>${escapeHtml(note)}</small></span></span><span class="quick-action-arrow">→</span></button>`)
     .join('');
 }
 

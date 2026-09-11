@@ -49,7 +49,7 @@ from .storage import storage_health
 settings.validate_for_runtime()
 configure_observability()
 
-app = FastAPI(title=settings.app_name, version="21.0.0")
+app = FastAPI(title=settings.app_name, version="22.0.0")
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLogMiddleware)
 app.add_middleware(RequestIdMiddleware)
@@ -125,7 +125,7 @@ def health():
     payload = {
         "status": status_value,
         "environment": settings.environment,
-        "version": "21.0.0",
+        "version": "22.0.0",
         "database": "ok" if database_ok else "error",
         "storage": storage,
     }
