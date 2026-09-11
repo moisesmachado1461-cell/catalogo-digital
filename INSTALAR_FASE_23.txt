@@ -1,0 +1,19 @@
+CATÁLOGO DIGITAL — FASE 23 — SUPER ADMIN PREMIUM
+
+1. Extraia este ZIP.
+2. Copie TODO o conteúdo de dentro da pasta extraída.
+3. Cole na raiz do projeto:
+   C:\Users\SUNLIGHT\Downloads\catalogo-digital-arquitetura-v1-corrigido
+4. Substitua os arquivos quando o Windows solicitar.
+5. No terminal do VS Code, na raiz do projeto:
+
+   git status
+   git add .
+   git commit -m "Fase 23 - super admin premium"
+   git push
+
+6. Aguarde o Render concluir o deploy.
+7. Abra /api/health e confirme version = 23.0.0.
+8. Abra super-admin.html e use Ctrl + F5 para limpar o cache visual.
+
+Não há migration de banco nesta fase.

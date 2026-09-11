@@ -4,87 +4,177 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Super Admin — Catálogo Digital</title>
-  <meta name="theme-color" content="#6d5dfc"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/app-icon.svg" type="image/svg+xml"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/design-system.css">
+  <meta name="theme-color" content="#101828">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/super-admin-premium.css">
 </head>
 <body>
-<section id="superLoginView" class="auth-page">
-  <div class="panel login-box">
-    <div class="brand"><span class="brand-mark">CD</span>Catálogo Digital</div>
-    <h1>Super Admin</h1>
-    <p>Gerencie lojas, planos e assinaturas da plataforma.</p>
-    <form id="superLoginForm" style="display:grid;gap:12px;margin-top:20px">
-      <div class="field"><label>E-mail</label><input class="input" name="email" type="email" required></div>
-      <div class="field"><label>Senha</label><input class="input" name="password" type="password" required></div>
-      <button class="btn primary" type="submit">Entrar</button>
-    </form>
-    <div class="notice" style="margin-top:18px">Ambiente local: superadmin@catalogodigital.dev · SuperAdmin@2026</div>
-    <a href="index.html" class="btn ghost" style="margin-top:12px;width:100%;text-align:center">Voltar ao início</a>
+<section id="superLoginView" class="auth-page super-login-page">
+  <div class="super-login-shell">
+    <div class="super-login-showcase">
+      <a class="brand super-login-brand" href="index.html"><span class="brand-mark">CD</span><span>Catálogo Digital<small>PLATAFORMA SAAS</small></span></a>
+      <div class="super-login-copy">
+        <span class="eyebrow">CENTRAL DE COMANDO</span>
+        <h2>Visão total da sua plataforma.</h2>
+        <p>Gerencie lojas, planos, assinaturas e crescimento do Catálogo Digital em uma experiência centralizada, rápida e segura.</p>
+        <div class="super-login-preview">
+          <div class="super-login-preview-card"><span>Lojas</span><b>Gestão central</b><small>Ativação, plano e operação</small></div>
+          <div class="super-login-preview-card"><span>Receita</span><b>Cobrança SaaS</b><small>Faturas e assinaturas</small></div>
+          <div class="super-login-preview-card"><span>Escala</span><b>Multi-tenant</b><small>Uma plataforma, várias empresas</small></div>
+        </div>
+      </div>
+      <div class="super-login-orb super-login-orb-a"></div>
+      <div class="super-login-orb super-login-orb-b"></div>
+    </div>
+
+    <div class="panel login-box super-login-box">
+      <div class="brand super-login-mobile-brand"><span class="brand-mark">CD</span>Catálogo Digital</div>
+      <span class="eyebrow">ACESSO RESTRITO</span>
+      <h1>Super Admin</h1>
+      <p>Entre para administrar toda a operação da plataforma.</p>
+      <form id="superLoginForm" class="super-login-form">
+        <div class="field"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="username" required placeholder="seu@email.com"></div>
+        <div class="field"><label>Senha</label><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
+        <button class="btn primary super-login-submit" type="submit">Entrar no painel</button>
+      </form>
+      <div class="notice super-demo-note">Ambiente local de demonstração disponível apenas para desenvolvimento.</div>
+      <a href="index.html" class="btn ghost super-back-btn">Voltar ao início</a>
+    </div>
   </div>
 </section>
 
-<section id="superView" class="admin-shell hidden">
-  <aside class="sidebar">
-    <a class="brand" href="index.html"><span class="brand-mark">CD</span>Catálogo Digital</a>
-    <div class="side-store"><b>Super Admin</b><br><small>Controle da plataforma</small></div>
-    <nav class="side-menu">
-      <button class="side-btn active" data-super-section="dashboard">Dashboard</button>
-      <button class="side-btn" data-super-section="stores">Lojas</button>
-      <button class="side-btn" data-super-section="plans">Planos</button>
-      <button class="side-btn" data-super-section="billing">Cobrança</button>
+<section id="superView" class="admin-shell super-shell hidden">
+  <aside class="sidebar super-sidebar">
+    <a class="brand super-sidebar-brand" href="index.html"><span class="brand-mark">CD</span><span>Catálogo Digital<small>SUPER ADMIN</small></span></a>
+
+    <div class="super-profile-card">
+      <div class="super-profile-avatar" id="superProfileAvatar">SA</div>
+      <div class="super-profile-copy"><b id="superProfileName">Super Admin</b><small>Controle da plataforma</small></div>
+      <span class="super-online" title="Plataforma online"></span>
+    </div>
+
+    <nav class="side-menu super-side-menu" aria-label="Navegação do Super Admin">
+      <div class="super-menu-group">
+        <span class="super-menu-label">Visão geral</span>
+        <button class="side-btn active" data-super-section="dashboard">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span>Dashboard</span>
+        </button>
+        <button class="side-btn" data-super-section="stores">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 10h16M6 10v9h12v-9M5 5h14l1 5H4l1-5Zm5 9h4v5h-4v-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span>Lojas</span>
+        </button>
+      </div>
+      <div class="super-menu-group">
+        <span class="super-menu-label">Comercial</span>
+        <button class="side-btn" data-super-section="plans">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5V5Zm3 3h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>Planos</span>
+        </button>
+        <button class="side-btn" data-super-section="billing">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v10H4V7Zm0 3h16M8 14h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Cobrança</span>
+        </button>
+      </div>
     </nav>
-    <button id="superLogoutBtn" class="side-btn" style="margin-top:18px;width:100%">Sair</button>
+
+    <div class="super-sidebar-footer">
+      <div class="super-platform-card"><span class="super-platform-icon">CD</span><div><b>Plataforma ativa</b><small>Ambiente de produção</small></div></div>
+      <button id="superLogoutBtn" class="side-btn super-logout"><span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4M9 12h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Sair</span></button>
+    </div>
   </aside>
 
-  <main class="admin-main">
-    <div class="mobile-admin-menu">
+  <main class="admin-main super-main">
+    <div class="mobile-admin-menu super-mobile-menu">
       <button class="tab-btn active" data-super-section="dashboard">Dashboard</button>
       <button class="tab-btn" data-super-section="stores">Lojas</button>
       <button class="tab-btn" data-super-section="plans">Planos</button>
       <button class="tab-btn" data-super-section="billing">Cobrança</button>
     </div>
-    <header class="admin-header">
-      <div><small>Administração da plataforma</small><h1 id="superTitle">Dashboard</h1></div>
-      <button class="btn primary" onclick="openSuperModal()">+ Nova loja</button>
+
+    <header class="admin-header super-header">
+      <div class="super-heading">
+        <div class="super-breadcrumb"><span class="super-header-dot"></span><small>Catálogo Digital / <span id="superBreadcrumbCurrent">Dashboard</span></small></div>
+        <h1 id="superTitle">Dashboard</h1>
+      </div>
+      <div class="super-header-actions">
+        <button class="btn ghost super-header-refresh" type="button" onclick="refreshCurrentSuperSection()">Atualizar</button>
+        <button class="btn primary" onclick="openSuperModal()">+ Nova loja</button>
+        <div class="super-user-chip"><div class="super-user-avatar" id="superUserAvatar">SA</div><div><b id="superUserName">Super Admin</b><small>Administrador da plataforma</small></div></div>
+      </div>
     </header>
 
     <section id="super-dashboard" class="admin-section active">
-      <div id="superStats" class="stats"></div>
-      <div class="panel">
-        <div class="panel-head"><h2>Visão geral</h2><button class="btn ghost small" onclick="loadSuperDashboard()">Atualizar</button></div>
-        <p class="section-copy">Acompanhe lojas, assinaturas, pedidos, clientes e módulos do Catálogo Digital em uma única visão.</p>
+      <div class="super-welcome-card">
+        <div class="super-welcome-copy">
+          <span class="eyebrow">PAINEL EXECUTIVO</span>
+          <h2 id="superWelcomeTitle">Visão completa do Catálogo Digital</h2>
+          <p>Acompanhe operação, crescimento, assinaturas e saúde da plataforma em um único lugar.</p>
+          <div class="super-welcome-meta"><span>Ambiente: <b>Produção</b></span><span class="super-meta-separator">•</span><span id="superTodayLabel">Hoje</span></div>
+        </div>
+        <div id="platformHealth" class="super-health-grid">
+          <div class="super-health-item"><span class="super-health-dot good"></span><div><b>API</b><small>Operacional</small></div></div>
+          <div class="super-health-item"><span class="super-health-dot good"></span><div><b>Banco</b><small>Conectado</small></div></div>
+          <div class="super-health-item"><span class="super-health-dot good"></span><div><b>Storage</b><small>Persistente</small></div></div>
+        </div>
+      </div>
+
+      <div id="superStats" class="stats super-stats-premium"></div>
+
+      <div class="super-dashboard-grid">
+        <div class="panel super-overview-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">OPERAÇÃO</span><h2>Resumo da plataforma</h2><small>Indicadores calculados a partir das lojas e assinaturas atuais.</small></div></div>
+          <div id="superPlatformInsights" class="super-insights-grid"></div>
+        </div>
+        <div class="panel super-actions-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">ATALHOS</span><h2>Ações rápidas</h2><small>Acesse as tarefas mais frequentes.</small></div></div>
+          <div class="super-quick-actions">
+            <button class="super-quick-action" type="button" onclick="openSuperModal()"><span class="super-action-icon">+</span><div><b>Nova loja</b><small>Cadastrar empresa e administrador</small></div><span>→</span></button>
+            <button class="super-quick-action" type="button" onclick="switchSuperSection('plans')"><span class="super-action-icon">P</span><div><b>Gerenciar planos</b><small>Preços, limites e recursos</small></div><span>→</span></button>
+            <button class="super-quick-action" type="button" onclick="switchSuperSection('billing')"><span class="super-action-icon">R$</span><div><b>Central de cobrança</b><small>Faturas e assinaturas SaaS</small></div><span>→</span></button>
+          </div>
+        </div>
       </div>
     </section>
 
     <section id="super-stores" class="admin-section">
-      <div class="panel">
-        <div class="panel-head"><div><h2>Lojas e assinaturas</h2><small>Altere o plano de cada estabelecimento sem trocar o store_id.</small></div><button class="btn ghost small" onclick="loadSuperStores()">Atualizar</button></div>
+      <div class="super-section-hero">
+        <div><span class="eyebrow">GESTÃO MULTI-LOJA</span><h2>Empresas da plataforma</h2><p>Controle status, plano, administrador e indicadores de cada estabelecimento.</p></div>
+        <button class="btn primary" onclick="openSuperModal()">+ Nova loja</button>
+      </div>
+      <div class="panel super-section-panel">
+        <div class="panel-head super-toolbar-head"><div><h2>Lojas e assinaturas</h2><small>As alterações de plano preservam o store_id e o histórico da loja.</small></div><div class="super-toolbar"><input id="superStoreSearch" class="input" placeholder="Buscar loja, segmento ou admin" oninput="renderSuperStores()"><select id="superStoreStatus" class="select" onchange="renderSuperStores()"><option value="">Todos os status</option><option value="active">Ativas</option><option value="inactive">Inativas</option></select></div></div>
         <div id="superStoresTable" class="table-wrap"></div>
       </div>
     </section>
 
     <section id="super-plans" class="admin-section">
-      <div class="panel">
-        <div class="panel-head responsive-head"><div><h2>Planos</h2><small>Preços, limites e recursos comerciais.</small></div><button class="btn primary small" onclick="openPlanModal()">+ Plano</button></div>
-        <div id="plansTable" class="table-wrap"></div>
+      <div class="super-section-hero">
+        <div><span class="eyebrow">ESTRATÉGIA COMERCIAL</span><h2>Planos do Catálogo Digital</h2><p>Organize preços, limites, recursos e posicionamento comercial.</p></div>
+        <button class="btn primary" onclick="openPlanModal()">+ Novo plano</button>
+      </div>
+      <div class="panel super-section-panel">
+        <div class="panel-head"><div><h2>Portfólio de planos</h2><small>Os planos ativos ficam disponíveis para novas lojas e alterações de assinatura.</small></div></div>
+        <div id="plansTable" class="super-plan-grid"></div>
       </div>
     </section>
 
-
     <section id="super-billing" class="admin-section">
-      <div class="billing-command-hero">
-        <div><span class="eyebrow">CENTRAL FINANCEIRA</span><h2>Cobrança das assinaturas</h2><p>Controle mensalidades do Catálogo Digital sem misturar com pagamentos dos clientes das lojas.</p></div>
+      <div class="billing-command-hero super-billing-hero">
+        <div><span class="eyebrow">CENTRAL FINANCEIRA</span><h2>Cobrança das assinaturas</h2><p>Controle mensalidades do Catálogo Digital sem misturar com pagamentos feitos pelos clientes das lojas.</p></div>
         <div class="billing-command-actions"><button class="btn ghost" type="button" onclick="loadBillingCenter()">Atualizar</button><button class="btn primary" type="button" onclick="processDueBilling()">Processar vencimentos</button></div>
       </div>
-      <div id="billingStats" class="stats billing-stats"></div>
-      <div class="panel billing-provider-panel">
-        <div class="panel-head"><div><h2>Gateways</h2><small>A arquitetura está pronta; a disponibilidade real depende de credenciais e adaptador configurados.</small></div></div>
+      <div id="billingStats" class="stats billing-stats super-billing-stats"></div>
+      <div class="panel billing-provider-panel super-section-panel">
+        <div class="panel-head"><div><span class="super-panel-kicker">INTEGRAÇÕES</span><h2>Gateways de cobrança</h2><small>A arquitetura está pronta; a disponibilidade real depende das credenciais e do adaptador configurado.</small></div></div>
         <div id="billingProviders" class="billing-provider-grid"></div>
       </div>
-      <div class="panel">
+      <div class="panel super-section-panel">
         <div class="panel-head responsive-head"><div><h2>Assinaturas</h2><small>Visão atual por loja, plano, vencimento e situação financeira.</small></div><div class="billing-filters"><input id="billingSearch" class="input" placeholder="Buscar loja ou plano" oninput="renderBillingSubscriptions()"><select id="billingStatusFilter" class="select" onchange="renderBillingSubscriptions()"><option value="">Todos os status</option><option value="ACTIVE">Ativa</option><option value="TRIAL">Teste</option><option value="PAST_DUE">Em atraso</option><option value="EXPIRED">Expirada</option><option value="CANCELED">Cancelada</option></select></div></div>
         <div id="billingSubscriptionsTable" class="table-wrap"></div>
       </div>
-      <div class="panel">
+      <div class="panel super-section-panel">
         <div class="panel-head responsive-head"><div><h2>Faturas</h2><small>Histórico financeiro da mensalidade SaaS.</small></div><select id="invoiceStatusFilter" class="select billing-status-select" onchange="renderBillingInvoices()"><option value="">Todos os status</option><option value="PENDING">Pendente</option><option value="PAID">Pago</option><option value="FAILED">Falhou</option><option value="CANCELED">Cancelado</option></select></div>
         <div id="billingInvoicesTable" class="table-wrap"></div>
       </div>
@@ -93,9 +183,9 @@
 </section>
 
 <div id="superStoreModal" class="modal-backdrop">
-  <div class="modal">
-    <div class="modal-head"><h2>Criar nova loja</h2><button class="close-btn" onclick="closeSuperModal()">×</button></div>
-    <form id="superStoreForm" class="form-grid" style="margin-top:18px">
+  <div class="modal super-modal">
+    <div class="modal-head"><div><span class="super-panel-kicker">NOVA EMPRESA</span><h2>Criar nova loja</h2><small>Cadastre a empresa, escolha o plano e crie o primeiro administrador.</small></div><button class="close-btn" onclick="closeSuperModal()">×</button></div>
+    <form id="superStoreForm" class="form-grid super-form-grid">
       <div class="field full"><label>Nome da empresa</label><input class="input" name="name" required></div>
       <div class="field full"><label>Segmento</label><select class="select" name="business_category_id" id="businessCategorySelect" required></select></div>
       <div class="field full"><label>Plano inicial</label><select class="select" name="plan_id" id="newStorePlanSelect"></select></div>
@@ -104,29 +194,30 @@
       <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3"></textarea></div>
       <div class="field"><label>WhatsApp</label><input class="input" name="whatsapp"></div>
       <div class="field"><label>Telefone</label><input class="input" name="phone"></div>
-      <div class="field full"><label>Administrador da loja</label><input class="input" name="admin_name" required placeholder="Nome do administrador"></div>
-      <div class="field"><label>E-mail do administrador</label><input class="input" name="admin_email" type="email" required></div>
+      <div class="field full super-form-divider"><span>Administrador da loja</span></div>
+      <div class="field full"><label>Nome do administrador</label><input class="input" name="admin_name" required placeholder="Nome do administrador"></div>
+      <div class="field"><label>E-mail</label><input class="input" name="admin_email" type="email" required></div>
       <div class="field"><label>Senha inicial</label><input class="input" name="admin_password" type="password" minlength="8" required></div>
-      <div class="field full"><button class="btn primary" type="submit">Criar loja e administrador</button></div>
+      <div class="field full"><button class="btn primary super-modal-submit" type="submit">Criar loja e administrador</button></div>
     </form>
   </div>
 </div>
 
 <div id="planModal" class="modal-backdrop">
-  <div class="modal">
-    <div class="modal-head"><div><small id="planModalEyebrow">Planos</small><h2 id="planModalTitle">Novo plano</h2></div><button class="close-btn" onclick="closePlanModal()">×</button></div>
-    <form id="planForm" class="form-grid" style="margin-top:18px">
+  <div class="modal super-modal">
+    <div class="modal-head"><div><span id="planModalEyebrow" class="super-panel-kicker">PLANOS</span><h2 id="planModalTitle">Novo plano</h2><small>Defina preço, limites e recursos do plano comercial.</small></div><button class="close-btn" onclick="closePlanModal()">×</button></div>
+    <form id="planForm" class="form-grid super-form-grid">
       <input type="hidden" name="id">
       <div class="field"><label>Nome</label><input class="input" name="name" required></div>
       <div class="field"><label>Código</label><input class="input" name="code" required placeholder="BASICO"></div>
       <div class="field"><label>Preço mensal</label><input class="input" name="monthly_price" type="number" min="0" step="0.01" value="0"></div>
       <div class="field"><label>Preço anual</label><input class="input" name="yearly_price" type="number" min="0" step="0.01"></div>
       <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3"></textarea></div>
-      <div class="field full"><b>Limites (-1 = ilimitado)</b></div>
+      <div class="field full super-form-divider"><span>Limites do plano <small>(-1 = ilimitado)</small></span></div>
       <div class="field"><label>Produtos</label><input class="input" name="limit_products" type="number" value="20"></div>
       <div class="field"><label>Serviços</label><input class="input" name="limit_services" type="number" value="10"></div>
       <div class="field"><label>Profissionais</label><input class="input" name="limit_professionals" type="number" value="1"></div>
-      <div class="field full"><b>Recursos</b></div>
+      <div class="field full super-form-divider"><span>Recursos</span></div>
       <div class="field checkbox-field"><label><input type="checkbox" name="feature_coupons"> Cupons</label></div>
       <div class="field checkbox-field"><label><input type="checkbox" name="feature_promotions"> Promoções</label></div>
       <div class="field checkbox-field"><label><input type="checkbox" name="feature_custom_branding"> Personalização visual</label></div>
@@ -135,12 +226,15 @@
       <div class="field checkbox-field"><label><input type="checkbox" name="feature_custom_domain"> Domínio personalizado</label></div>
       <div class="field checkbox-field"><label><input type="checkbox" name="feature_online_payments"> Pagamentos online</label></div>
       <div class="field checkbox-field"><label><input type="checkbox" name="is_active" checked> Plano ativo</label></div>
-      <div class="field full"><button class="btn primary" type="submit">Salvar plano</button></div>
+      <div class="field full"><button class="btn primary super-modal-submit" type="submit">Salvar plano</button></div>
     </form>
   </div>
 </div>
 
-<script src="js/runtime-config.js"></script><script src="js/api.js"></script>
+<script src="js/runtime-config.js"></script>
+<script src="js/api.js"></script>
 <script src="js/super-admin.js"></script>
-<script src="js/ui-system.js"></script><script src="js/pwa.js"></script></body>
+<script src="js/ui-system.js"></script>
+<script src="js/pwa.js"></script>
+</body>
 </html>
