@@ -85,3 +85,10 @@ body:has(#superView:not(.hidden)){background:#f5f7fb}
   .super-coupon-toolbar .btn { width: 100%; }
   .super-coupon-editor-head { align-items: flex-start; }
 }
+
+/* Fase 23.4 — cupons de planos e escopo por produto */
+.super-billing-coupon-modal{width:min(94vw,900px)!important;max-height:92vh;overflow:auto}
+#billingCouponsTable .table{min-width:920px}
+#billingCouponPlansGrid,#superCouponProductsGrid{max-height:220px;overflow:auto;padding:10px;border:1px solid #edf0f4;border-radius:13px;background:#fbfcfe}
+#billingCouponPlansGrid label,#superCouponProductsGrid label{align-items:center}
+@media(max-width:720px){.super-billing-coupon-modal{width:min(96vw,900px)!important}}

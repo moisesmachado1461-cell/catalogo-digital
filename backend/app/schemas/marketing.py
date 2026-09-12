@@ -16,6 +16,7 @@ class CouponCreate(BaseModel):
     usage_limit: int | None = Field(default=None, ge=1)
     is_active: bool = True
     is_public: bool = False
+    product_ids: list[int] = Field(default_factory=list)
 
     @field_validator("code")
     @classmethod
@@ -29,6 +30,7 @@ class CouponCreate(BaseModel):
     def validate_period(self):
         if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
             raise ValueError("A data final do cupom deve ser posterior à data inicial")
+        self.product_ids = sorted({int(product_id) for product_id in self.product_ids if int(product_id) > 0})
         return self
 
 

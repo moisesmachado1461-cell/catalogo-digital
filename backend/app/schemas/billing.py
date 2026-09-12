@@ -57,6 +57,7 @@ class PlanChangeInvoiceCreate(BaseModel):
     plan_id: int = Field(gt=0)
     billing_cycle: str = "MONTHLY"
     due_at: datetime | None = None
+    coupon_code: str | None = Field(default=None, max_length=40)
 
     @field_validator("billing_cycle")
     @classmethod
@@ -84,3 +85,78 @@ class InvoiceStatusUpdate(BaseModel):
 
 class SubscriptionCancelRequest(BaseModel):
     at_period_end: bool = True
+
+
+class BillingCouponCreate(BaseModel):
+    code: str = Field(min_length=2, max_length=40)
+    description: str | None = Field(default=None, max_length=500)
+    discount_type: str = "PERCENT"
+    value: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
+    max_discount: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
+    duration: str = "FIRST_INVOICE"
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    usage_limit: int | None = Field(default=None, ge=1)
+    is_active: bool = True
+    plan_ids: list[int] = Field(default_factory=list)
+
+    @field_validator("code")
+    @classmethod
+    def normalize_code(cls, value: str):
+        normalized = value.strip().upper().replace(" ", "")
+        if not all(ch.isalnum() or ch in "-_" for ch in normalized):
+            raise ValueError("Use apenas letras, números, hífen ou sublinhado no código")
+        return normalized
+
+    @field_validator("discount_type")
+    @classmethod
+    def validate_discount_type(cls, value: str):
+        value = value.strip().upper()
+        if value not in {"PERCENT", "FIXED"}:
+            raise ValueError("discount_type deve ser PERCENT ou FIXED")
+        return value
+
+    @field_validator("duration")
+    @classmethod
+    def validate_duration(cls, value: str):
+        value = value.strip().upper()
+        if value not in {"FIRST_INVOICE", "RECURRING"}:
+            raise ValueError("duration deve ser FIRST_INVOICE ou RECURRING")
+        return value
+
+    @field_validator("plan_ids")
+    @classmethod
+    def normalize_plan_ids(cls, value: list[int]):
+        return sorted({int(plan_id) for plan_id in value if int(plan_id) > 0})
+
+
+class BillingCouponUpdate(BillingCouponCreate):
+    pass
+
+
+class BillingCouponValidateRequest(BaseModel):
+    plan_id: int = Field(gt=0)
+    billing_cycle: str = "MONTHLY"
+    coupon_code: str = Field(min_length=2, max_length=40)
+
+    @field_validator("billing_cycle")
+    @classmethod
+    def validate_cycle(cls, value: str):
+        value = value.strip().upper()
+        if value not in {"MONTHLY", "YEARLY"}:
+            raise ValueError("billing_cycle deve ser MONTHLY ou YEARLY")
+        return value
+
+
+class AdminPlanChangeRequest(BaseModel):
+    plan_id: int = Field(gt=0)
+    billing_cycle: str = "MONTHLY"
+    coupon_code: str | None = Field(default=None, max_length=40)
+
+    @field_validator("billing_cycle")
+    @classmethod
+    def validate_cycle(cls, value: str):
+        value = value.strip().upper()
+        if value not in {"MONTHLY", "YEARLY"}:
+            raise ValueError("billing_cycle deve ser MONTHLY ou YEARLY")
+        return value

@@ -149,3 +149,12 @@ O Super Admin volta a editar dados completos das lojas pelo painel, preservando 
 
 ## Fase 23.3 — lojas e cupons
 Atualização cumulativa que mantém a edição de lojas e amplia cupons no Admin, Super Admin e loja pública. Cupons só aparecem publicamente quando marcados como visíveis. A migration `014_public_coupons` adiciona esse controle de exposição. Backend em `23.3.0`.
+
+## Fase 23.4 — cupons avançados e cupons de planos
+
+Os cupons das lojas agora podem ser limitados a produtos selecionados, inclusive
+por atalho na tela de Produtos do Admin. A cobrança SaaS ganhou um sistema de
+cupons separado, controlado pelo Super Admin, com elegibilidade por plano,
+percentual/valor fixo, validade, limite de usos e duração na primeira fatura ou
+recorrente. O Admin pode escolher um plano em Meu plano, validar o cupom e gerar
+a fatura de troca. Backend em `23.4.0`; migration `015_advanced_coupons`.

@@ -12,6 +12,7 @@ from ..models import (
     BusinessCategory,
     Customer,
     Coupon,
+    CouponProduct,
     Order,
     Product,
     QuoteRequest,
@@ -105,7 +106,13 @@ def _store_summary(db: Session, store: Store) -> dict:
 
 
 
-def _coupon_payload(coupon: Coupon) -> dict:
+def _coupon_payload(db: Session, coupon: Coupon) -> dict:
+    product_ids = [
+        row.product_id
+        for row in db.query(CouponProduct).filter(
+            CouponProduct.store_id == coupon.store_id, CouponProduct.coupon_id == coupon.id
+        ).order_by(CouponProduct.product_id).all()
+    ]
     return {
         "id": coupon.id,
         "store_id": coupon.store_id,
@@ -121,7 +128,28 @@ def _coupon_payload(coupon: Coupon) -> dict:
         "usage_count": coupon.usage_count,
         "is_active": coupon.is_active,
         "is_public": coupon.is_public,
+        "product_ids": product_ids,
+        "scope": "PRODUCTS" if product_ids else "ORDER",
     }
+
+
+def _validate_store_coupon_products(db: Session, store_id: int, product_ids: list[int]) -> list[int]:
+    unique = sorted({int(product_id) for product_id in product_ids if int(product_id) > 0})
+    if not unique:
+        return []
+    rows = db.query(Product.id).filter(Product.store_id == store_id, Product.id.in_(unique)).all()
+    if len(rows) != len(unique):
+        raise HTTPException(status_code=400, detail="Há produtos inválidos ou pertencentes a outra loja")
+    return unique
+
+
+def _sync_store_coupon_products(db: Session, coupon: Coupon, store_id: int, product_ids: list[int]) -> None:
+    db.query(CouponProduct).filter(
+        CouponProduct.store_id == store_id, CouponProduct.coupon_id == coupon.id
+    ).delete(synchronize_session=False)
+    now = datetime.now(timezone.utc)
+    for product_id in _validate_store_coupon_products(db, store_id, product_ids):
+        db.add(CouponProduct(store_id=store_id, coupon_id=coupon.id, product_id=product_id, created_at=now))
 
 
 def _super_admin_profile_payload(user: User) -> dict:
@@ -531,6 +559,19 @@ def update_store(
     return _store_summary(db, store)
 
 
+@router.get("/stores/{store_id}/products")
+def list_store_products_for_coupon(
+    store_id: int,
+    _super_admin: User = Depends(get_current_super_admin),
+    db: Session = Depends(get_db),
+):
+    store = db.query(Store.id).filter(Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
+    rows = db.query(Product).filter(Product.store_id == store_id).order_by(Product.name, Product.id).all()
+    return [{"id": row.id, "name": row.name, "sku": row.sku, "is_active": row.is_active} for row in rows]
+
+
 @router.get("/stores/{store_id}/coupons")
 def list_store_coupons(
     store_id: int,
@@ -546,7 +587,7 @@ def list_store_coupons(
         .order_by(Coupon.created_at.desc(), Coupon.id.desc())
         .all()
     )
-    return [_coupon_payload(coupon) for coupon in coupons]
+    return [_coupon_payload(db, coupon) for coupon in coupons]
 
 
 @router.post("/stores/{store_id}/coupons", status_code=status.HTTP_201_CREATED)
@@ -564,9 +605,11 @@ def create_store_coupon(
         raise HTTPException(status_code=400, detail="Percentual não pode ultrapassar 100%")
     if db.query(Coupon.id).filter(Coupon.store_id == store_id, Coupon.code == data.code).first():
         raise HTTPException(status_code=409, detail="Já existe um cupom com este código nesta loja")
-    coupon = Coupon(store_id=store_id, **data.model_dump())
+    payload = data.model_dump(exclude={"product_ids"})
+    coupon = Coupon(store_id=store_id, **payload)
     db.add(coupon)
     db.flush()
+    _sync_store_coupon_products(db, coupon, store_id, data.product_ids)
     ip_address, user_agent = _request_context(request)
     write_audit(
         db,
@@ -579,7 +622,7 @@ def create_store_coupon(
     )
     db.commit()
     db.refresh(coupon)
-    return _coupon_payload(coupon)
+    return _coupon_payload(db, coupon)
 
 
 @router.patch("/stores/{store_id}/coupons/{coupon_id}")
@@ -608,10 +651,19 @@ def update_store_coupon(
     if duplicate:
         raise HTTPException(status_code=409, detail="Já existe um cupom com este código nesta loja")
     changed_fields = []
-    for field, value in data.model_dump().items():
+    for field, value in data.model_dump(exclude={"product_ids"}).items():
         if getattr(coupon, field) != value:
             setattr(coupon, field, value)
             changed_fields.append(field)
+    previous_product_ids = [
+        row.product_id for row in db.query(CouponProduct).filter(
+            CouponProduct.store_id == store_id, CouponProduct.coupon_id == coupon.id
+        ).all()
+    ]
+    next_product_ids = _validate_store_coupon_products(db, store_id, data.product_ids)
+    if sorted(previous_product_ids) != next_product_ids:
+        changed_fields.append("product_ids")
+    _sync_store_coupon_products(db, coupon, store_id, next_product_ids)
     ip_address, user_agent = _request_context(request)
     write_audit(
         db,
@@ -624,7 +676,7 @@ def update_store_coupon(
     )
     db.commit()
     db.refresh(coupon)
-    return _coupon_payload(coupon)
+    return _coupon_payload(db, coupon)
 
 
 @router.patch("/stores/{store_id}/status")

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..billing.registry import provider_statuses
 from ..config import settings
-from ..models import BillingGatewayPrice, Plan, Store, Subscription, SubscriptionInvoice
+from ..models import BillingCoupon, BillingCouponPlan, BillingCouponUsage, BillingGatewayPrice, Plan, Store, Subscription, SubscriptionInvoice
 from .subscription_service import plan_context
 
 
@@ -55,6 +55,87 @@ def amount_for_plan(plan: Plan, billing_cycle: str) -> Decimal:
     raise ValueError("Ciclo de cobrança inválido")
 
 
+def billing_coupon_dict(db: Session, row: BillingCoupon) -> dict:
+    plan_ids = [
+        item.plan_id
+        for item in db.query(BillingCouponPlan).filter(BillingCouponPlan.coupon_id == row.id).order_by(BillingCouponPlan.plan_id).all()
+    ]
+    return {
+        "id": row.id,
+        "code": row.code,
+        "description": row.description,
+        "discount_type": row.discount_type,
+        "value": row.value,
+        "max_discount": row.max_discount,
+        "duration": row.duration,
+        "starts_at": row.starts_at,
+        "ends_at": row.ends_at,
+        "usage_limit": row.usage_limit,
+        "usage_count": row.usage_count,
+        "is_active": row.is_active,
+        "plan_ids": plan_ids,
+        "scope": "PLANS" if plan_ids else "ALL_PLANS",
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+    }
+
+
+def sync_billing_coupon_plans(db: Session, coupon: BillingCoupon, plan_ids: list[int]) -> list[int]:
+    unique = sorted({int(plan_id) for plan_id in plan_ids if int(plan_id) > 0})
+    if unique:
+        rows = db.query(Plan.id).filter(Plan.id.in_(unique)).all()
+        if len(rows) != len(unique):
+            raise ValueError("Há planos inválidos no cupom")
+    db.query(BillingCouponPlan).filter(BillingCouponPlan.coupon_id == coupon.id).delete(synchronize_session=False)
+    now = utcnow()
+    for plan_id in unique:
+        db.add(BillingCouponPlan(coupon_id=coupon.id, plan_id=plan_id, created_at=now))
+    return unique
+
+
+def _billing_coupon_window_active(coupon: BillingCoupon, now: datetime | None = None) -> bool:
+    now = aware(now) or utcnow()
+    start = aware(coupon.starts_at)
+    end = aware(coupon.ends_at)
+    return not ((start and start > now) or (end and end < now))
+
+
+def validate_billing_coupon(
+    db: Session,
+    code: str | None,
+    *,
+    plan: Plan,
+    billing_cycle: str,
+    amount: Decimal | None = None,
+    now: datetime | None = None,
+) -> tuple[BillingCoupon | None, Decimal, Decimal]:
+    subtotal = amount_for_plan(plan, billing_cycle) if amount is None else Decimal(amount).quantize(Decimal("0.01"))
+    if not code:
+        return None, Decimal("0.00"), subtotal
+    normalized = code.strip().upper().replace(" ", "")
+    coupon = db.query(BillingCoupon).filter(BillingCoupon.code == normalized).first()
+    if not coupon or not coupon.is_active or not _billing_coupon_window_active(coupon, now):
+        raise ValueError("Cupom de plano inválido ou expirado")
+    if coupon.usage_limit is not None and int(coupon.usage_count or 0) >= int(coupon.usage_limit):
+        raise ValueError("Este cupom de plano atingiu o limite de usos")
+    plan_ids = [row.plan_id for row in db.query(BillingCouponPlan).filter(BillingCouponPlan.coupon_id == coupon.id).all()]
+    if plan_ids and plan.id not in plan_ids:
+        raise ValueError("Este cupom não é válido para o plano escolhido")
+    if coupon.discount_type == "PERCENT":
+        if Decimal(coupon.value) > 100:
+            raise ValueError("Percentual do cupom não pode ultrapassar 100%")
+        discount = subtotal * (Decimal(coupon.value) / Decimal("100"))
+    elif coupon.discount_type == "FIXED":
+        discount = Decimal(coupon.value)
+    else:
+        raise ValueError("Tipo de cupom inválido")
+    if coupon.max_discount is not None:
+        discount = min(discount, Decimal(coupon.max_discount))
+    discount = min(max(discount, Decimal("0.00")), subtotal).quantize(Decimal("0.01"))
+    total = max(Decimal("0.00"), subtotal - discount).quantize(Decimal("0.01"))
+    return coupon, discount, total
+
+
 def _invoice_dict(row: SubscriptionInvoice) -> dict:
     return {
         "id": row.id,
@@ -67,8 +148,12 @@ def _invoice_dict(row: SubscriptionInvoice) -> dict:
         "status": row.status,
         "invoice_type": row.invoice_type,
         "billing_cycle": row.billing_cycle,
+        "subtotal_amount": row.subtotal_amount if row.subtotal_amount is not None else row.amount,
+        "discount_amount": row.discount_amount or Decimal("0.00"),
         "amount": row.amount,
         "currency": row.currency,
+        "billing_coupon_id": row.billing_coupon_id,
+        "coupon_code": row.coupon_code,
         "payment_method": row.payment_method,
         "due_at": row.due_at,
         "period_start": row.period_start,
@@ -162,6 +247,25 @@ def gateway_price_dict(row: BillingGatewayPrice) -> dict:
     return _gateway_price_dict(row)
 
 
+def get_store_subscription(db: Session, store_id: int) -> Subscription | None:
+    active = (
+        db.query(Subscription)
+        .options(selectinload(Subscription.plan), selectinload(Subscription.store))
+        .filter(Subscription.store_id == store_id, Subscription.status.in_(list(ACTIVE_OR_COLLECTIBLE)))
+        .order_by(Subscription.created_at.desc(), Subscription.id.desc())
+        .first()
+    )
+    if active:
+        return active
+    return (
+        db.query(Subscription)
+        .options(selectinload(Subscription.plan), selectinload(Subscription.store))
+        .filter(Subscription.store_id == store_id)
+        .order_by(Subscription.created_at.desc(), Subscription.id.desc())
+        .first()
+    )
+
+
 def get_subscription(db: Session, subscription_id: int) -> Subscription | None:
     return (
         db.query(Subscription)
@@ -207,9 +311,24 @@ def create_renewal_invoice(
     if subscription.status not in ACTIVE_OR_COLLECTIBLE:
         raise ValueError("A assinatura não está em estado cobravel")
 
-    amount = amount_for_plan(subscription.plan, subscription.billing_cycle)
-    if amount <= 0:
+    subtotal_amount = amount_for_plan(subscription.plan, subscription.billing_cycle)
+    if subtotal_amount <= 0:
         raise ValueError("Plano gratuito não exige fatura de renovação")
+
+    coupon = None
+    discount_amount = Decimal("0.00")
+    amount = subtotal_amount
+    if subscription.billing_coupon_id:
+        recurring_coupon = db.query(BillingCoupon).filter(BillingCoupon.id == subscription.billing_coupon_id).first()
+        if recurring_coupon and recurring_coupon.duration == "RECURRING":
+            try:
+                coupon, discount_amount, amount = validate_billing_coupon(
+                    db, recurring_coupon.code, plan=subscription.plan, billing_cycle=subscription.billing_cycle, amount=subtotal_amount, now=now
+                )
+            except ValueError:
+                subscription.billing_coupon_id = None
+        else:
+            subscription.billing_coupon_id = None
 
     period_start, period_end = _renewal_period(subscription, now)
     existing = (
@@ -235,8 +354,12 @@ def create_renewal_invoice(
         status="PENDING",
         invoice_type="RENEWAL",
         billing_cycle=subscription.billing_cycle,
+        subtotal_amount=subtotal_amount,
+        discount_amount=discount_amount,
         amount=amount,
         currency=settings.billing_default_currency,
+        billing_coupon_id=coupon.id if coupon else None,
+        coupon_code=coupon.code if coupon else None,
         payment_method=payment_method,
         due_at=aware(due_at) or period_start,
         period_start=period_start,
@@ -256,6 +379,7 @@ def create_plan_change_invoice(
     *,
     plan: Plan,
     billing_cycle: str,
+    coupon_code: str | None = None,
     due_at: datetime | None = None,
     now: datetime | None = None,
 ) -> tuple[SubscriptionInvoice, bool]:
@@ -266,7 +390,10 @@ def create_plan_change_invoice(
         raise ValueError("O plano escolhido está inativo")
 
     cycle = billing_cycle.strip().upper()
-    amount = amount_for_plan(plan, cycle)
+    subtotal_amount = amount_for_plan(plan, cycle)
+    coupon, discount_amount, amount = validate_billing_coupon(
+        db, coupon_code, plan=plan, billing_cycle=cycle, amount=subtotal_amount, now=now
+    )
     period_start = now
     period_end = add_billing_cycle(period_start, cycle)
 
@@ -276,12 +403,20 @@ def create_plan_change_invoice(
             SubscriptionInvoice.subscription_id == subscription.id,
             SubscriptionInvoice.plan_id == plan.id,
             SubscriptionInvoice.invoice_type == "PLAN_CHANGE",
+            SubscriptionInvoice.billing_cycle == cycle,
             SubscriptionInvoice.status.in_(list(OPEN_INVOICE_STATUSES)),
         )
         .order_by(SubscriptionInvoice.id.desc())
         .first()
     )
     if existing:
+        existing.subtotal_amount = subtotal_amount
+        existing.discount_amount = discount_amount
+        existing.amount = amount
+        existing.billing_coupon_id = coupon.id if coupon else None
+        existing.coupon_code = coupon.code if coupon else None
+        existing.updated_at = now
+        db.flush()
         return existing, False
 
     row = SubscriptionInvoice(
@@ -292,8 +427,12 @@ def create_plan_change_invoice(
         status="PENDING",
         invoice_type="PLAN_CHANGE",
         billing_cycle=cycle,
+        subtotal_amount=subtotal_amount,
+        discount_amount=discount_amount,
         amount=amount,
         currency=settings.billing_default_currency,
+        billing_coupon_id=coupon.id if coupon else None,
+        coupon_code=coupon.code if coupon else None,
         due_at=aware(due_at) or now,
         period_start=period_start,
         period_end=period_end,
@@ -355,6 +494,29 @@ def apply_invoice_status(
         invoice.period_start = start
         invoice.period_end = end
 
+        applied_coupon = None
+        if invoice.billing_coupon_id:
+            applied_coupon = db.query(BillingCoupon).filter(BillingCoupon.id == invoice.billing_coupon_id).first()
+            existing_usage = db.query(BillingCouponUsage.id).filter(
+                BillingCouponUsage.coupon_id == invoice.billing_coupon_id,
+                BillingCouponUsage.invoice_id == invoice.id,
+            ).first()
+            if applied_coupon and not existing_usage:
+                if (
+                    applied_coupon.usage_limit is not None
+                    and int(applied_coupon.usage_count or 0) >= int(applied_coupon.usage_limit)
+                ):
+                    raise ValueError("Este cupom de plano atingiu o limite de usos antes da confirmação do pagamento")
+                applied_coupon.usage_count = int(applied_coupon.usage_count or 0) + 1
+                db.add(BillingCouponUsage(
+                    coupon_id=applied_coupon.id,
+                    store_id=invoice.store_id,
+                    subscription_id=subscription.id,
+                    invoice_id=invoice.id,
+                    discount_amount=invoice.discount_amount or Decimal("0.00"),
+                    created_at=now,
+                ))
+
         subscription.plan_id = invoice.plan_id or subscription.plan_id
         subscription.billing_cycle = invoice.billing_cycle
         subscription.status = "ACTIVE"
@@ -366,6 +528,10 @@ def apply_invoice_status(
         subscription.provider_status = "PAID"
         subscription.cancel_at_period_end = False
         subscription.next_billing_at = end
+        if invoice.invoice_type == "PLAN_CHANGE":
+            subscription.billing_coupon_id = (
+                applied_coupon.id if applied_coupon and applied_coupon.duration == "RECURRING" else None
+            )
         subscription.updated_at = now
 
     elif status == "FAILED":

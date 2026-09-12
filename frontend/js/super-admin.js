@@ -6,10 +6,12 @@ let plans = [];
 let billingSubscriptions = [];
 let billingInvoices = [];
 let billingProviders = [];
+let billingCoupons = [];
 let superDashboardData = null;
 let currentSuperSection = 'dashboard';
 let selectedCouponStoreId = null;
 let selectedStoreCoupons = [];
+let selectedStoreProducts = [];
 
 function initials(value, fallback = 'SA') {
   const parts = String(value || '').trim().split(/\s+/).filter(Boolean);
@@ -246,7 +248,13 @@ window.closeStoreCouponsModal = () => {
   $s('#storeCouponsModal')?.classList.remove('open');
   selectedCouponStoreId = null;
   selectedStoreCoupons = [];
+  selectedStoreProducts = [];
 };
+
+async function loadSelectedStoreProducts() {
+  if (!selectedCouponStoreId) return;
+  selectedStoreProducts = await api(`/api/super-admin/stores/${selectedCouponStoreId}/products`);
+}
 
 async function loadSelectedStoreCoupons() {
   if (!selectedCouponStoreId) return;
@@ -257,7 +265,8 @@ async function loadSelectedStoreCoupons() {
 function renderSelectedStoreCoupons() {
   const root = $s('#storeCouponsTable');
   if (!root) return;
-  root.innerHTML = selectedStoreCoupons.length ? `<table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Validade</th><th>No site</th><th>Status</th><th>Ação</th></tr></thead><tbody>${selectedStoreCoupons.map(coupon => `<tr><td><b>${escapeHtml(coupon.code)}</b><br><small>${escapeHtml(coupon.description || '')}</small></td><td>${superCouponDiscount(coupon)}<br><small>mín. ${money(coupon.min_order_value || 0)}</small></td><td><small>${escapeHtml(superCouponValidity(coupon))}</small></td><td><span class="status ${coupon.is_public?'CONFIRMADO':'PENDENTE'}">${coupon.is_public?'Visível':'Oculto'}</span></td><td><span class="status ${coupon.is_active?'CONFIRMADO':'CANCELADO'}">${coupon.is_active?'Ativo':'Inativo'}</span></td><td><button class="btn ghost small" type="button" onclick="openSuperCouponEditor(${coupon.id})">Editar</button></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Esta loja ainda não possui cupons.</div>';
+  const productNames = Object.fromEntries(selectedStoreProducts.map(product => [product.id, product.name]));
+  root.innerHTML = selectedStoreCoupons.length ? `<table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Aplicação</th><th>Validade</th><th>No site</th><th>Status</th><th>Ação</th></tr></thead><tbody>${selectedStoreCoupons.map(coupon => { const names=(coupon.product_ids||[]).map(id=>productNames[id]).filter(Boolean); return `<tr><td><b>${escapeHtml(coupon.code)}</b><br><small>${escapeHtml(coupon.description || '')}</small></td><td>${superCouponDiscount(coupon)}<br><small>mín. ${money(coupon.min_order_value || 0)}</small></td><td><b>${names.length?'Produtos selecionados':'Pedido inteiro'}</b>${names.length?`<br><small>${names.slice(0,2).map(escapeHtml).join(', ')}${names.length>2?` +${names.length-2}`:''}</small>`:''}</td><td><small>${escapeHtml(superCouponValidity(coupon))}</small></td><td><span class="status ${coupon.is_public?'CONFIRMADO':'PENDENTE'}">${coupon.is_public?'Visível':'Oculto'}</span></td><td><span class="status ${coupon.is_active?'CONFIRMADO':'CANCELADO'}">${coupon.is_active?'Ativo':'Inativo'}</span></td><td><button class="btn ghost small" type="button" onclick="openSuperCouponEditor(${coupon.id})">Editar</button></td></tr>`; }).join('')}</tbody></table>` : '<div class="empty">Esta loja ainda não possui cupons.</div>';
 }
 
 window.openStoreCouponsModal = async function(storeId) {
@@ -269,6 +278,7 @@ window.openStoreCouponsModal = async function(storeId) {
   $s('#storeCouponEditorView')?.classList.add('hidden');
   $s('#storeCouponsModal')?.classList.add('open');
   try {
+    await loadSelectedStoreProducts();
     await loadSelectedStoreCoupons();
   } catch (err) {
     showToast(err.message, 'error');
@@ -292,6 +302,13 @@ window.openSuperCouponEditor = function(couponId = null) {
   form.elements['description'].value = coupon?.description || '';
   form.elements['is_public'].checked = Boolean(coupon?.is_public);
   form.elements['is_active'].checked = coupon?.is_active ?? true;
+  const productIds = coupon?.product_ids || [];
+  form.elements['scope'].value = productIds.length ? 'PRODUCTS' : 'ORDER';
+  const grid = $s('#superCouponProductsGrid');
+  if (grid) grid.innerHTML = selectedStoreProducts.map(product => `<label><input type="checkbox" name="product_ids" value="${product.id}" ${productIds.includes(product.id)?'checked':''}> ${escapeHtml(product.name)}${product.sku?` <small>(${escapeHtml(product.sku)})</small>`:''}</label>`).join('') || '<span class="muted-note">Nenhum produto cadastrado.</span>';
+  const syncScope = () => $s('#superCouponProductsScope')?.classList.toggle('hidden', form.elements['scope'].value !== 'PRODUCTS');
+  form.elements['scope'].onchange = syncScope;
+  syncScope();
   const title = $s('#superCouponEditorTitle');
   if (title) title.textContent = coupon ? `Editar ${coupon.code}` : 'Novo cupom';
   $s('#storeCouponsListView')?.classList.add('hidden');
@@ -325,7 +342,9 @@ if (superCouponForm) {
       usage_limit: form.elements['usage_limit'].value === '' ? null : Number(form.elements['usage_limit'].value),
       is_active: form.elements['is_active'].checked,
       is_public: form.elements['is_public'].checked,
+      product_ids: form.elements['scope'].value === 'PRODUCTS' ? [...form.querySelectorAll('input[name="product_ids"]:checked')].map(input => Number(input.value)) : [],
     };
+    if (form.elements['scope'].value === 'PRODUCTS' && !payload.product_ids.length) return showToast('Escolha pelo menos um produto para este cupom.', 'error');
     try {
       await api(couponId ? `/api/super-admin/stores/${selectedCouponStoreId}/coupons/${couponId}` : `/api/super-admin/stores/${selectedCouponStoreId}/coupons`, {
         method: couponId ? 'PATCH' : 'POST',
@@ -613,16 +632,19 @@ function billingCycle(value) { return String(value||'MONTHLY').toUpperCase()==='
 function currentBillingSubscriptions() { const seen=new Set(); return billingSubscriptions.filter(row=>{ if(seen.has(row.store_id)) return false; seen.add(row.store_id); return true; }); }
 
 window.loadBillingCenter = async function() {
-  const [subscriptions, invoices, providers] = await Promise.all([
+  const [subscriptions, invoices, providers, coupons] = await Promise.all([
     api('/api/super-admin/subscriptions'),
     api('/api/super-admin/billing/invoices?limit=200'),
     api('/api/super-admin/billing/providers'),
+    api('/api/super-admin/billing/coupons'),
   ]);
   billingSubscriptions = subscriptions || [];
   billingInvoices = invoices || [];
   billingProviders = providers || [];
+  billingCoupons = coupons || [];
   renderBillingStats();
   renderBillingProviders();
+  renderBillingCoupons();
   renderBillingSubscriptions();
   renderBillingInvoices();
   renderPlatformInsights();
@@ -648,6 +670,54 @@ function renderBillingProviders() {
   root.innerHTML = billingProviders.map(provider=>`<div class="billing-provider-card ${provider.configured?'is-ready':''}"><div><b>${escapeHtml(provider.display_name)}</b><small>${provider.automatic?'Cobrança automática':'Operação manual'}</small></div><span class="status ${provider.configured?'CONFIRMADO':'PENDENTE'}">${provider.configured?'Configurado':'Pendente'}</span></div>`).join('') || '<div class="empty">Nenhum provedor cadastrado.</div>';
 }
 
+function billingCouponValue(coupon) {
+  return coupon.discount_type === 'PERCENT' ? `${Number(coupon.value)}%` : money(coupon.value);
+}
+function billingCouponValidity(coupon) {
+  const start = coupon.starts_at ? new Date(coupon.starts_at).toLocaleDateString('pt-BR') : 'agora';
+  const end = coupon.ends_at ? new Date(coupon.ends_at).toLocaleDateString('pt-BR') : 'sem fim';
+  return `${start} → ${end}`;
+}
+window.renderBillingCoupons = function() {
+  const root = $s('#billingCouponsTable'); if (!root) return;
+  const planNames = Object.fromEntries(plans.map(plan => [plan.id, plan.name]));
+  root.innerHTML = billingCoupons.length ? `<table class="table billing-table"><thead><tr><th>Código</th><th>Desconto</th><th>Planos</th><th>Duração</th><th>Validade</th><th>Usos</th><th>Status</th><th>Ações</th></tr></thead><tbody>${billingCoupons.map(coupon=>{
+    const targetPlans=(coupon.plan_ids||[]).map(id=>planNames[id]).filter(Boolean);
+    return `<tr><td><b>${escapeHtml(coupon.code)}</b><br><small>${escapeHtml(coupon.description||'Cupom de assinatura')}</small></td><td><b>${escapeHtml(billingCouponValue(coupon))}</b>${coupon.max_discount?`<br><small>máx. ${money(coupon.max_discount)}</small>`:''}</td><td>${targetPlans.length?targetPlans.map(escapeHtml).join(', '):'<b>Todos os planos</b>'}</td><td>${coupon.duration==='RECURRING'?'Recorrente':'1ª cobrança'}</td><td><small>${escapeHtml(billingCouponValidity(coupon))}</small></td><td>${coupon.usage_count}${coupon.usage_limit?` / ${coupon.usage_limit}`:' / ∞'}</td><td><span class="status ${coupon.is_active?'CONFIRMADO':'CANCELADO'}">${coupon.is_active?'Ativo':'Inativo'}</span></td><td><div class="billing-row-actions"><button class="btn ghost small" onclick="openBillingCouponModal(${coupon.id})">Editar</button>${coupon.is_active?`<button class="btn danger small" onclick="deactivateBillingCoupon(${coupon.id})">Desativar</button>`:''}</div></td></tr>`;
+  }).join('')}</tbody></table>` : '<div class="empty">Nenhum cupom de plano criado. Crie códigos promocionais para aquisição ou upgrade de planos.</div>';
+};
+window.closeBillingCouponModal = () => $s('#billingCouponModal')?.classList.remove('open');
+window.openBillingCouponModal = function(id=null) {
+  const coupon=id?billingCoupons.find(item=>item.id===id):null;
+  const form=$s('#billingCouponForm'); if(!form)return;
+  form.reset();
+  form.elements['id'].value=coupon?.id||'';
+  form.elements['code'].value=coupon?.code||'';
+  form.elements['discount_type'].value=coupon?.discount_type||'PERCENT';
+  form.elements['value'].value=coupon?.value??10;
+  form.elements['max_discount'].value=coupon?.max_discount??'';
+  form.elements['duration'].value=coupon?.duration||'FIRST_INVOICE';
+  form.elements['usage_limit'].value=coupon?.usage_limit??'';
+  form.elements['starts_at'].value=superCouponDateTimeLocal(coupon?.starts_at);
+  form.elements['ends_at'].value=superCouponDateTimeLocal(coupon?.ends_at);
+  form.elements['description'].value=coupon?.description||'';
+  form.elements['is_active'].checked=coupon?.is_active??true;
+  const selected=new Set(coupon?.plan_ids||[]);
+  const grid=$s('#billingCouponPlansGrid');
+  if(grid)grid.innerHTML=plans.filter(plan=>plan.is_active||selected.has(plan.id)).map(plan=>`<label><input type="checkbox" name="plan_ids" value="${plan.id}" ${selected.has(plan.id)?'checked':''}> ${escapeHtml(plan.name)} <small>${money(plan.monthly_price)}/mês</small></label>`).join('');
+  const title=$s('#billingCouponModalTitle'); if(title)title.textContent=coupon?`Editar ${coupon.code}`:'Novo cupom de plano';
+  $s('#billingCouponModal')?.classList.add('open');
+};
+const billingCouponForm=$s('#billingCouponForm');
+if(billingCouponForm){billingCouponForm.onsubmit=async event=>{
+  event.preventDefault(); const form=event.currentTarget;
+  if(form.starts_at.value&&form.ends_at.value&&new Date(form.ends_at.value)<=new Date(form.starts_at.value))return showToast('A data final deve ser posterior à inicial.','error');
+  const id=Number(form.id.value||0);
+  const payload={code:form.code.value,description:form.description.value.trim()||null,discount_type:form.discount_type.value,value:Number(form.value.value),max_discount:form.max_discount.value===''?null:Number(form.max_discount.value),duration:form.duration.value,starts_at:form.starts_at.value?new Date(form.starts_at.value).toISOString():null,ends_at:form.ends_at.value?new Date(form.ends_at.value).toISOString():null,usage_limit:form.usage_limit.value===''?null:Number(form.usage_limit.value),is_active:form.is_active.checked,plan_ids:[...form.querySelectorAll('input[name="plan_ids"]:checked')].map(input=>Number(input.value))};
+  try{await api(id?`/api/super-admin/billing/coupons/${id}`:'/api/super-admin/billing/coupons',{method:id?'PATCH':'POST',body:JSON.stringify(payload)});closeBillingCouponModal();await loadBillingCenter();showToast(id?'Cupom de plano atualizado.':'Cupom de plano criado.');}catch(err){showToast(err.message,'error')}
+};}
+window.deactivateBillingCoupon=async function(id){if(!confirm('Desativar este cupom de plano?'))return;try{await api(`/api/super-admin/billing/coupons/${id}`,{method:'DELETE'});await loadBillingCenter();showToast('Cupom de plano desativado.');}catch(err){showToast(err.message,'error')}};
+
 window.renderBillingSubscriptions = function() {
   const root = $s('#billingSubscriptionsTable'); if (!root) return;
   const query = String($s('#billingSearch')?.value || '').trim().toLowerCase();
@@ -667,7 +737,7 @@ window.renderBillingInvoices = function() {
   const root = $s('#billingInvoicesTable'); if (!root) return;
   const status = String($s('#invoiceStatusFilter')?.value || '').toUpperCase();
   const rows = billingInvoices.filter(row=>!status||row.status===status);
-  root.innerHTML = rows.length ? `<table class="table billing-table"><thead><tr><th>Fatura</th><th>Loja</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Método</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(row=>`<tr><td><b>#${row.id}</b><br><small>${row.invoice_type==='PLAN_CHANGE'?'Troca de plano':'Renovação'}</small></td><td>${escapeHtml(row.store_name||`Loja #${row.store_id}`)}</td><td>${escapeHtml(row.plan_name||'—')}</td><td>${billingDate(row.due_at||row.created_at)}</td><td><b>${money(row.amount)}</b></td><td>${escapeHtml(row.payment_method||billingProviderName(row.provider))}</td><td><span class="status ${billingClass(row.status)}">${escapeHtml(billingLabel(row.status))}</span></td><td><div class="billing-row-actions">${['PENDING','FAILED'].includes(row.status)?`<button class="btn primary small" onclick="setInvoiceStatus(${row.id},'PAID')">Registrar pago</button><button class="btn ghost small" onclick="setInvoiceStatus(${row.id},'FAILED')">Marcar falha</button><button class="btn danger small" onclick="setInvoiceStatus(${row.id},'CANCELED')">Cancelar</button>`:'<span class="muted-note">Concluída</span>'}</div></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Nenhuma fatura encontrada.</div>';
+  root.innerHTML = rows.length ? `<table class="table billing-table"><thead><tr><th>Fatura</th><th>Loja</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Método</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(row=>`<tr><td><b>#${row.id}</b><br><small>${row.invoice_type==='PLAN_CHANGE'?'Troca de plano':'Renovação'}</small></td><td>${escapeHtml(row.store_name||`Loja #${row.store_id}`)}</td><td>${escapeHtml(row.plan_name||'—')}</td><td>${billingDate(row.due_at||row.created_at)}</td><td><b>${money(row.amount)}</b>${Number(row.discount_amount||0)>0?`<br><small>desconto ${money(row.discount_amount)}${row.coupon_code?` · ${escapeHtml(row.coupon_code)}`:''}</small>`:''}</td><td>${escapeHtml(row.payment_method||billingProviderName(row.provider))}</td><td><span class="status ${billingClass(row.status)}">${escapeHtml(billingLabel(row.status))}</span></td><td><div class="billing-row-actions">${['PENDING','FAILED'].includes(row.status)?`<button class="btn primary small" onclick="setInvoiceStatus(${row.id},'PAID')">Registrar pago</button><button class="btn ghost small" onclick="setInvoiceStatus(${row.id},'FAILED')">Marcar falha</button><button class="btn danger small" onclick="setInvoiceStatus(${row.id},'CANCELED')">Cancelar</button>`:'<span class="muted-note">Concluída</span>'}</div></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Nenhuma fatura encontrada.</div>';
 };
 
 window.createRenewalInvoice = async function(subscriptionId) {

@@ -5,11 +5,11 @@ from .catalog import Category, Product, ProductOption, ProductOptionItem, Produc
 from .sales import Customer, Inventory, Order, OrderItem
 from .services import Appointment, Professional, ProfessionalBlock, ProfessionalHours, ProfessionalService, Service
 from .quotes import QuoteAttachment, QuoteRequest
-from .marketing import Coupon, CouponUsage, Promotion, PromotionItem
+from .marketing import Coupon, CouponProduct, CouponUsage, Promotion, PromotionItem
 from .reservations import Resource, Reservation, RentalItem, RentalReservation
 from .payments import Payment, PaymentSettings
 from .subscriptions import Plan, Subscription
-from .billing import BillingGatewayPrice, SubscriptionInvoice, BillingWebhookEvent
+from .billing import BillingCoupon, BillingCouponPlan, BillingCouponUsage, BillingGatewayPrice, SubscriptionInvoice, BillingWebhookEvent
 from .security_privacy import AuditLog, PrivacyRequest
 
 __all__ = [
@@ -35,6 +35,7 @@ __all__ = [
     "QuoteRequest",
     "QuoteAttachment",
     "Coupon",
+    "CouponProduct",
     "CouponUsage",
     "Promotion",
     "PromotionItem",
@@ -46,6 +47,9 @@ __all__ = [
     "PaymentSettings",
     "Plan",
     "Subscription",
+    "BillingCoupon",
+    "BillingCouponPlan",
+    "BillingCouponUsage",
     "BillingGatewayPrice",
     "SubscriptionInvoice",
     "BillingWebhookEvent",

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..dependencies import get_current_store_id
 from ..models.catalog import Product
-from ..models.marketing import Coupon, Promotion, PromotionItem
+from ..models.marketing import Coupon, CouponProduct, Promotion, PromotionItem
 from ..repositories.catalog_repository import get_store_by_slug
 from ..schemas.marketing import CouponCreate, CouponUpdate, PromotionCreate, PromotionUpdate
 from ..services.marketing_service import active_promotions_for_store, active_public_coupons_for_store
@@ -16,15 +16,40 @@ public_router = APIRouter(prefix="/api/public", tags=["marketing-public"])
 admin_router = APIRouter(prefix="/api/admin", tags=["marketing-admin"])
 
 
-def coupon_dict(c: Coupon):
+def coupon_dict(db: Session, c: Coupon):
+    product_ids = [
+        row.product_id
+        for row in db.query(CouponProduct).filter(
+            CouponProduct.store_id == c.store_id, CouponProduct.coupon_id == c.id
+        ).order_by(CouponProduct.product_id).all()
+    ]
     return {
         "id": c.id, "code": c.code, "description": c.description, "discount_type": c.discount_type,
         "value": c.value, "min_order_value": c.min_order_value, "max_discount": c.max_discount,
         "starts_at": c.starts_at.isoformat() if c.starts_at else None,
         "ends_at": c.ends_at.isoformat() if c.ends_at else None,
         "usage_limit": c.usage_limit, "usage_count": c.usage_count, "is_active": c.is_active,
-        "is_public": c.is_public,
+        "is_public": c.is_public, "product_ids": product_ids, "scope": "PRODUCTS" if product_ids else "ORDER",
     }
+
+
+def _validate_coupon_products(db: Session, store_id: int, product_ids: list[int]) -> list[int]:
+    unique = sorted({int(product_id) for product_id in product_ids if int(product_id) > 0})
+    if not unique:
+        return []
+    rows = db.query(Product.id).filter(Product.store_id == store_id, Product.id.in_(unique)).all()
+    if len(rows) != len(unique):
+        raise HTTPException(status_code=400, detail="Há produtos inválidos ou pertencentes a outra loja")
+    return unique
+
+
+def _sync_coupon_products(db: Session, coupon: Coupon, store_id: int, product_ids: list[int]) -> None:
+    db.query(CouponProduct).filter(
+        CouponProduct.coupon_id == coupon.id, CouponProduct.store_id == store_id
+    ).delete(synchronize_session=False)
+    now = datetime.now(timezone.utc)
+    for product_id in _validate_coupon_products(db, store_id, product_ids):
+        db.add(CouponProduct(store_id=store_id, coupon_id=coupon.id, product_id=product_id, created_at=now))
 
 
 def promotion_dict(db: Session, p: Promotion):
@@ -59,7 +84,7 @@ def public_coupons(slug: str, db: Session = Depends(get_db)):
 @admin_router.get("/coupons")
 def list_coupons(store_id: int = Depends(get_current_store_id), db: Session = Depends(get_db)):
     require_feature(db, store_id, "coupons")
-    return [coupon_dict(c) for c in db.query(Coupon).filter(Coupon.store_id == store_id).order_by(Coupon.id.desc()).all()]
+    return [coupon_dict(db, c) for c in db.query(Coupon).filter(Coupon.store_id == store_id).order_by(Coupon.id.desc()).all()]
 
 
 @admin_router.post("/coupons", status_code=status.HTTP_201_CREATED)
@@ -69,9 +94,12 @@ def create_coupon(data: CouponCreate, store_id: int = Depends(get_current_store_
         raise HTTPException(status_code=400, detail="Percentual não pode ultrapassar 100%")
     if db.query(Coupon.id).filter(Coupon.store_id == store_id, Coupon.code == data.code).first():
         raise HTTPException(status_code=409, detail="Já existe um cupom com este código")
-    c = Coupon(store_id=store_id, **data.model_dump())
-    db.add(c); db.commit(); db.refresh(c)
-    return coupon_dict(c)
+    payload = data.model_dump(exclude={"product_ids"})
+    c = Coupon(store_id=store_id, **payload)
+    db.add(c); db.flush()
+    _sync_coupon_products(db, c, store_id, data.product_ids)
+    db.commit(); db.refresh(c)
+    return coupon_dict(db, c)
 
 
 @admin_router.put("/coupons/{coupon_id}")
@@ -83,8 +111,9 @@ def update_coupon(coupon_id: int, data: CouponUpdate, store_id: int = Depends(ge
         raise HTTPException(status_code=400, detail="Percentual não pode ultrapassar 100%")
     duplicate = db.query(Coupon.id).filter(Coupon.store_id == store_id, Coupon.code == data.code, Coupon.id != coupon_id).first()
     if duplicate: raise HTTPException(status_code=409, detail="Já existe um cupom com este código")
-    for k, v in data.model_dump().items(): setattr(c, k, v)
-    db.commit(); db.refresh(c); return coupon_dict(c)
+    for k, v in data.model_dump(exclude={"product_ids"}).items(): setattr(c, k, v)
+    _sync_coupon_products(db, c, store_id, data.product_ids)
+    db.commit(); db.refresh(c); return coupon_dict(db, c)
 
 
 @admin_router.delete("/coupons/{coupon_id}")

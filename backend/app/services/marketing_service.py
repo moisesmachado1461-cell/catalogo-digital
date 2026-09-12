@@ -4,7 +4,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from ..models.marketing import Coupon, Promotion, PromotionItem
+from ..models.marketing import Coupon, CouponProduct, Promotion, PromotionItem
 
 CENT = Decimal("0.01")
 
@@ -66,7 +66,13 @@ def best_promotion_for_product(db: Session, store_id: int, product_id: int, base
     return best, money(best_discount)
 
 
-def validate_coupon(db: Session, store_id: int, code: str | None, subtotal: Decimal):
+def validate_coupon(
+    db: Session,
+    store_id: int,
+    code: str | None,
+    subtotal: Decimal,
+    product_line_totals: dict[int, Decimal] | None = None,
+):
     if not code:
         return None, Decimal("0.00")
     normalized = code.strip().upper().replace(" ", "")
@@ -77,7 +83,21 @@ def validate_coupon(db: Session, store_id: int, code: str | None, subtotal: Deci
         raise HTTPException(status_code=400, detail="Este cupom atingiu o limite de usos")
     if subtotal < coupon.min_order_value:
         raise HTTPException(status_code=400, detail=f"Pedido mínimo para este cupom: R$ {coupon.min_order_value}")
-    return coupon, discount_value(coupon.discount_type, coupon.value, subtotal, coupon.max_discount)
+
+    product_ids = [
+        row.product_id
+        for row in db.query(CouponProduct).filter(
+            CouponProduct.store_id == store_id, CouponProduct.coupon_id == coupon.id
+        ).all()
+    ]
+    eligible_amount = money(subtotal)
+    if product_ids:
+        totals = product_line_totals or {}
+        eligible_amount = money(sum((Decimal(totals.get(product_id, 0)) for product_id in product_ids), Decimal("0.00")))
+        if eligible_amount <= 0:
+            raise HTTPException(status_code=400, detail="Este cupom é válido apenas para produtos selecionados que não estão no carrinho")
+
+    return coupon, discount_value(coupon.discount_type, coupon.value, eligible_amount, coupon.max_discount)
 
 
 def active_promotions_for_store(db: Session, store_id: int):
@@ -118,6 +138,12 @@ def active_public_coupons_for_store(db: Session, store_id: int):
         if coupon.usage_limit is not None and coupon.usage_count >= coupon.usage_limit:
             continue
         remaining = None if coupon.usage_limit is None else max(coupon.usage_limit - coupon.usage_count, 0)
+        product_ids = [
+            row.product_id
+            for row in db.query(CouponProduct).filter(
+                CouponProduct.store_id == store_id, CouponProduct.coupon_id == coupon.id
+            ).all()
+        ]
         result.append({
             "id": coupon.id,
             "code": coupon.code,
@@ -129,5 +155,7 @@ def active_public_coupons_for_store(db: Session, store_id: int):
             "starts_at": coupon.starts_at.isoformat() if coupon.starts_at else None,
             "ends_at": coupon.ends_at.isoformat() if coupon.ends_at else None,
             "usage_remaining": remaining,
+            "product_ids": product_ids,
+            "scope": "PRODUCTS" if product_ids else "ORDER",
         })
     return result

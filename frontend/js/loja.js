@@ -129,6 +129,7 @@ function publicCouponDiscountLabel(coupon) {
 function publicCouponRules(coupon) {
   const rules = [];
   if (Number(coupon.min_order_value || 0) > 0) rules.push(`Pedido mínimo ${money(coupon.min_order_value)}`);
+  if ((coupon.product_ids || []).length) rules.push('Válido em produtos selecionados');
   if (coupon.max_discount != null) rules.push(`Desconto máximo ${money(coupon.max_discount)}`);
   if (coupon.ends_at) rules.push(`Válido até ${new Date(coupon.ends_at).toLocaleDateString('pt-BR')}`);
   if (coupon.usage_remaining != null) rules.push(`${coupon.usage_remaining} uso(s) restante(s)`);
@@ -313,8 +314,9 @@ function renderProducts() {
     const inventory = p.inventory?.quantity;
     const unavailable = p.track_inventory && p.inventory && Number(inventory) <= 0 && !(p.variants || []).length;
     const offer = discountedBasePrice(p);
+    const productCoupon = publicCoupons.find(coupon => (coupon.product_ids || []).includes(p.id));
     return `<article class="product-card product-card-v2">
-      <div class="product-image product-image-v2">${p.image_url ? `<img src="${escapeHtml(assetUrl(p.image_url))}" alt="${escapeHtml(p.name)}" loading="lazy">` : `<span class="image-placeholder">${initials(p.name)}</span>`}${(p.compare_at_price || offer.promotion) ? `<span class="promo-tag">${offer.promotion ? escapeHtml(offer.promotion.name) : 'Oferta'}</span>` : ''}</div>
+      <div class="product-image product-image-v2">${p.image_url ? `<img src="${escapeHtml(assetUrl(p.image_url))}" alt="${escapeHtml(p.name)}" loading="lazy">` : `<span class="image-placeholder">${initials(p.name)}</span>`}${(p.compare_at_price || offer.promotion) ? `<span class="promo-tag">${offer.promotion ? escapeHtml(offer.promotion.name) : 'Oferta'}</span>` : ''}${productCoupon ? `<button class="product-coupon-tag" type="button" onclick="event.stopPropagation(); usePublicCoupon('${String(productCoupon.code).replace(/'/g, "\\'")}')" title="Usar cupom ${escapeHtml(productCoupon.code)}">Cupom ${escapeHtml(productCoupon.code)}</button>` : ''}</div>
       <div class="card-body">
         <div class="product-category">${escapeHtml(catalog.categories.find(c => c.id === p.category_id)?.name || 'Produto')}</div>
         <h3>${escapeHtml(p.name)}</h3>

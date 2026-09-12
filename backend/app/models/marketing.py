@@ -40,6 +40,17 @@ class Coupon(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
 
 
+class CouponProduct(Base):
+    __tablename__ = "coupon_products"
+    __table_args__ = (UniqueConstraint("coupon_id", "product_id", name="uq_coupon_product"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    store_id: Mapped[int] = mapped_column(ForeignKey("stores.id", ondelete="RESTRICT"), nullable=False, index=True)
+    coupon_id: Mapped[int] = mapped_column(ForeignKey("coupons.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
 class CouponUsage(Base):
     __tablename__ = "coupon_usages"
     __table_args__ = (UniqueConstraint("coupon_id", "order_id", name="uq_coupon_usage_order"),)

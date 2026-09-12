@@ -4,9 +4,13 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..billing.registry import provider_statuses
 from ..database import get_db
-from ..dependencies import get_current_store_id, get_current_super_admin
-from ..models import BillingGatewayPrice, User
+from ..dependencies import get_current_store_admin, get_current_store_id, get_current_super_admin
+from ..models import BillingCoupon, BillingGatewayPrice, Plan, User
 from ..schemas.billing import (
+    AdminPlanChangeRequest,
+    BillingCouponCreate,
+    BillingCouponUpdate,
+    BillingCouponValidateRequest,
     GatewayPriceCreate,
     GatewayPriceUpdate,
     InvoiceStatusUpdate,
@@ -18,17 +22,22 @@ from ..services.audit_service import write_audit
 from ..services.billing_service import (
     admin_billing_overview,
     apply_invoice_status,
+    amount_for_plan,
+    billing_coupon_dict,
     cancel_subscription,
     create_plan_change_invoice,
     create_renewal_invoice,
     ensure_plan,
     gateway_price_dict,
     get_invoice,
+    get_store_subscription,
     get_subscription,
     invoice_dict,
     list_gateway_prices,
     list_invoices,
     process_due_billing,
+    sync_billing_coupon_plans,
+    validate_billing_coupon,
 )
 
 admin_router = APIRouter(prefix="/api/admin/billing", tags=["subscription-billing-admin"])
@@ -81,11 +90,187 @@ def billing_overview(
     return admin_billing_overview(db, store_id)
 
 
+@admin_router.get("/available-plans")
+def admin_available_plans(
+    _store_id: int = Depends(get_current_store_id),
+    db: Session = Depends(get_db),
+):
+    plans = db.query(Plan).filter(Plan.is_active.is_(True)).order_by(Plan.sort_order, Plan.id).all()
+    return [
+        {
+            "id": plan.id,
+            "name": plan.name,
+            "code": plan.code,
+            "description": plan.description,
+            "monthly_price": plan.monthly_price,
+            "yearly_price": plan.yearly_price,
+            "limits": plan.limits or {},
+            "features": plan.features or {},
+        }
+        for plan in plans
+    ]
+
+
+@admin_router.post("/validate-coupon")
+def admin_validate_billing_coupon(
+    data: BillingCouponValidateRequest,
+    _store_id: int = Depends(get_current_store_id),
+    db: Session = Depends(get_db),
+):
+    plan = ensure_plan(db, data.plan_id)
+    if not plan or not plan.is_active:
+        raise HTTPException(status_code=404, detail="Plano não encontrado ou inativo")
+    try:
+        subtotal = amount_for_plan(plan, data.billing_cycle)
+        coupon, discount, total = validate_billing_coupon(
+            db, data.coupon_code, plan=plan, billing_cycle=data.billing_cycle, amount=subtotal
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "valid": True,
+        "coupon": billing_coupon_dict(db, coupon) if coupon else None,
+        "plan_id": plan.id,
+        "billing_cycle": data.billing_cycle,
+        "subtotal_amount": subtotal,
+        "discount_amount": discount,
+        "amount": total,
+    }
+
+
+@admin_router.post("/change-plan", status_code=status.HTTP_201_CREATED)
+def admin_request_plan_change(
+    data: AdminPlanChangeRequest,
+    request: Request,
+    current_user: User = Depends(get_current_store_admin),
+    db: Session = Depends(get_db),
+):
+    store_id = current_user.store_id
+    subscription = get_store_subscription(db, store_id)
+    if not subscription:
+        raise HTTPException(status_code=404, detail="Assinatura atual não encontrada")
+    plan = ensure_plan(db, data.plan_id)
+    if not plan or not plan.is_active:
+        raise HTTPException(status_code=404, detail="Plano não encontrado ou inativo")
+    if subscription.plan_id == plan.id and subscription.billing_cycle == data.billing_cycle:
+        raise HTTPException(
+            status_code=400,
+            detail="Este já é o seu plano atual neste ciclo de cobrança.",
+        )
+    try:
+        invoice, created = create_plan_change_invoice(
+            db,
+            subscription,
+            plan=plan,
+            billing_cycle=data.billing_cycle,
+            coupon_code=data.coupon_code,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _audit(
+        db, request, current_user,
+        action="ADMIN_PLAN_CHANGE_REQUESTED" if created else "ADMIN_PLAN_CHANGE_UPDATED",
+        store_id=store_id, entity_type="subscription_invoice", entity_id=invoice.id,
+        metadata={"target_plan_id": plan.id, "billing_cycle": data.billing_cycle, "coupon_code": invoice.coupon_code},
+    )
+    db.commit()
+    row = get_invoice(db, invoice.id)
+    return {
+        "created": created,
+        "message": "Solicitação criada. O novo plano será ativado após a confirmação do pagamento.",
+        "invoice": invoice_dict(row or invoice),
+    }
+
+
 @super_router.get("/providers")
 def super_billing_providers(
     _super_admin: User = Depends(get_current_super_admin),
 ):
     return provider_statuses()
+
+
+@super_router.get("/coupons")
+def super_list_billing_coupons(
+    _super_admin: User = Depends(get_current_super_admin),
+    db: Session = Depends(get_db),
+):
+    rows = db.query(BillingCoupon).order_by(BillingCoupon.created_at.desc(), BillingCoupon.id.desc()).all()
+    return [billing_coupon_dict(db, row) for row in rows]
+
+
+@super_router.post("/coupons", status_code=status.HTTP_201_CREATED)
+def super_create_billing_coupon(
+    data: BillingCouponCreate,
+    request: Request,
+    super_admin: User = Depends(get_current_super_admin),
+    db: Session = Depends(get_db),
+):
+    if data.discount_type == "PERCENT" and data.value > 100:
+        raise HTTPException(status_code=400, detail="Percentual não pode ultrapassar 100%")
+    if data.starts_at and data.ends_at and data.ends_at <= data.starts_at:
+        raise HTTPException(status_code=400, detail="A data final deve ser posterior à inicial")
+    if db.query(BillingCoupon.id).filter(BillingCoupon.code == data.code).first():
+        raise HTTPException(status_code=409, detail="Já existe um cupom de plano com este código")
+    payload = data.model_dump(exclude={"plan_ids"})
+    row = BillingCoupon(**payload)
+    db.add(row)
+    db.flush()
+    try:
+        sync_billing_coupon_plans(db, row, data.plan_ids)
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _audit(db, request, super_admin, action="BILLING_COUPON_CREATED", entity_type="billing_coupon", entity_id=row.id, metadata={"code": row.code})
+    db.commit()
+    db.refresh(row)
+    return billing_coupon_dict(db, row)
+
+
+@super_router.patch("/coupons/{coupon_id}")
+def super_update_billing_coupon(
+    coupon_id: int,
+    data: BillingCouponUpdate,
+    request: Request,
+    super_admin: User = Depends(get_current_super_admin),
+    db: Session = Depends(get_db),
+):
+    row = db.query(BillingCoupon).filter(BillingCoupon.id == coupon_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Cupom de plano não encontrado")
+    if data.discount_type == "PERCENT" and data.value > 100:
+        raise HTTPException(status_code=400, detail="Percentual não pode ultrapassar 100%")
+    if data.starts_at and data.ends_at and data.ends_at <= data.starts_at:
+        raise HTTPException(status_code=400, detail="A data final deve ser posterior à inicial")
+    duplicate = db.query(BillingCoupon.id).filter(BillingCoupon.code == data.code, BillingCoupon.id != coupon_id).first()
+    if duplicate:
+        raise HTTPException(status_code=409, detail="Já existe um cupom de plano com este código")
+    for key, value in data.model_dump(exclude={"plan_ids"}).items():
+        setattr(row, key, value)
+    try:
+        sync_billing_coupon_plans(db, row, data.plan_ids)
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _audit(db, request, super_admin, action="BILLING_COUPON_UPDATED", entity_type="billing_coupon", entity_id=row.id, metadata={"code": row.code})
+    db.commit()
+    db.refresh(row)
+    return billing_coupon_dict(db, row)
+
+
+@super_router.delete("/coupons/{coupon_id}")
+def super_deactivate_billing_coupon(
+    coupon_id: int,
+    request: Request,
+    super_admin: User = Depends(get_current_super_admin),
+    db: Session = Depends(get_db),
+):
+    row = db.query(BillingCoupon).filter(BillingCoupon.id == coupon_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Cupom de plano não encontrado")
+    row.is_active = False
+    _audit(db, request, super_admin, action="BILLING_COUPON_DEACTIVATED", entity_type="billing_coupon", entity_id=row.id, metadata={"code": row.code})
+    db.commit()
+    return {"ok": True}
 
 
 @super_router.get("/gateway-prices")
@@ -220,6 +405,7 @@ def super_request_plan_change(
             plan=plan,
             billing_cycle=data.billing_cycle,
             due_at=data.due_at,
+            coupon_code=data.coupon_code,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

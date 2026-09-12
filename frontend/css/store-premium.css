@@ -102,3 +102,25 @@
   .public-coupon-grid { grid-template-columns: 1fr; }
   .public-coupon-actions .btn { flex: 1; }
 }
+
+
+/* Fase 23.4 — cupom específico no card do produto */
+.product-coupon-tag {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  border: 1px solid color-mix(in srgb, var(--brand) 28%, #ffffff);
+  background: color-mix(in srgb, var(--brand) 88%, #111827);
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: .67rem;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: .03em;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .16);
+  cursor: pointer;
+}
+.product-coupon-tag:hover { transform: translateY(-1px); }
+.product-coupon-tag:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 28%, transparent); outline-offset: 2px; }

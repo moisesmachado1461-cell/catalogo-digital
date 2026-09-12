@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 23.3**.
+Versão consolidada até a **Fase 23.4**.
 
 ## Concluído
 
@@ -25,6 +25,8 @@ Versão consolidada até a **Fase 23.3**.
 - perfil e segurança do Super Admin, com troca de e-mail/senha e revogação de outras sessões;
 - edição completa das lojas pelo Super Admin;
 - gestão e exposição pública controlada de cupons.
+- cupons por produto no Admin e cálculo restrito aos itens elegíveis;
+- cupons de planos SaaS gerenciados pelo Super Admin e aplicáveis na escolha de plano do Admin.
 
 ## Gateway real
 
@@ -70,3 +72,14 @@ Fazer uma revisão integrada de **Cliente + Admin + Super Admin** para corrigir 
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.
+
+## Fase 23.4 — cupons avançados e cupons de planos
+
+- cupons de loja podem valer para pedido inteiro ou produtos selecionados;
+- Produtos do Admin possuem atalho para criar cupom do item;
+- Super Admin controla cupons comerciais dos planos SaaS;
+- Admin pode escolher plano, aplicar código e visualizar subtotal/desconto/total;
+- fatura de troca fica pendente até confirmação do pagamento;
+- cupons recorrentes podem ser reaplicados às renovações enquanto válidos;
+- migration `015_advanced_coupons`;
+- backend `23.4.0`.

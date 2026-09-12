@@ -1,0 +1,35 @@
+CATÁLOGO DIGITAL — FASE 23.4
+Cupons avançados de produtos + cupons dos planos SaaS
+
+1. Extraia este ZIP.
+2. Copie todo o conteúdo para a raiz do projeto:
+   C:\Users\SUNLIGHT\Downloads\catalogo-digital-arquitetura-v1-corrigido
+3. Escolha substituir os arquivos no destino.
+4. No terminal da raiz do projeto execute:
+   git status
+   git add .
+   git commit -m "Fase 23.4 - cupons avancados e cupons de planos"
+   git push
+5. Aguarde o Render concluir o deploy.
+6. Confira /api/health. A versão esperada é 23.4.0.
+7. Pressione Ctrl+F5 no Admin, Super Admin e loja pública.
+
+MIGRATION
+- 015_advanced_coupons
+- O deploy do backend executa as migrations existentes pelo start-render.sh.
+
+O QUE FOI ADICIONADO
+- Cupons de loja aplicáveis ao pedido inteiro ou a produtos selecionados.
+- Atalho "Cupom" na listagem de produtos do Admin.
+- Validação do desconto por produto no backend.
+- Cupons de assinatura separados dos cupons das lojas.
+- Super Admin cria cupons de planos com percentual/valor fixo, validade,
+  limite de usos, planos elegíveis e duração (primeira fatura/recorrente).
+- Admin escolhe um plano, informa o cupom e visualiza subtotal, desconto e total.
+- Como o gateway automático continua pausado, a troca gera fatura PENDING e
+  o plano só é ativado após confirmação do pagamento no Super Admin.
+
+IMPORTANTE
+Cupons da loja e cupons de assinatura são sistemas separados de propósito.
+Isso impede que um cupom de produto seja usado para reduzir o preço do SaaS,
+ou que um cupom comercial do Catálogo Digital altere pedidos da loja.

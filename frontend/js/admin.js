@@ -21,6 +21,7 @@ let payments = [];
 let paymentSettings = null;
 let subscriptionInfo = null;
 let billingOverview = null;
+let availableBillingPlans = [];
 let privacyRequests = [];
 let auditLogs = [];
 let reportOverview = null;
@@ -557,7 +558,12 @@ window.downloadReportCsv = async function downloadReportCsv(type) {
 };
 
 window.loadSubscription = async function loadSubscription() {
-  billingOverview = await api('/api/admin/billing/overview');
+  const [overview, plans] = await Promise.all([
+    api('/api/admin/billing/overview'),
+    api('/api/admin/billing/available-plans'),
+  ]);
+  billingOverview = overview;
+  availableBillingPlans = plans || [];
   subscriptionInfo = billingOverview?.subscription || null;
   renderSubscription();
   renderDashboardReportPreview();
@@ -658,7 +664,7 @@ function renderSubscription() {
     <div class="panel-soft billing-feature-panel">
       <div class="billing-card-title"><div><span class="eyebrow">RECURSOS</span><h3>O que está incluído</h3></div></div>
       <div class="feature-chips">${Object.entries(featureLabels).map(([key,label]) => `<span class="feature-chip ${features[key] ? 'enabled' : 'disabled'}">${features[key] ? '✓' : '—'} ${escapeHtml(label)}</span>`).join('')}</div>
-      <p class="section-copy billing-help-copy">A troca de plano continua sendo controlada pelo Super Admin enquanto os gateways automáticos não estão conectados.</p>
+      <p class="section-copy billing-help-copy">Você já pode escolher outro plano e aplicar um cupom promocional. Enquanto o pagamento automático não estiver conectado, a ativação ocorre após a confirmação da cobrança.</p>
     </div>
     <div class="panel-soft billing-summary-panel">
       <div class="billing-card-title"><div><span class="eyebrow">COBRANÇA</span><h3>Resumo financeiro</h3></div></div>
@@ -671,18 +677,82 @@ function renderSubscription() {
     </div>
   </div>
 
+  <div class="panel-soft billing-plan-marketplace">
+    <div class="billing-card-title"><div><span class="eyebrow">PLANOS</span><h3>Escolha o plano ideal</h3></div><small>Cupons promocionais podem ser aplicados antes de confirmar</small></div>
+    <div class="billing-plan-choice-grid">${availableBillingPlans.map(candidate => {
+      const isCurrent = Number(candidate.id) === Number(plan.id);
+      const featureCount = Object.values(candidate.features || {}).filter(Boolean).length;
+      return `<article class="billing-choice-card ${isCurrent ? 'is-current' : ''}">
+        <div class="billing-choice-head"><div><b>${escapeHtml(candidate.name)}</b><small>${escapeHtml(candidate.description || 'Plano Catálogo Digital')}</small></div>${isCurrent ? '<span class="status CONFIRMADO">Atual</span>' : ''}</div>
+        <div class="billing-choice-price"><strong>${money(candidate.monthly_price)}</strong><span>/mês</span></div>
+        <div class="billing-choice-meta"><span>${featureCount} recurso(s)</span><span>${candidate.yearly_price != null ? `${money(candidate.yearly_price)}/ano` : 'Mensal'}</span></div>
+        <button class="btn ${isCurrent ? 'ghost' : 'primary'} small" type="button" onclick="openPlanCheckout(${candidate.id})">${isCurrent ? 'Alterar ciclo / usar cupom' : 'Escolher plano'}</button>
+      </article>`;
+    }).join('') || '<div class="empty">Nenhum plano disponível.</div>'}</div>
+  </div>
+
   <div class="panel-soft billing-history-panel">
     <div class="billing-card-title"><div><span class="eyebrow">HISTÓRICO</span><h3>Cobranças da assinatura</h3></div><small>Últimas ${Math.min(invoices.length,20)} faturas</small></div>
     <div class="table-wrap">${invoices.length ? `<table class="table billing-table"><thead><tr><th>Fatura</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Pagamento</th><th>Status</th></tr></thead><tbody>${invoices.map(invoice => `<tr>
       <td><b>#${invoice.id}</b><br><small>${escapeHtml(invoice.invoice_type === 'PLAN_CHANGE' ? 'Troca de plano' : 'Renovação')}</small></td>
       <td>${escapeHtml(invoice.plan_name || plan.name)}</td>
       <td>${formatBillingDate(invoice.due_at || invoice.created_at)}</td>
-      <td><b>${money(invoice.amount)}</b></td>
+      <td><b>${money(invoice.amount)}</b>${Number(invoice.discount_amount || 0) > 0 ? `<br><small>desconto ${money(invoice.discount_amount)}${invoice.coupon_code ? ` · ${escapeHtml(invoice.coupon_code)}` : ''}</small>` : ''}</td>
       <td>${escapeHtml(invoice.payment_method || billingProviderLabel(invoice.provider))}</td>
       <td><span class="status ${billingStatusClass(invoice.status)}">${escapeHtml(billingStatusLabel(invoice.status))}</span></td>
     </tr>`).join('')}</tbody></table>` : '<div class="empty small-empty">Ainda não há cobranças registradas para esta assinatura.</div>'}</div>
   </div>`;
 }
+
+function billingCheckoutPreview(plan, cycle, preview = null) {
+  const subtotal = preview?.subtotal_amount ?? (cycle === 'YEARLY' ? plan.yearly_price : plan.monthly_price);
+  const discount = Number(preview?.discount_amount || 0);
+  const total = preview?.amount ?? subtotal;
+  return `<div class="billing-checkout-preview">
+    <div><span>Plano</span><b>${escapeHtml(plan.name)}</b></div>
+    <div><span>Valor do ciclo</span><b>${money(subtotal)}</b></div>
+    <div><span>Desconto</span><b>${discount > 0 ? `- ${money(discount)}` : money(0)}</b></div>
+    <div class="billing-checkout-total"><span>Total</span><strong>${money(total)}</strong></div>
+    ${preview?.coupon ? `<div class="billing-coupon-applied">✓ Cupom ${escapeHtml(preview.coupon.code)} aplicado${preview.coupon.duration === 'RECURRING' ? ' às cobranças recorrentes enquanto estiver válido' : ' nesta cobrança'}</div>` : ''}
+  </div>`;
+}
+
+window.openPlanCheckout = function openPlanCheckout(planId) {
+  const plan = availableBillingPlans.find(item => Number(item.id) === Number(planId));
+  if (!plan) return showToast('Plano não encontrado.', 'error');
+  openModal('Escolher plano', 'Assinatura', `<form id="planCheckoutForm" class="form-grid modal-form">
+    <div class="field full"><div class="billing-checkout-plan-title"><span class="eyebrow">${escapeHtml(plan.code || 'PLANO')}</span><h3>${escapeHtml(plan.name)}</h3><p>${escapeHtml(plan.description || 'Plano Catálogo Digital')}</p></div></div>
+    <div class="field"><label>Ciclo de cobrança</label><select class="select" name="billing_cycle"><option value="MONTHLY">Mensal — ${money(plan.monthly_price)}</option>${plan.yearly_price != null ? `<option value="YEARLY">Anual — ${money(plan.yearly_price)}</option>` : ''}</select></div>
+    <div class="field"><label>Cupom de desconto</label><div class="billing-coupon-input"><input class="input" name="coupon_code" maxlength="40" placeholder="Ex.: PROFISSIONAL20"><button class="btn ghost small" type="button" id="applyBillingCouponBtn">Aplicar</button></div></div>
+    <div id="billingCheckoutPreview" class="field full">${billingCheckoutPreview(plan, 'MONTHLY')}</div>
+    <div class="field full notice">A solicitação gera uma cobrança com o desconto. O novo plano é ativado quando o pagamento for confirmado. O gateway automático será conectado em uma etapa posterior.</div>
+    <div class="field full form-actions"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary" type="submit">Confirmar escolha</button></div>
+  </form>`);
+  const form = $('#planCheckoutForm');
+  let appliedPreview = null;
+  const updateBase = () => { appliedPreview = null; $('#billingCheckoutPreview').innerHTML = billingCheckoutPreview(plan, form.billing_cycle.value); };
+  form.billing_cycle.onchange = updateBase;
+  $('#applyBillingCouponBtn').onclick = async () => {
+    const code = form.coupon_code.value.trim();
+    if (!code) return showToast('Digite o código do cupom.', 'error');
+    try {
+      appliedPreview = await api('/api/admin/billing/validate-coupon', {method:'POST', body:JSON.stringify({plan_id:plan.id,billing_cycle:form.billing_cycle.value,coupon_code:code})});
+      $('#billingCheckoutPreview').innerHTML = billingCheckoutPreview(plan, form.billing_cycle.value, appliedPreview);
+      showToast('Cupom aplicado.');
+    } catch (error) { appliedPreview = null; $('#billingCheckoutPreview').innerHTML = billingCheckoutPreview(plan, form.billing_cycle.value); showToast(error.message, 'error'); }
+  };
+  form.onsubmit = async event => {
+    event.preventDefault();
+    try {
+      const result = await api('/api/admin/billing/change-plan', {method:'POST', body:JSON.stringify({
+        plan_id:plan.id, billing_cycle:form.billing_cycle.value, coupon_code:form.coupon_code.value.trim() || null,
+      })});
+      closeModal();
+      await loadSubscription();
+      showToast(result.message || 'Solicitação de plano criada.');
+    } catch (error) { showToast(error.message, 'error'); }
+  };
+};
 
 window.loadCategories = async function loadCategories() {
   categories = await api('/api/admin/categories');
@@ -779,6 +849,7 @@ function renderProducts() {
         <td><span class="status ${product.is_active ? 'CONFIRMADO' : 'CANCELADO'}">${product.is_active ? 'Ativo' : 'Inativo'}</span></td>
         <td><div class="row-actions">
           <button class="btn ghost small" onclick="openProductModal(${product.id})">Editar</button>
+          <button class="btn ghost small" onclick="openCouponModal(null, ${product.id})">Cupom</button>
           <button class="btn ghost small" onclick="openProductExtrasModal(${product.id})">Variações</button>
           ${product.inventory ? `<button class="btn ghost small" onclick="openInventoryModal(${product.inventory.id})">Estoque</button>` : ''}
           <button class="btn ${product.is_active ? 'danger' : 'ghost'} small" onclick="toggleProduct(${product.id})">${product.is_active ? 'Desativar' : 'Ativar'}</button>
@@ -953,35 +1024,50 @@ window.openInventoryModal = function openInventoryModal(id) {
 
 window.loadCoupons = async function loadCoupons() {
   coupons = await api('/api/admin/coupons');
-  $('#couponsTable').innerHTML = coupons.length ? `<table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Pedido mínimo</th><th>Validade</th><th>Usos</th><th>No site</th><th>Status</th><th>Ações</th></tr></thead><tbody>${coupons.map(c=>`<tr><td><b>${escapeHtml(c.code)}</b><br><small>${escapeHtml(c.description||'Sem descrição')}</small></td><td>${c.discount_type==='PERCENT'?`${c.value}%`:money(c.value)}${c.max_discount?`<br><small>máx. ${money(c.max_discount)}</small>`:''}</td><td>${money(c.min_order_value)}</td><td><small>${escapeHtml(couponValidityLabel(c))}</small></td><td>${c.usage_count}${c.usage_limit?` / ${c.usage_limit}`:' / ∞'}</td><td><span class="status ${c.is_public?'CONFIRMADO':'PENDENTE'}">${c.is_public?'Visível':'Oculto'}</span></td><td><span class="status ${c.is_active?'CONFIRMADO':'CANCELADO'}">${c.is_active?'Ativo':'Inativo'}</span></td><td><div class="row-actions"><button class="btn ghost small" onclick="openCouponModal(${c.id})">Editar</button><button class="btn ${c.is_active?'danger':'ghost'} small" onclick="toggleCoupon(${c.id})">${c.is_active?'Desativar':'Ativar'}</button></div></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Nenhum cupom cadastrado. Crie um cupom e escolha se ele deve aparecer publicamente na loja.</div>';
+  const productNames = Object.fromEntries(products.map(product => [product.id, product.name]));
+  $('#couponsTable').innerHTML = coupons.length ? `<table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Aplicação</th><th>Pedido mínimo</th><th>Validade</th><th>Usos</th><th>No site</th><th>Status</th><th>Ações</th></tr></thead><tbody>${coupons.map(c=>{
+    const scopedNames=(c.product_ids||[]).map(id=>productNames[id]).filter(Boolean);
+    const scopeText=scopedNames.length ? scopedNames.slice(0,2).map(escapeHtml).join(', ')+(scopedNames.length>2?` +${scopedNames.length-2}`:'') : 'Pedido inteiro';
+    return `<tr><td><b>${escapeHtml(c.code)}</b><br><small>${escapeHtml(c.description||'Sem descrição')}</small></td><td>${c.discount_type==='PERCENT'?`${c.value}%`:money(c.value)}${c.max_discount?`<br><small>máx. ${money(c.max_discount)}</small>`:''}</td><td><b>${scopedNames.length?'Produtos selecionados':'Todos os produtos'}</b><br><small>${scopeText}</small></td><td>${money(c.min_order_value)}</td><td><small>${escapeHtml(couponValidityLabel(c))}</small></td><td>${c.usage_count}${c.usage_limit?` / ${c.usage_limit}`:' / ∞'}</td><td><span class="status ${c.is_public?'CONFIRMADO':'PENDENTE'}">${c.is_public?'Visível':'Oculto'}</span></td><td><span class="status ${c.is_active?'CONFIRMADO':'CANCELADO'}">${c.is_active?'Ativo':'Inativo'}</span></td><td><div class="row-actions"><button class="btn ghost small" onclick="openCouponModal(${c.id})">Editar</button><button class="btn ${c.is_active?'danger':'ghost'} small" onclick="toggleCoupon(${c.id})">${c.is_active?'Desativar':'Ativar'}</button></div></td></tr>`;
+  }).join('')}</tbody></table>` : '<div class="empty">Nenhum cupom cadastrado. Você pode criar um cupom para o pedido inteiro ou apenas para produtos selecionados.</div>';
 };
 
-window.openCouponModal = function openCouponModal(id=null) {
+window.openCouponModal = function openCouponModal(id=null, preselectedProductId=null) {
   const c = id ? coupons.find(x=>x.id===id) : null;
-  openModal(c?'Editar cupom':'Novo cupom','Marketing',`<form id="couponForm" class="form-grid modal-form">
+  const initialProductIds = c ? (c.product_ids || []) : (preselectedProductId ? [Number(preselectedProductId)] : []);
+  const scope = initialProductIds.length ? 'PRODUCTS' : 'ORDER';
+  const productChecks = products.filter(product=>product.is_active || initialProductIds.includes(product.id)).map(product=>`<label><input type="checkbox" name="product_ids" value="${product.id}" ${initialProductIds.includes(product.id)?'checked':''}> ${escapeHtml(product.name)}${product.sku?` <small>(${escapeHtml(product.sku)})</small>`:''}</label>`).join('') || '<span class="muted-note">Cadastre produtos para usar cupons específicos.</span>';
+  openModal(c?'Editar cupom':(preselectedProductId?'Novo cupom para produto':'Novo cupom'),'Marketing',`<form id="couponForm" class="form-grid modal-form">
     <div class="field"><label>Código</label><input class="input" name="code" required maxlength="40" value="${escapeHtml(c?.code||'')}" placeholder="BEMVINDO10"></div>
     <div class="field"><label>Tipo</label><select class="select" name="discount_type"><option value="PERCENT" ${optionSelected(c?.discount_type,'PERCENT')}>Percentual</option><option value="FIXED" ${optionSelected(c?.discount_type,'FIXED')}>Valor fixo</option></select></div>
     <div class="field"><label>Valor do desconto</label><input class="input" name="value" type="number" min="0" step="0.01" required value="${c?.value??10}"></div>
+    <div class="field"><label>Onde o cupom vale</label><select class="select" name="scope"><option value="ORDER" ${optionSelected(scope,'ORDER')}>Pedido inteiro</option><option value="PRODUCTS" ${optionSelected(scope,'PRODUCTS')}>Produtos selecionados</option></select></div>
+    <div class="field full coupon-product-scope ${scope==='PRODUCTS'?'':'hidden'}" id="couponProductScope"><label>Produtos válidos</label><div class="check-grid">${productChecks}</div><small>O desconto será calculado somente sobre os itens selecionados que estiverem no carrinho.</small></div>
     <div class="field"><label>Pedido mínimo</label><input class="input" name="min_order_value" type="number" min="0" step="0.01" value="${c?.min_order_value??0}"></div>
     <div class="field"><label>Desconto máximo</label><input class="input" name="max_discount" type="number" min="0" step="0.01" value="${c?.max_discount??''}" placeholder="Opcional"></div>
     <div class="field"><label>Limite de usos</label><input class="input" name="usage_limit" type="number" min="1" value="${c?.usage_limit??''}" placeholder="Ilimitado"></div>
     <div class="field"><label>Início da validade</label><input class="input" name="starts_at" type="datetime-local" value="${toDateTimeLocal(c?.starts_at)}"></div>
     <div class="field"><label>Fim da validade</label><input class="input" name="ends_at" type="datetime-local" value="${toDateTimeLocal(c?.ends_at)}"></div>
-    <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3" placeholder="Ex.: 10% de desconto na primeira compra">${escapeHtml(c?.description||'')}</textarea></div>
+    <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3" placeholder="Ex.: 10% de desconto nos produtos selecionados">${escapeHtml(c?.description||'')}</textarea></div>
     <div class="field checkbox-field"><label><input type="checkbox" name="is_public" ${checked(c?.is_public??false)}> Exibir este cupom no site da loja</label></div>
     <div class="field checkbox-field"><label><input type="checkbox" name="is_active" ${checked(c?.is_active??true)}> Cupom ativo</label></div>
-    <div class="field full notice">Cupons marcados como públicos aparecem na área “Cupons” da loja. Cupons privados continuam funcionando no checkout quando o cliente conhece o código.</div>
+    <div class="field full notice">Cupons por produto só dão desconto nos produtos escolhidos. O pedido mínimo continua considerando o total do carrinho.</div>
     <div class="field full form-actions"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary" type="submit">Salvar cupom</button></div>
   </form>`);
-  $('#couponForm').onsubmit=async e=>{
+  const form=$('#couponForm');
+  const syncScope=()=>$('#couponProductScope')?.classList.toggle('hidden',form.scope.value!=='PRODUCTS');
+  form.scope.onchange=syncScope; syncScope();
+  form.onsubmit=async e=>{
     e.preventDefault();
     const f=e.currentTarget;
     if (f.starts_at.value && f.ends_at.value && new Date(f.ends_at.value) <= new Date(f.starts_at.value)) return showToast('A data final deve ser posterior à inicial.','error');
+    const product_ids=f.scope.value==='PRODUCTS'?[...f.querySelectorAll('input[name="product_ids"]:checked')].map(input=>Number(input.value)):[];
+    if(f.scope.value==='PRODUCTS'&&!product_ids.length)return showToast('Escolha pelo menos um produto para este cupom.','error');
     const payload={
       code:f.code.value,description:nullable(f.description.value),discount_type:f.discount_type.value,value:Number(f.value.value),
       min_order_value:Number(f.min_order_value.value||0),max_discount:f.max_discount.value===''?null:Number(f.max_discount.value),
       starts_at:f.starts_at.value?new Date(f.starts_at.value).toISOString():null,ends_at:f.ends_at.value?new Date(f.ends_at.value).toISOString():null,
-      usage_limit:f.usage_limit.value===''?null:Number(f.usage_limit.value),is_active:f.is_active.checked,is_public:f.is_public.checked
+      usage_limit:f.usage_limit.value===''?null:Number(f.usage_limit.value),is_active:f.is_active.checked,is_public:f.is_public.checked,product_ids
     };
     try{
       await api(c?`/api/admin/coupons/${c.id}`:'/api/admin/coupons',{method:c?'PUT':'POST',body:JSON.stringify(payload)});
@@ -997,7 +1083,7 @@ window.toggleCoupon = async function toggleCoupon(id) {
     code:c.code, description:c.description || null, discount_type:c.discount_type, value:Number(c.value),
     min_order_value:Number(c.min_order_value || 0), max_discount:c.max_discount == null ? null : Number(c.max_discount),
     starts_at:c.starts_at || null, ends_at:c.ends_at || null, usage_limit:c.usage_limit == null ? null : Number(c.usage_limit),
-    is_active:!c.is_active, is_public:Boolean(c.is_public),
+    is_active:!c.is_active, is_public:Boolean(c.is_public), product_ids:[...(c.product_ids || [])],
   };
   try {
     await api(`/api/admin/coupons/${id}`, {method:'PUT', body:JSON.stringify(payload)});

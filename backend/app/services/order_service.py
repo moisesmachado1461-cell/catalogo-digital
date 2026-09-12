@@ -142,12 +142,20 @@ def create_order_for_store(db: Session, store: Store, data: CheckoutRequest) -> 
         prepared_items.append((product, variant, inventory, requested.quantity, base_price + options_total, unit_price, promotion.name if promotion else None, selected_options))
 
     subtotal = _money(subtotal)
+    product_line_totals: dict[int, Decimal] = {}
+    for product, _variant, _inventory, quantity, _original_unit_price, unit_price, _promotion_name, _selected_options in prepared_items:
+        product_line_totals[product.id] = _money(
+            product_line_totals.get(product.id, Decimal("0.00")) + (_money(unit_price) * quantity)
+        )
+
     coupon = None
     discount = Decimal("0.00")
     if data.coupon_code:
         if not store.capabilities.get("coupons", False) or not feature_enabled(db, store.id, "coupons"):
             raise HTTPException(status_code=403, detail="Cupons não estão disponíveis para esta loja ou plano")
-        coupon, discount = validate_coupon(db, store.id, data.coupon_code, subtotal)
+        coupon, discount = validate_coupon(
+            db, store.id, data.coupon_code, subtotal, product_line_totals=product_line_totals
+        )
 
     delivery_fee = Decimal("0.00")
     total = _money(max(Decimal("0.00"), subtotal - discount + delivery_fee))

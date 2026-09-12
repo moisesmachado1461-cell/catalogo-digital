@@ -178,6 +178,10 @@
         <div id="billingProviders" class="billing-provider-grid"></div>
       </div>
       <div class="panel super-section-panel">
+        <div class="panel-head responsive-head"><div><span class="super-panel-kicker">PROMOÇÕES DO SAAS</span><h2>Cupons para planos</h2><small>Crie cupons que o administrador da loja pode aplicar ao escolher um plano do Catálogo Digital.</small></div><button class="btn primary small" type="button" onclick="openBillingCouponModal()">+ Novo cupom de plano</button></div>
+        <div id="billingCouponsTable" class="table-wrap"></div>
+      </div>
+      <div class="panel super-section-panel">
         <div class="panel-head responsive-head"><div><h2>Assinaturas</h2><small>Visão atual por loja, plano, vencimento e situação financeira.</small></div><div class="billing-filters"><input id="billingSearch" class="input" placeholder="Buscar loja ou plano" oninput="renderBillingSubscriptions()"><select id="billingStatusFilter" class="select" onchange="renderBillingSubscriptions()"><option value="">Todos os status</option><option value="ACTIVE">Ativa</option><option value="TRIAL">Teste</option><option value="PAST_DUE">Em atraso</option><option value="EXPIRED">Expirada</option><option value="CANCELED">Cancelada</option></select></div></div>
         <div id="billingSubscriptionsTable" class="table-wrap"></div>
       </div>
@@ -319,6 +323,8 @@
         <div class="field"><label>Código</label><input class="input" name="code" maxlength="40" required placeholder="BEMVINDO10"></div>
         <div class="field"><label>Tipo</label><select class="select" name="discount_type"><option value="PERCENT">Percentual</option><option value="FIXED">Valor fixo</option></select></div>
         <div class="field"><label>Valor do desconto</label><input class="input" name="value" type="number" min="0" step="0.01" required value="10"></div>
+        <div class="field"><label>Onde o cupom vale</label><select class="select" name="scope"><option value="ORDER">Pedido inteiro</option><option value="PRODUCTS">Produtos selecionados</option></select></div>
+        <div class="field full hidden" id="superCouponProductsScope"><label>Produtos válidos</label><div id="superCouponProductsGrid" class="check-grid"></div><small>Selecione os produtos que receberão o desconto deste cupom.</small></div>
         <div class="field"><label>Pedido mínimo</label><input class="input" name="min_order_value" type="number" min="0" step="0.01" value="0"></div>
         <div class="field"><label>Desconto máximo</label><input class="input" name="max_discount" type="number" min="0" step="0.01" placeholder="Opcional"></div>
         <div class="field"><label>Limite de usos</label><input class="input" name="usage_limit" type="number" min="1" placeholder="Ilimitado"></div>
@@ -331,6 +337,28 @@
         <div class="field full form-actions"><button class="btn ghost" type="button" onclick="backToStoreCouponList()">Cancelar</button><button class="btn primary" type="submit">Salvar cupom</button></div>
       </form>
     </div>
+  </div>
+</div>
+
+<div id="billingCouponModal" class="modal-backdrop">
+  <div class="modal super-modal super-billing-coupon-modal">
+    <div class="modal-head"><div><span class="super-panel-kicker">CUPOM DE ASSINATURA</span><h2 id="billingCouponModalTitle">Novo cupom de plano</h2><small>Este cupom é usado na cobrança do SaaS e não interfere nos cupons de pedidos das lojas.</small></div><button class="close-btn" type="button" onclick="closeBillingCouponModal()">×</button></div>
+    <form id="billingCouponForm" class="form-grid super-form-grid">
+      <input type="hidden" name="id">
+      <div class="field"><label>Código</label><input class="input" name="code" maxlength="40" required placeholder="PROFISSIONAL20"></div>
+      <div class="field"><label>Tipo</label><select class="select" name="discount_type"><option value="PERCENT">Percentual</option><option value="FIXED">Valor fixo</option></select></div>
+      <div class="field"><label>Valor do desconto</label><input class="input" name="value" type="number" min="0" step="0.01" required value="10"></div>
+      <div class="field"><label>Desconto máximo</label><input class="input" name="max_discount" type="number" min="0" step="0.01" placeholder="Opcional"></div>
+      <div class="field"><label>Duração</label><select class="select" name="duration"><option value="FIRST_INVOICE">Somente nesta cobrança</option><option value="RECURRING">Recorrente enquanto válido</option></select></div>
+      <div class="field"><label>Limite de usos</label><input class="input" name="usage_limit" type="number" min="1" placeholder="Ilimitado"></div>
+      <div class="field"><label>Início da validade</label><input class="input" name="starts_at" type="datetime-local"></div>
+      <div class="field"><label>Fim da validade</label><input class="input" name="ends_at" type="datetime-local"></div>
+      <div class="field full"><label>Planos válidos</label><div id="billingCouponPlansGrid" class="check-grid"></div><small>Se nenhum plano for marcado, o cupom valerá para todos os planos ativos.</small></div>
+      <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3" placeholder="Ex.: 20% de desconto no Plano Profissional"></textarea></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="is_active" checked> Cupom ativo</label></div>
+      <div class="field full notice">O administrador da loja poderá informar o código ao escolher um plano em “Meu plano”. O valor final ficará registrado na fatura.</div>
+      <div class="field full form-actions"><button class="btn ghost" type="button" onclick="closeBillingCouponModal()">Cancelar</button><button class="btn primary" type="submit">Salvar cupom</button></div>
+    </form>
   </div>
 </div>
 

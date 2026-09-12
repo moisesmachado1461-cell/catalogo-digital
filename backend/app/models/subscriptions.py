@@ -55,6 +55,7 @@ class Subscription(Base):
     auto_renew: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     next_billing_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    billing_coupon_id: Mapped[int | None] = mapped_column(ForeignKey("billing_coupons.id", ondelete="SET NULL"), index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
