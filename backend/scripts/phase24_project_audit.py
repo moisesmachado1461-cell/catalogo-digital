@@ -152,18 +152,33 @@ def check_secret_hygiene() -> None:
         ok("Nenhum padrão óbvio de segredo privado foi encontrado nos arquivos versionáveis")
 
 
+def current_app_version() -> str | None:
+    version_path = BACKEND / "app" / "version.py"
+    try:
+        tree = ast.parse(version_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "APP_VERSION" for target in node.targets
+        ):
+            if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                return node.value.value
+    return None
+
+
 def check_cors_and_version() -> None:
     config = (BACKEND / "app" / "config.py").read_text(encoding="utf-8")
     main = (BACKEND / "app" / "main.py").read_text(encoding="utf-8")
-    version = (BACKEND / "app" / "version.py").read_text(encoding="utf-8")
+    version = current_app_version()
     if '"*" in self.allowed_origins' not in config:
         fail("Proteção contra CORS '*' em produção não encontrada")
     else:
         ok("CORS wildcard é bloqueado em produção")
-    if "APP_VERSION" not in main or 'APP_VERSION = "24.4.1"' not in version:
-        fail("Versão centralizada 24.4.1 não encontrada")
+    if "APP_VERSION" not in main or not version:
+        fail("Versão centralizada APP_VERSION não encontrada")
     else:
-        ok("Versão do backend centralizada em APP_VERSION=24.4.1")
+        ok(f"Versão do backend centralizada em APP_VERSION={version}")
 
 
 def check_route_guards() -> None:
@@ -247,7 +262,7 @@ def main() -> int:
     for check in checks:
         check()
 
-    print("CATÁLOGO DIGITAL — AUDITORIA FASE 24.4.1")
+    print(f"CATÁLOGO DIGITAL — AUDITORIA · VERSÃO {current_app_version() or 'desconhecida'}")
     for message in passes:
         print(f"[OK] {message}")
     for message in warnings:

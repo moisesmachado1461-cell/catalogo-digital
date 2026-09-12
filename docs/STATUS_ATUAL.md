@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.4.1**.
+Versão consolidada até a **Fase 24.5.0**.
 
 ## Concluído
 
@@ -68,7 +68,7 @@ A conexão com Mercado Pago continua desacoplada e pode ser adicionada posterior
 
 ## Próximo passo
 
-Concluir a validação operacional que depende de ambiente real: executar a regressão funcional com as dependências instaladas, executar o workflow de restore drill com PostgreSQL temporário no GitHub Actions e fazer a revisão visual manual em celular/tablet/notebook/desktop. Depois disso, avançar para domínio, SEO/PWA final, checklist de produção e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
+Executar uma vez o release gate local da Fase 24.5, enviar ao GitHub e confirmar o deploy com o smoke de produção. Depois, executar uma vez o workflow manual de restore drill no GitHub Actions. Com esses gates aprovados, avançar para domínio, SEO/PWA final e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.
@@ -160,3 +160,20 @@ Ainda é necessário cadastrar os secrets no GitHub e executar pelo menos um res
 - não exige o secret `RESTORE_TEST_DATABASE_URL`;
 - continuam necessários `BACKUP_DATABASE_URL` e `BACKUP_ENCRYPTION_KEY`;
 - o banco temporário é descartado ao final do workflow.
+
+
+## Fase 24.5 — validação final de produção
+
+- novo `phase24_5_release_gate.py` executa em um único comando a auditoria geral, revisão integrada e regressão funcional isolada;
+- regressão funcional passa a validar dinamicamente a versão atual do backend, sem ficar presa à versão 24.2.0;
+- auditoria e revisão integrada deixam de exigir números de versão codificados manualmente;
+- `production_smoke_check.py` passa a usar por padrão as URLs oficiais do projeto;
+- smoke de produção confirma versão esperada, ambiente production, banco, Cloudinary persistente/configurado, CORS, headers de segurança e páginas principais;
+- sem migration; backend `24.5.0`.
+
+### Gate operacional restante antes do lançamento
+
+- executar `python backend\scripts\phase24_5_release_gate.py`;
+- após o deploy, executar `python backend\scripts\production_smoke_check.py`;
+- executar uma vez o workflow `Restore drill do PostgreSQL` no GitHub Actions;
+- fazer apenas uma conferência visual curta da loja pública e dos painéis em desktop e celular.

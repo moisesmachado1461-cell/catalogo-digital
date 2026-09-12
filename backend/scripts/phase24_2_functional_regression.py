@@ -35,6 +35,14 @@ from urllib.request import Request, urlopen
 
 BACKEND = Path(__file__).resolve().parents[1]
 
+
+def current_app_version() -> str:
+    source = (BACKEND / "app" / "version.py").read_text(encoding="utf-8")
+    for line in source.splitlines():
+        if line.strip().startswith("APP_VERSION") and "=" in line:
+            return line.split("=", 1)[1].strip().strip('"\'')
+    raise CheckError("APP_VERSION não encontrada em backend/app/version.py")
+
 DEMO_USERS = {
     "super": ("superadmin@catalogodigital.dev", "SuperAdmin@2026"),
     "market": ("admin@mercadobompreco.com", "Admin@12345"),
@@ -179,6 +187,9 @@ def main() -> int:
                 "STORAGE_PROVIDER": "local",
                 "UPLOAD_DIR": str(uploads),
                 "SENTRY_DSN": "",
+                # Evita que logs INFO encham o pipe do subprocesso no Windows durante
+                # dezenas de requisições sequenciais da regressão e bloqueiem a API.
+                "LOG_LEVEL": "WARNING",
                 "PYTHONUNBUFFERED": "1",
             }
         )
@@ -212,8 +223,9 @@ def main() -> int:
             wait_api(base, process)
             health = request_json(base, "/api/health")
             require(health.get("database") == "ok", "Health não confirmou banco")
-            require(health.get("version") == "24.2.0", "Health não está em 24.2.0")
-            ok("API local iniciou com health 24.2.0")
+            expected_version = current_app_version()
+            require(health.get("version") == expected_version, f"Health não está em {expected_version}")
+            ok(f"API local iniciou com health {expected_version}")
 
             # Login / papéis / tenants
             tokens = {key: login(base, *credentials) for key, credentials in DEMO_USERS.items()}

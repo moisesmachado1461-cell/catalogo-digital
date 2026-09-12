@@ -37,6 +37,12 @@ def text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def current_app_version() -> str | None:
+    source = text(ROOT / "backend" / "app" / "version.py")
+    match = re.search(r'APP_VERSION\s*=\s*["\']([^"\']+)["\']', source)
+    return match.group(1) if match else None
+
+
 def check_required_surfaces() -> None:
     required = [
         FRONTEND / "loja.html",
@@ -190,20 +196,21 @@ def check_shared_frontend_runtime() -> None:
 
 
 def check_phase_metadata() -> None:
-    version = text(ROOT / "backend" / "app" / "version.py")
+    version = current_app_version()
     readme = text(ROOT / "README.md")
     status = text(ROOT / "docs" / "STATUS_ATUAL.md")
     issues: list[str] = []
-    if 'APP_VERSION = "24.4.1"' not in version:
-        issues.append("backend não está em 24.4.1")
-    if "Fase 24.4" not in readme:
-        issues.append("README não aponta a Fase 24.4")
-    if "Fase 24.4" not in status:
-        issues.append("STATUS_ATUAL não registra a Fase 24.4")
+    if not version:
+        issues.append("APP_VERSION não encontrada")
+    else:
+        if version not in readme:
+            issues.append(f"README não registra a versão {version}")
+        if version not in status:
+            issues.append(f"STATUS_ATUAL não registra a versão {version}")
     if issues:
         fail("Metadados da fase incompletos: " + "; ".join(issues))
     else:
-        ok("Versão, README e status estão alinhados na Fase 24.4.1")
+        ok(f"Versão, README e status estão alinhados em {version}")
 
 
 def main() -> int:
@@ -221,7 +228,7 @@ def main() -> int:
     for check in checks:
         check()
 
-    print("CATÁLOGO DIGITAL — FASE 24.4.1 · REVISÃO INTEGRADA")
+    print(f"CATÁLOGO DIGITAL — REVISÃO INTEGRADA · VERSÃO {current_app_version() or 'desconhecida'}")
     for message in passes:
         print(f"[OK] {message}")
     for message in warnings:

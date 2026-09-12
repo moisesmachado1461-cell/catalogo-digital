@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.4.1
+# Catálogo Digital — Fase 24.5.0
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.4.1 — Revisão integrada + restore drill temporário no GitHub Actions**
+**24.5.0 — Validação final de produção com release gate simplificado**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -69,7 +69,7 @@ python -m http.server 5500 --bind 0.0.0.0
 - Banco: Render PostgreSQL
 - Código: GitHub privado
 
-Consulte `docs/FASE_24_4_REVISAO_INTEGRADA.md` e `docs/FASE_24_3_1_RESTORE_GITHUB.md` para o estado mais recente.
+Consulte `docs/FASE_24_5_VALIDACAO_PRODUCAO.md` para o fluxo final de validação e deploy.
 
 ## Dados locais que nunca devem ir para o GitHub
 
@@ -177,3 +177,22 @@ A proteção de dados recebeu backup lógico v2 verificável, criptografia para 
 ## Correção 24.4.1 — restore drill simplificado
 
 A melhoria da Fase 24.3.1 foi reincorporada à base consolidada: o workflow manual de restore sobe um PostgreSQL 18 temporário no GitHub Actions. Assim, o teste não exige um segundo PostgreSQL no Render nem o secret `RESTORE_TEST_DATABASE_URL`.
+
+
+## Fase 24.5 — validação final de produção
+
+A validação foi simplificada para dois comandos:
+
+Antes do push:
+
+```powershell
+python backend\scripts\phase24_5_release_gate.py
+```
+
+Depois que o Render ficar Live:
+
+```powershell
+python backend\scripts\production_smoke_check.py
+```
+
+O primeiro comando executa auditoria, revisão integrada e regressão funcional em banco temporário. O segundo confirma versão online, banco, Cloudinary persistente, CORS, headers de segurança e páginas públicas do deploy. Nenhuma migration foi adicionada. Backend em `24.5.0`.

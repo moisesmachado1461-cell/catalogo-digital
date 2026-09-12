@@ -1,19 +1,31 @@
-"""Smoke test público e seguro do deploy.
+"""Smoke test público, seguro e rápido do deploy de produção.
 
-Uso:
-    python scripts/production_smoke_check.py \
-      --api https://catalogo-digital-api.onrender.com \
-      --frontend https://catalogo-digital-v3zs.onrender.com
+Uso mais simples (URLs oficiais do projeto):
+    python scripts/production_smoke_check.py
 
-Não pede senha e não altera dados.
+Também aceita URLs alternativas:
+    python scripts/production_smoke_check.py --api https://api.exemplo.com --frontend https://site.exemplo.com
+
+O script não pede senha e não altera dados.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import sys
-from urllib.error import HTTPError, URLError
+from pathlib import Path
 from urllib.request import Request, urlopen
+
+BACKEND = Path(__file__).resolve().parents[1]
+DEFAULT_API = "https://catalogo-digital-api.onrender.com"
+DEFAULT_FRONTEND = "https://catalogo-digital-v3zs.onrender.com"
+
+
+def current_app_version() -> str:
+    source = (BACKEND / "app" / "version.py").read_text(encoding="utf-8")
+    for line in source.splitlines():
+        if line.strip().startswith("APP_VERSION") and "=" in line:
+            return line.split("=", 1)[1].strip().strip('"\'')
+    raise RuntimeError("APP_VERSION não encontrada em backend/app/version.py")
 
 
 def fetch(url: str, method: str = "GET", headers: dict[str, str] | None = None):
@@ -23,27 +35,56 @@ def fetch(url: str, method: str = "GET", headers: dict[str, str] | None = None):
         return response.status, dict(response.headers.items()), body
 
 
+def header_value(headers: dict[str, str], name: str) -> str | None:
+    name = name.lower()
+    return next((value for key, value in headers.items() if key.lower() == name), None)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--api", required=True)
-    parser.add_argument("--frontend")
+    parser.add_argument("--api", default=DEFAULT_API)
+    parser.add_argument("--frontend", default=DEFAULT_FRONTEND)
     parser.add_argument("--origin", help="Origem HTTPS esperada no CORS; por padrão usa --frontend")
+    parser.add_argument("--expected-version", default=current_app_version())
+    parser.add_argument("--expected-storage", default="cloudinary")
     args = parser.parse_args()
+
     api = args.api.rstrip("/")
     frontend = args.frontend.rstrip("/") if args.frontend else None
     origin = args.origin or frontend
-    failures = []
+    failures: list[str] = []
+
+    print(f"CATÁLOGO DIGITAL — SMOKE DE PRODUÇÃO · esperado {args.expected_version}")
 
     try:
         status, headers, body = fetch(f"{api}/api/health")
         data = json.loads(body)
-        print(f"[OK] health HTTP {status} — versão {data.get('version')}")
-        if status != 200 or data.get("database") != "ok":
+        actual_version = data.get("version")
+        print(f"[OK] health HTTP {status} — versão {actual_version}")
+
+        if status != 200 or data.get("status") != "ok" or data.get("database") != "ok":
             failures.append("health/database")
+        if data.get("environment") != "production":
+            failures.append("environment")
+            print(f"[ERRO] environment={data.get('environment')!r}; esperado 'production'")
+        if actual_version != args.expected_version:
+            failures.append("version")
+            print(f"[ERRO] versão online {actual_version!r}; esperada {args.expected_version!r}")
+
+        storage = data.get("storage") if isinstance(data.get("storage"), dict) else {}
+        if storage.get("provider") != args.expected_storage:
+            failures.append("storage/provider")
+            print(f"[ERRO] storage provider={storage.get('provider')!r}; esperado {args.expected_storage!r}")
+        if storage.get("configured") is not True or storage.get("persistent") is not True:
+            failures.append("storage/persistence")
+            print(f"[ERRO] storage não está persistente/configurado: {storage!r}")
+        else:
+            print(f"[OK] storage {storage.get('provider')} persistente e configurado")
+
         for header in ("x-content-type-options", "x-frame-options", "referrer-policy", "x-request-id"):
-            if not any(k.lower() == header for k in headers):
+            if header_value(headers, header) is None:
                 failures.append(f"header {header}")
-        if data.get("environment") == "production" and not any(k.lower() == "strict-transport-security" for k in headers):
+        if header_value(headers, "strict-transport-security") is None:
             failures.append("header HSTS")
     except Exception as exc:
         print(f"[ERRO] health: {exc}")
@@ -51,7 +92,7 @@ def main() -> int:
 
     if origin:
         try:
-            status, headers, _ = fetch(
+            _, headers, _ = fetch(
                 f"{api}/api/auth/login",
                 method="OPTIONS",
                 headers={
@@ -60,22 +101,23 @@ def main() -> int:
                     "Access-Control-Request-Headers": "content-type",
                 },
             )
-            allow_origin = next((v for k, v in headers.items() if k.lower() == "access-control-allow-origin"), None)
+            allow_origin = header_value(headers, "access-control-allow-origin")
             if allow_origin != origin:
                 failures.append("CORS")
                 print(f"[ERRO] CORS retornou {allow_origin!r}; esperado {origin!r}")
             else:
-                print(f"[OK] CORS aceita somente a origem testada: {origin}")
+                print(f"[OK] CORS aceita a origem oficial: {origin}")
         except Exception as exc:
             print(f"[ERRO] CORS: {exc}")
             failures.append("CORS")
 
     if frontend:
-        for page in ("/", "/admin.html", "/super-admin.html", "/service-worker.js"):
+        for page in ("/", "/loja.html", "/admin.html", "/super-admin.html", "/service-worker.js"):
             try:
-                status, _, _ = fetch(frontend + page)
-                if status != 200:
+                status, _, body = fetch(frontend + page)
+                if status != 200 or not body.strip():
                     failures.append(f"frontend {page}")
+                    print(f"[ERRO] frontend {page}: HTTP {status} ou resposta vazia")
                 else:
                     print(f"[OK] frontend {page}")
             except Exception as exc:
@@ -86,7 +128,7 @@ def main() -> int:
     if failures:
         print("Falhas: " + ", ".join(failures))
         return 1
-    print("Smoke test público concluído sem falhas.")
+    print("Smoke de produção concluído sem falhas.")
     return 0
 
 
