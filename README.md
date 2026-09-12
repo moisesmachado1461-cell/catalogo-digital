@@ -158,3 +158,8 @@ cupons separado, controlado pelo Super Admin, com elegibilidade por plano,
 percentual/valor fixo, validade, limite de usos e duração na primeira fatura ou
 recorrente. O Admin pode escolher um plano em Meu plano, validar o cupom e gerar
 a fatura de troca. Backend em `23.4.0`; migration `015_advanced_coupons`.
+
+
+## Fase 24.1 — auditoria e hardening
+
+A primeira etapa da revisão final adiciona hardening de autenticação/configuração, auditoria automatizada do projeto, smoke test público do deploy e verificação estrutural de backups. Não há migration. Backend em `24.1.0`.

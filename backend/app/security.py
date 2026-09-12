@@ -19,6 +19,22 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
+
+def verify_password_or_dummy(plain: str, hashed: str | None) -> bool:
+    """Verifica a senha sem entregar por tempo se o usuário existe.
+
+    Quando não há hash real, o Passlib executa uma verificação simulada com
+    custo equivalente ao esquema padrão.
+    """
+    if hashed:
+        try:
+            return pwd_context.verify(plain, hashed)
+        except (ValueError, TypeError):
+            return False
+    pwd_context.dummy_verify()
+    return False
+
+
 def create_access_token(subject: str, token_version: int = 0) -> str:
     now = datetime.now(timezone.utc)
     exp = now + timedelta(minutes=settings.access_token_expire_minutes)

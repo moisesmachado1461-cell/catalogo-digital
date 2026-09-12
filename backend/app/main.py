@@ -45,11 +45,12 @@ from .routes.subscriptions import super_router as subscriptions_super_router
 from .routes.super_admin import router as super_admin_router
 from .routes.uploads import router as uploads_admin_router
 from .storage import storage_health
+from .version import APP_VERSION
 
 settings.validate_for_runtime()
 configure_observability()
 
-app = FastAPI(title=settings.app_name, version="23.4.0")
+app = FastAPI(title=settings.app_name, version=APP_VERSION)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLogMiddleware)
 app.add_middleware(RequestIdMiddleware)
@@ -125,7 +126,7 @@ def health():
     payload = {
         "status": status_value,
         "environment": settings.environment,
-        "version": "23.4.0",
+        "version": APP_VERSION,
         "database": "ok" if database_ok else "error",
         "storage": storage,
     }

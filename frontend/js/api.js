@@ -51,10 +51,15 @@ async function api(path, options = {}) {
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   let response;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90000);
   try {
-    response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    response = await fetch(`${API_BASE}${path}`, { ...options, headers, cache: 'no-store', signal: options.signal || controller.signal });
   } catch (error) {
+    if (error?.name === 'AbortError') throw new Error('A API demorou mais de 90 segundos para responder. Tente novamente.');
     throw new Error(`Não foi possível conectar à API (${API_BASE}). Verifique se o backend está disponível.`);
+  } finally {
+    clearTimeout(timeout);
   }
 
   const text = await response.text();

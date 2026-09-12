@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 import uuid
 from collections import defaultdict, deque
@@ -11,6 +12,7 @@ from starlette.responses import JSONResponse
 from .config import settings
 
 logger = logging.getLogger("catalogo.requests")
+REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -22,11 +24,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        sensitive_api = (
+            request.headers.get("authorization") is not None
+            or request.url.path.startswith((
+                "/api/auth",
+                "/api/admin",
+                "/api/super-admin",
+                "/api/billing",
+                "/api/subscriptions",
+            ))
+        )
         response.headers["Cache-Control"] = (
-            "no-store"
-            if request.url.path.startswith("/api/auth")
+            "no-store, max-age=0"
+            if sensitive_api
             else response.headers.get("Cache-Control", "no-cache")
         )
+        if sensitive_api:
+            response.headers["Pragma"] = "no-cache"
         if settings.environment.lower() == "production":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
@@ -34,7 +48,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
-        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        candidate = (request.headers.get("X-Request-ID") or "").strip()
+        request_id = candidate if REQUEST_ID_RE.fullmatch(candidate) else str(uuid.uuid4())
         request.state.request_id = request_id
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
@@ -81,6 +96,24 @@ class AuthRateLimitMiddleware(BaseHTTPMiddleware):
         self.window_seconds = 60
         self.limit = max(1, settings.login_rate_limit_per_minute)
         self.hits: dict[str, deque[float]] = defaultdict(deque)
+        self._requests_seen = 0
+        self._max_buckets = 10000
+
+    def _cleanup(self, now: float) -> None:
+        cutoff = now - self.window_seconds
+        stale = []
+        for key, bucket in self.hits.items():
+            while bucket and bucket[0] <= cutoff:
+                bucket.popleft()
+            if not bucket:
+                stale.append(key)
+        for key in stale:
+            self.hits.pop(key, None)
+        if len(self.hits) > self._max_buckets:
+            # Defesa de memória: remove os buckets mais antigos primeiro.
+            oldest = sorted(self.hits.items(), key=lambda item: item[1][0] if item[1] else 0)
+            for key, _ in oldest[: len(self.hits) - self._max_buckets]:
+                self.hits.pop(key, None)
 
     async def dispatch(self, request, call_next):
         if request.method == "POST" and request.url.path in {"/api/auth/login", "/api/auth/token"}:
@@ -91,6 +124,10 @@ class AuthRateLimitMiddleware(BaseHTTPMiddleware):
             client_ip = client_ip or "unknown"
 
             now = time.monotonic()
+            self._requests_seen += 1
+            if self._requests_seen % 250 == 0:
+                self._cleanup(now)
+            client_ip = client_ip[:128]
             bucket = self.hits[client_ip]
             cutoff = now - self.window_seconds
             while bucket and bucket[0] <= cutoff:

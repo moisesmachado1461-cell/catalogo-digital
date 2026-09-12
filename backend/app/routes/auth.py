@@ -10,7 +10,7 @@ from ..database import get_db
 from ..dependencies import get_current_user
 from ..models.user import User
 from ..schemas.auth import LoginRequest, TokenResponse
-from ..security import create_access_token, verify_password
+from ..security import create_access_token, verify_password_or_dummy
 from ..services.audit_service import write_audit
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -43,7 +43,8 @@ def _authenticate_user(db: Session, email: str, password: str, request: Request)
         db.commit()
         raise HTTPException(status_code=429, detail="Muitas tentativas. Aguarde alguns minutos e tente novamente.")
 
-    valid = bool(user and user.is_active and verify_password(password, user.password_hash))
+    valid_password = verify_password_or_dummy(password, user.password_hash if user else None)
+    valid = bool(user and user.is_active and valid_password)
     if not valid:
         if user:
             user.failed_login_attempts = int(user.failed_login_attempts or 0) + 1

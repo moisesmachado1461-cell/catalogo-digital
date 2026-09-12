@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -113,6 +115,16 @@ class Settings(BaseSettings):
             raise RuntimeError("BILLING_INVOICE_LEAD_DAYS deve ficar entre 0 e 60.")
         if not 0 <= self.billing_grace_days <= 60:
             raise RuntimeError("BILLING_GRACE_DAYS deve ficar entre 0 e 60.")
+        if self.jwt_algorithm not in {"HS256", "HS384", "HS512"}:
+            raise RuntimeError("JWT_ALGORITHM deve usar HS256, HS384 ou HS512.")
+        if not 5 <= self.access_token_expire_minutes <= 1440:
+            raise RuntimeError("ACCESS_TOKEN_EXPIRE_MINUTES deve ficar entre 5 e 1440.")
+        if not 3 <= self.max_login_attempts <= 20:
+            raise RuntimeError("MAX_LOGIN_ATTEMPTS deve ficar entre 3 e 20.")
+        if not 1 <= self.login_lock_minutes <= 1440:
+            raise RuntimeError("LOGIN_LOCK_MINUTES deve ficar entre 1 e 1440.")
+        if not 3 <= self.login_rate_limit_per_minute <= 120:
+            raise RuntimeError("LOGIN_RATE_LIMIT_PER_MINUTE deve ficar entre 3 e 120.")
 
         if self.environment.lower() == "production":
             if self.jwt_secret in {"change-me", "", None} or len(self.jwt_secret) < 32:
@@ -126,6 +138,20 @@ class Settings(BaseSettings):
             invalid_origins = [origin for origin in self.allowed_origins if not origin.startswith("https://")]
             if invalid_origins:
                 raise RuntimeError("Em produção, CORS_ORIGINS deve conter apenas endereços HTTPS.")
+            for origin in self.allowed_origins:
+                parsed = urlsplit(origin)
+                if (
+                    parsed.scheme != "https"
+                    or not parsed.netloc
+                    or parsed.username
+                    or parsed.password
+                    or parsed.query
+                    or parsed.fragment
+                    or parsed.path not in {"", "/"}
+                ):
+                    raise RuntimeError(
+                        "CORS_ORIGINS deve conter apenas origens HTTPS, sem caminho, credenciais, query ou fragmento."
+                    )
 
 
 settings = Settings()

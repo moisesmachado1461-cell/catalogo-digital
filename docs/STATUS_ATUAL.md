@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 23.4**.
+Versão consolidada até a **Fase 24.1**.
 
 ## Concluído
 
@@ -83,3 +83,20 @@ Fazer uma revisão integrada de **Cliente + Admin + Super Admin** para corrigir 
 - cupons recorrentes podem ser reaplicados às renovações enquanto válidos;
 - migration `015_advanced_coupons`;
 - backend `23.4.0`.
+
+
+## Fase 24.1 — auditoria automatizada e hardening
+
+- hardening de autenticação, CORS, cache sensível, request IDs e rate limit;
+- versão centralizada em `backend/app/version.py`;
+- auditoria local automatizada de sintaxe, migrations, segredos e guardas;
+- smoke test público do deploy;
+- verificador estrutural dos backups lógicos;
+- sem migration; backend `24.1.0`.
+
+### Ainda pendente dentro da Fase 24
+
+- teste autenticado de isolamento entre duas lojas;
+- revisão funcional de fluxos críticos Cliente/Admin/Super Admin;
+- restore drill real em banco separado;
+- automação/offsite de backup e rotações finais de credenciais.
