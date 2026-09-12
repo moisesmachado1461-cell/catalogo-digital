@@ -391,3 +391,12 @@ body{background:
 }
 .table thead th{background:linear-gradient(180deg,var(--theme-soft),#fff)}
 .table tbody tr:hover{background:color-mix(in srgb,var(--brand) 5%,#fff)}
+
+
+/* Fase 24.7 — tipografia mais robusta e comercial */
+body{font-family:"Segoe UI Variable Text","Segoe UI",Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500}
+h1,h2,h3,h4,h5,h6,.brand,.store-header-copy strong,.side-btn,.tab-btn,.btn,.table th,.eyebrow{font-weight:800}
+h1,h2,.hero h1,.store-hero-copy h1,.plan-price,.super-plan-price strong{font-weight:900}
+.input,.select,.textarea{font-weight:600}
+.field label,.nav-links,.store-nav-v2,.billing-choice-head b{font-weight:750}
+small,.section-copy,.metric-note,.stock{font-weight:500}

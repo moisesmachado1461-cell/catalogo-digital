@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.6.3**.
+Versão consolidada até a **Fase 24.7.0**.
 
 ## Concluído
 
@@ -30,7 +30,7 @@ Versão consolidada até a **Fase 24.6.3**.
 
 ## Gateway real
 
-A conexão com Mercado Pago continua desacoplada e pode ser adicionada posteriormente, com uma conta elegível e autorizada, sem reconstruir o motor de cobrança. Pix Automático, PicPay e outros continuam previstos pela mesma arquitetura.
+Mercado Pago passa a ser o primeiro gateway real da cobrança SaaS, inicialmente com Pix imediato. O Access Token e o segredo do webhook ficam somente no backend. Pix Automático, PicPay e outros continuam previstos pela mesma arquitetura.
 
 ## Fase 23 — Super Admin Premium
 
@@ -68,7 +68,7 @@ A conexão com Mercado Pago continua desacoplada e pode ser adicionada posterior
 
 ## Próximo passo
 
-Após publicar e validar a Fase 24.6.3, avançar para a Fase 24.7: domínio, SEO/PWA final, restore drill operacional, credenciais de produção e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
+Após publicar e validar a Fase 24.7, configurar as credenciais do Mercado Pago no Render e executar um pagamento Pix real controlado. Depois seguir para chatbot/WhatsApp, pagamentos dos clientes das lojas e preparação final de lançamento.
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.
@@ -239,3 +239,16 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - checkout e lógica do carrinho foram preservados;
 - cache PWA atualizado para `catalogo-digital-v24-6-3`;
 - sem nova migration; backend em `24.6.3`.
+
+
+## Fase 24.7 — planos dinâmicos + cobrança SaaS via Pix
+
+- planos Essencial, Profissional e Premium com valores iniciais de R$ 49,90, R$ 89,90 e R$ 149,90/mês;
+- Super Admin pode editar preços, descrição, limites, recursos, período grátis, tolerância, destaque, ordem e disponibilidade;
+- alterações de plano não mudam silenciosamente assinantes existentes graças ao snapshot comercial;
+- Mercado Pago conectado ao backend para criação de Pix com QR Code/Copia e Cola;
+- confirmação via consulta à API + webhook assinado;
+- plano ativado somente após pagamento aprovado;
+- desktop da loja pública ajustado para 3 produtos por linha;
+- tipografia reforçada em toda a plataforma;
+- migration `019_dynamic_plans_pix`; backend `24.7.0`; cache PWA `catalogo-digital-v24-7-0`.

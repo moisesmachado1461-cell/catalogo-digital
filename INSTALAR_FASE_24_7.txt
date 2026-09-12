@@ -1,0 +1,26 @@
+CATÁLOGO DIGITAL — FASE 24.7.0
+PLANOS DINÂMICOS + PIX IMEDIATO VIA MERCADO PAGO
+
+1. Extraia o ZIP incremental.
+2. Copie todo o conteúdo para a pasta principal do projeto e substitua os arquivos solicitados pelo Windows.
+3. Com a .venv ativa, rode somente:
+
+   python backend\scripts\phase24_5_release_gate.py
+
+4. Se aparecer RELEASE GATE APROVADO:
+
+   git add .
+   git commit -m "Fase 24.7 - planos dinamicos e Pix Mercado Pago"
+   git push
+
+5. Espere o Render ficar Live e confirme /api/health = 24.7.0.
+
+6. Para habilitar dinheiro real, configure no Backend do Render, sem compartilhar os valores no chat/Git:
+   MERCADO_PAGO_ACCESS_TOKEN
+   MERCADO_PAGO_WEBHOOK_SECRET
+   MERCADO_PAGO_WEBHOOK_URL=https://catalogo-digital-api.onrender.com/api/billing/webhooks/mercado-pago
+
+7. No painel de desenvolvedores do Mercado Pago, configure a mesma URL de Webhook para eventos de pagamento e use o segredo fornecido pelo Mercado Pago no Render.
+
+OBSERVAÇÃO
+O deploy funciona mesmo antes das credenciais: o botão mostrará “Pix em configuração”. Depois de configurar as credenciais e redeployar, o checkout Pix fica disponível.

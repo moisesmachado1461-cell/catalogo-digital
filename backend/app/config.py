@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     billing_invoice_lead_days: int = 7
     billing_grace_days: int = 5
 
+    # Mercado Pago — cobrança SaaS via Pix imediato
+    mercado_pago_access_token: str | None = None
+    mercado_pago_webhook_secret: str | None = None
+    mercado_pago_webhook_url: str | None = None
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
@@ -115,6 +120,12 @@ class Settings(BaseSettings):
             raise RuntimeError("BILLING_INVOICE_LEAD_DAYS deve ficar entre 0 e 60.")
         if not 0 <= self.billing_grace_days <= 60:
             raise RuntimeError("BILLING_GRACE_DAYS deve ficar entre 0 e 60.")
+        if bool(self.mercado_pago_access_token) != bool(self.mercado_pago_webhook_secret):
+            raise RuntimeError("Configure MERCADO_PAGO_ACCESS_TOKEN e MERCADO_PAGO_WEBHOOK_SECRET juntos.")
+        if self.mercado_pago_webhook_url:
+            parsed_webhook = urlsplit(self.mercado_pago_webhook_url)
+            if parsed_webhook.scheme not in {"http", "https"} or not parsed_webhook.netloc:
+                raise RuntimeError("MERCADO_PAGO_WEBHOOK_URL deve ser uma URL HTTP/HTTPS válida.")
         if self.jwt_algorithm not in {"HS256", "HS384", "HS512"}:
             raise RuntimeError("JWT_ALGORITHM deve usar HS256, HS384 ou HS512.")
         if not 5 <= self.access_token_expire_minutes <= 1440:
@@ -133,6 +144,8 @@ class Settings(BaseSettings):
                 raise RuntimeError("Em produção, CORS_ORIGINS não pode usar '*'.")
             if self.database_url.startswith("sqlite"):
                 raise RuntimeError("Em produção, use PostgreSQL em DATABASE_URL; SQLite fica somente no desenvolvimento.")
+            if self.mercado_pago_webhook_url and not self.mercado_pago_webhook_url.startswith("https://"):
+                raise RuntimeError("Em produção, MERCADO_PAGO_WEBHOOK_URL deve usar HTTPS.")
             if not self.allowed_origins:
                 raise RuntimeError("Em produção, informe pelo menos uma origem HTTPS em CORS_ORIGINS.")
             invalid_origins = [origin for origin in self.allowed_origins if not origin.startswith("https://")]

@@ -20,6 +20,11 @@ class Plan(Base):
     features: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    trial_days: Mapped[int] = mapped_column(Integer, default=7, nullable=False)
+    grace_days: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    badge: Mapped[str | None] = mapped_column(String(60))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
@@ -56,6 +61,14 @@ class Subscription(Base):
     cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     next_billing_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     billing_coupon_id: Mapped[int | None] = mapped_column(ForeignKey("billing_coupons.id", ondelete="SET NULL"), index=True)
+    plan_name_snapshot: Mapped[str | None] = mapped_column(String(80))
+    monthly_price_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    yearly_price_snapshot: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    limits_snapshot: Mapped[dict | None] = mapped_column(JSON)
+    features_snapshot: Mapped[dict | None] = mapped_column(JSON)
+    trial_days_snapshot: Mapped[int | None] = mapped_column(Integer)
+    grace_days_snapshot: Mapped[int | None] = mapped_column(Integer)
+    commercial_terms_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )

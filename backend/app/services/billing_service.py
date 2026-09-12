@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 from ..billing.registry import provider_statuses
 from ..config import settings
 from ..models import BillingCoupon, BillingCouponPlan, BillingCouponUsage, BillingGatewayPrice, Plan, Store, Subscription, SubscriptionInvoice
-from .subscription_service import plan_context
+from .subscription_service import plan_context, snapshot_subscription_terms
 
 
 ACTIVE_OR_COLLECTIBLE = {"TRIAL", "ACTIVE", "PAST_DUE"}
@@ -53,6 +53,17 @@ def amount_for_plan(plan: Plan, billing_cycle: str) -> Decimal:
             raise ValueError("Este plano ainda não possui preço anual configurado")
         return Decimal(plan.yearly_price).quantize(Decimal("0.01"))
     raise ValueError("Ciclo de cobrança inválido")
+
+
+def amount_for_subscription(subscription: Subscription, billing_cycle: str | None = None) -> Decimal:
+    cycle = (billing_cycle or subscription.billing_cycle).strip().upper()
+    if cycle == "MONTHLY" and subscription.monthly_price_snapshot is not None:
+        return Decimal(subscription.monthly_price_snapshot).quantize(Decimal("0.01"))
+    if cycle == "YEARLY" and subscription.yearly_price_snapshot is not None:
+        return Decimal(subscription.yearly_price_snapshot).quantize(Decimal("0.01"))
+    if not subscription.plan:
+        raise ValueError("Assinatura sem plano associado")
+    return amount_for_plan(subscription.plan, cycle)
 
 
 def billing_coupon_dict(db: Session, row: BillingCoupon) -> dict:
@@ -155,6 +166,11 @@ def _invoice_dict(row: SubscriptionInvoice) -> dict:
         "billing_coupon_id": row.billing_coupon_id,
         "coupon_code": row.coupon_code,
         "payment_method": row.payment_method,
+        "provider_status": row.provider_status,
+        "external_payment_id": row.external_payment_id,
+        "checkout_url": row.checkout_url,
+        "pix_available": bool(row.pix_qr_code),
+        "pix_expires_at": row.pix_expires_at,
         "due_at": row.due_at,
         "period_start": row.period_start,
         "period_end": row.period_end,
@@ -198,13 +214,15 @@ def admin_billing_overview(db: Session, store_id: int) -> dict:
         .limit(20)
         .all()
     )
+    context = plan_context(db, store_id)
+    plan_grace = (context.get("plan") or {}).get("grace_days")
     return {
-        "subscription": plan_context(db, store_id),
+        "subscription": context,
         "providers": provider_statuses(),
         "billing_policy": {
             "currency": settings.billing_default_currency,
             "invoice_lead_days": settings.billing_invoice_lead_days,
-            "grace_days": settings.billing_grace_days,
+            "grace_days": settings.billing_grace_days if plan_grace is None else plan_grace,
         },
         "recent_invoices": [_invoice_dict(row) for row in invoices],
     }
@@ -311,7 +329,7 @@ def create_renewal_invoice(
     if subscription.status not in ACTIVE_OR_COLLECTIBLE:
         raise ValueError("A assinatura não está em estado cobravel")
 
-    subtotal_amount = amount_for_plan(subscription.plan, subscription.billing_cycle)
+    subtotal_amount = amount_for_subscription(subscription, subscription.billing_cycle)
     if subtotal_amount <= 0:
         raise ValueError("Plano gratuito não exige fatura de renovação")
 
@@ -488,6 +506,7 @@ def apply_invoice_status(
         end = add_billing_cycle(start, invoice.billing_cycle)
 
         invoice.status = "PAID"
+        invoice.provider_status = invoice.provider_status or "approved"
         invoice.paid_at = now
         invoice.failed_at = None
         invoice.failure_reason = None
@@ -518,6 +537,9 @@ def apply_invoice_status(
                 ))
 
         subscription.plan_id = invoice.plan_id or subscription.plan_id
+        target_plan = invoice.plan or db.query(Plan).filter(Plan.id == subscription.plan_id).first()
+        if target_plan and (invoice.invoice_type == "PLAN_CHANGE" or subscription.commercial_terms_at is None):
+            snapshot_subscription_terms(subscription, target_plan, now=now)
         subscription.billing_cycle = invoice.billing_cycle
         subscription.status = "ACTIVE"
         subscription.current_period_start = start
@@ -536,6 +558,7 @@ def apply_invoice_status(
 
     elif status == "FAILED":
         invoice.status = "FAILED"
+        invoice.provider_status = invoice.provider_status or "rejected"
         invoice.failed_at = now
         invoice.failure_reason = failure_reason or "Pagamento não confirmado"
         if subscription and invoice.invoice_type == "RENEWAL":
@@ -547,6 +570,7 @@ def apply_invoice_status(
 
     elif status == "CANCELED":
         invoice.status = "CANCELED"
+        invoice.provider_status = invoice.provider_status or "cancelled"
         invoice.failure_reason = failure_reason
 
     else:  # PENDING, útil para reabrir uma tentativa manual que falhou.
@@ -596,7 +620,6 @@ def process_due_billing(db: Session, *, now: datetime | None = None) -> dict:
     """
     now = aware(now) or utcnow()
     lead_until = now + timedelta(days=settings.billing_invoice_lead_days)
-    grace = timedelta(days=settings.billing_grace_days)
 
     stats = {
         "processed": 0,
@@ -639,7 +662,7 @@ def process_due_billing(db: Session, *, now: datetime | None = None) -> dict:
             continue
 
         try:
-            amount = amount_for_plan(subscription.plan, subscription.billing_cycle)
+            amount = amount_for_subscription(subscription, subscription.billing_cycle)
         except ValueError:
             continue
 
@@ -672,7 +695,10 @@ def process_due_billing(db: Session, *, now: datetime | None = None) -> dict:
                 subscription.provider_status = "AWAITING_PAYMENT"
                 subscription.updated_at = now
                 stats["past_due"] += 1
-            if due_point + grace <= now:
+            grace_days = subscription.grace_days_snapshot
+            if grace_days is None:
+                grace_days = getattr(subscription.plan, "grace_days", settings.billing_grace_days)
+            if due_point + timedelta(days=int(grace_days or 0)) <= now:
                 subscription.status = "EXPIRED"
                 subscription.provider_status = "EXPIRED"
                 subscription.next_billing_at = None

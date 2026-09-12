@@ -8,7 +8,7 @@ from ..dependencies import get_current_store_id, get_current_super_admin
 from ..models import Plan, Store, Subscription, User
 from ..schemas.subscriptions import PlanCreate, PlanUpdate, StoreSubscriptionUpdate
 from ..services.billing_service import add_billing_cycle
-from ..services.subscription_service import plan_context
+from ..services.subscription_service import plan_context, snapshot_subscription_terms
 
 public_router = APIRouter(prefix="/api", tags=["plans-public"])
 admin_router = APIRouter(prefix="/api/admin", tags=["subscriptions-admin"])
@@ -27,6 +27,11 @@ def _plan_dict(plan: Plan):
         "features": plan.features or {},
         "is_active": plan.is_active,
         "sort_order": plan.sort_order,
+        "trial_days": plan.trial_days,
+        "grace_days": plan.grace_days,
+        "is_public": plan.is_public,
+        "is_featured": plan.is_featured,
+        "badge": plan.badge,
     }
 
 
@@ -54,7 +59,7 @@ def _subscription_dict(row: Subscription):
 
 @public_router.get("/plans")
 def public_plans(db: Session = Depends(get_db)):
-    plans = db.query(Plan).filter(Plan.is_active.is_(True)).order_by(Plan.sort_order, Plan.id).all()
+    plans = db.query(Plan).filter(Plan.is_active.is_(True), Plan.is_public.is_(True)).order_by(Plan.sort_order, Plan.id).all()
     return [_plan_dict(plan) for plan in plans]
 
 
@@ -82,7 +87,10 @@ def create_plan(
 ):
     if db.query(Plan.id).filter(Plan.code == data.code).first():
         raise HTTPException(status_code=409, detail="Já existe um plano com este código")
-    plan = Plan(**data.model_dump())
+    payload = data.model_dump()
+    if payload.get("is_featured"):
+        db.query(Plan).filter(Plan.is_featured.is_(True)).update({"is_featured": False}, synchronize_session=False)
+    plan = Plan(**payload)
     db.add(plan)
     db.commit()
     db.refresh(plan)
@@ -99,7 +107,10 @@ def update_plan(
     plan = db.query(Plan).filter(Plan.id == plan_id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Plano não encontrado")
-    for key, value in data.model_dump(exclude_unset=True).items():
+    payload = data.model_dump(exclude_unset=True)
+    if payload.get("is_featured") is True:
+        db.query(Plan).filter(Plan.id != plan_id, Plan.is_featured.is_(True)).update({"is_featured": False}, synchronize_session=False)
+    for key, value in payload.items():
         setattr(plan, key, value)
     db.commit()
     db.refresh(plan)
@@ -167,6 +178,7 @@ def set_store_subscription(
         created_at=now,
         updated_at=now,
     )
+    snapshot_subscription_terms(subscription, plan, now=now)
     if data.status == "CANCELED":
         subscription.canceled_at = now
     db.add(subscription)

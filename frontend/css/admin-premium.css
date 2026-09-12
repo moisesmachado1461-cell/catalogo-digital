@@ -180,3 +180,22 @@ body:has(#adminView:not(.hidden)){
 .admin-shell.sidebar-collapsed > .sidebar-collapse-btn{left:47px}
 @media(max-width:1180px) and (min-width:981px){.sidebar-collapse-btn{left:228px}.admin-shell.sidebar-collapsed > .sidebar-collapse-btn{left:47px}}
 @media(max-width:980px){.sidebar-collapse-btn{display:none!important}.admin-shell.sidebar-collapsed{grid-template-columns:1fr}.admin-shell.sidebar-collapsed .admin-sidebar-premium{padding:20px 16px 16px;overflow:auto}.admin-shell.sidebar-collapsed .sidebar-brand>span:last-child{display:grid!important}.admin-shell.sidebar-collapsed .side-store{display:grid!important}.admin-shell.sidebar-collapsed .side-menu{display:grid!important}.admin-shell.sidebar-collapsed .sidebar-footer{display:block!important}}
+
+/* Fase 24.7 — planos comerciais + checkout Pix */
+.billing-choice-card{position:relative;overflow:hidden}
+.billing-choice-card.is-featured{border-color:color-mix(in srgb,var(--brand) 42%,var(--line));box-shadow:0 14px 32px color-mix(in srgb,var(--brand) 10%,transparent)}
+.billing-plan-badge{justify-self:start;display:inline-flex;align-items:center;min-height:25px;padding:4px 9px;border-radius:999px;background:color-mix(in srgb,var(--brand) 11%,#fff);border:1px solid color-mix(in srgb,var(--brand) 22%,var(--line));color:color-mix(in srgb,var(--brand) 84%,#172033);font-size:.65rem;font-weight:900;letter-spacing:.015em}
+.billing-choice-card .btn:disabled{cursor:not-allowed;opacity:.56;transform:none!important;box-shadow:none!important}
+.billing-pix-shell{display:grid;gap:18px}
+.billing-pix-status{display:flex;align-items:center;gap:13px;padding:16px;border:1px solid color-mix(in srgb,var(--brand) 18%,var(--line));border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 7%,#fff),#fff)}
+.billing-pix-status-icon{flex:0 0 auto;width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:var(--brand);color:#fff;font-weight:950;font-size:.78rem;box-shadow:0 10px 26px color-mix(in srgb,var(--brand) 24%,transparent)}
+.billing-pix-status h3,.billing-pix-status p{margin:0}.billing-pix-status h3{margin-top:3px;font-size:1.12rem}.billing-pix-status p{margin-top:4px;color:var(--muted);font-size:.78rem;line-height:1.45}
+.billing-pix-content{display:grid;grid-template-columns:210px minmax(0,1fr);gap:18px;align-items:start}
+.billing-pix-qr{display:block;width:210px;aspect-ratio:1;object-fit:contain;border:1px solid var(--line);border-radius:18px;padding:10px;background:#fff;box-shadow:var(--shadow-xs)}
+.billing-pix-payment-data{display:grid;gap:10px}.billing-pix-payment-data>label{font-size:.72rem;font-weight:850;color:var(--text)}.billing-pix-payment-data>small{color:var(--muted);line-height:1.45}
+.billing-pix-value{display:flex;justify-content:space-between;align-items:end;padding-bottom:10px;border-bottom:1px solid var(--line)}.billing-pix-value span{color:var(--muted);font-size:.72rem}.billing-pix-value strong{font-size:1.35rem;letter-spacing:-.04em}
+.billing-pix-copy{display:grid;gap:8px}.billing-pix-copy textarea{min-height:80px;resize:none;font-size:.68rem;line-height:1.35;word-break:break-all}
+.billing-pix-success-card{display:grid;gap:4px;padding:18px;border-radius:17px;background:#ecfdf3;border:1px solid #abefc6;color:#067647}.billing-pix-success-card b{font-size:1rem}.billing-pix-success-card span{font-size:.78rem}
+.billing-pix-shell.is-paid .billing-pix-status{border-color:#abefc6;background:#ecfdf3}.billing-pix-shell.is-paid .billing-pix-status-icon{background:#079455}
+.billing-pix-shell.is-failed .billing-pix-status{border-color:#fecdca;background:#fef3f2}.billing-pix-shell.is-failed .billing-pix-status-icon{background:#d92d20}
+@media(max-width:680px){.billing-pix-content{grid-template-columns:1fr}.billing-pix-qr{width:min(240px,100%);justify-self:center}.billing-pix-copy .btn{width:100%}}

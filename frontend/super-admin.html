@@ -370,7 +370,11 @@
       <div class="field"><label>Nome</label><input class="input" name="name" required></div>
       <div class="field"><label>Código</label><input class="input" name="code" required placeholder="BASICO"></div>
       <div class="field"><label>Preço mensal</label><input class="input" name="monthly_price" type="number" min="0" step="0.01" value="0"></div>
-      <div class="field"><label>Preço anual</label><input class="input" name="yearly_price" type="number" min="0" step="0.01"></div>
+      <div class="field"><label>Preço anual <small>(opcional)</small></label><input class="input" name="yearly_price" type="number" min="0" step="0.01"></div>
+      <div class="field"><label>Dias de teste grátis</label><input class="input" name="trial_days" type="number" min="0" max="90" value="7"></div>
+      <div class="field"><label>Tolerância após vencimento</label><input class="input" name="grace_days" type="number" min="0" max="60" value="5"></div>
+      <div class="field"><label>Selo / destaque</label><input class="input" name="badge" maxlength="60" placeholder="Ex.: Mais escolhido"></div>
+      <div class="field"><label>Ordem de exibição</label><input class="input" name="sort_order" type="number" min="0" value="0"></div>
       <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3"></textarea></div>
       <div class="field full super-form-divider"><span>Limites do plano <small>(-1 = ilimitado)</small></span></div>
       <div class="field"><label>Produtos</label><input class="input" name="limit_products" type="number" value="20"></div>
@@ -384,7 +388,10 @@
       <div class="field checkbox-field"><label><input type="checkbox" name="feature_priority_support"> Suporte prioritário</label></div>
       <div class="field checkbox-field"><label><input type="checkbox" name="feature_custom_domain"> Domínio personalizado</label></div>
       <div class="field checkbox-field"><label><input type="checkbox" name="feature_online_payments"> Pagamentos online</label></div>
+      <div class="field full super-form-divider"><span>Disponibilidade comercial</span></div>
       <div class="field checkbox-field"><label><input type="checkbox" name="is_active" checked> Plano ativo</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="is_public" checked> Disponível para contratação</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="is_featured"> Destacar como recomendado</label></div>
       <div class="field full"><button class="btn primary super-modal-submit" type="submit">Salvar plano</button></div>
     </form>
   </div>

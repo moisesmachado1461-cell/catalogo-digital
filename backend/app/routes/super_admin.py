@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -32,7 +32,7 @@ from ..schemas.super_admin import (
 )
 from ..security import create_access_token, hash_password, verify_password
 from ..utils.text import slugify
-from ..services.subscription_service import plan_context
+from ..services.subscription_service import plan_context, snapshot_subscription_terms
 from ..services.audit_service import write_audit
 
 router = APIRouter(prefix="/api/super-admin", tags=["super-admin"])
@@ -412,17 +412,26 @@ def create_store(
         if plan:
             from datetime import datetime, timezone
             now = datetime.now(timezone.utc)
-            db.add(Subscription(
+            trial_days = int(getattr(plan, "trial_days", 0) or 0)
+            trial_end = now + timedelta(days=trial_days) if trial_days > 0 and Decimal(plan.monthly_price or 0) > 0 else None
+            subscription = Subscription(
                 store_id=store.id,
                 plan_id=plan.id,
-                status="ACTIVE",
+                status="TRIAL" if trial_end else "ACTIVE",
                 billing_cycle="MONTHLY",
                 starts_at=now,
                 current_period_start=now,
+                current_period_end=trial_end,
+                trial_ends_at=trial_end,
                 provider="MANUAL",
+                provider_status="TRIAL" if trial_end else "MANUAL_ACTIVE",
+                auto_renew=False,
+                next_billing_at=trial_end,
                 created_at=now,
                 updated_at=now,
-            ))
+            )
+            snapshot_subscription_terms(subscription, plan, now=now)
+            db.add(subscription)
         db.commit()
     except Exception:
         db.rollback()

@@ -1,11 +1,18 @@
+import hashlib
+import json
+import uuid
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from ..billing.registry import provider_statuses
+from ..billing.mercado_pago import MercadoPagoError, MercadoPagoGateway
+from ..billing.registry import get_gateway, provider_statuses
+from ..config import settings
 from ..database import get_db
 from ..dependencies import get_current_store_admin, get_current_store_id, get_current_super_admin
-from ..models import BillingCoupon, BillingGatewayPrice, Plan, User
+from ..models import BillingCoupon, BillingGatewayPrice, BillingWebhookEvent, Plan, SubscriptionInvoice, User
 from ..schemas.billing import (
     AdminPlanChangeRequest,
     BillingCouponCreate,
@@ -15,6 +22,7 @@ from ..schemas.billing import (
     GatewayPriceUpdate,
     InvoiceStatusUpdate,
     PlanChangeInvoiceCreate,
+    PixCheckoutCreate,
     RenewalInvoiceCreate,
     SubscriptionCancelRequest,
 )
@@ -40,6 +48,7 @@ from ..services.billing_service import (
     validate_billing_coupon,
 )
 
+public_router = APIRouter(prefix="/api/billing", tags=["subscription-billing-webhooks"])
 admin_router = APIRouter(prefix="/api/admin/billing", tags=["subscription-billing-admin"])
 super_router = APIRouter(prefix="/api/super-admin/billing", tags=["subscription-billing-super-admin"])
 
@@ -95,7 +104,7 @@ def admin_available_plans(
     _store_id: int = Depends(get_current_store_id),
     db: Session = Depends(get_db),
 ):
-    plans = db.query(Plan).filter(Plan.is_active.is_(True)).order_by(Plan.sort_order, Plan.id).all()
+    plans = db.query(Plan).filter(Plan.is_active.is_(True), Plan.is_public.is_(True)).order_by(Plan.sort_order, Plan.id).all()
     return [
         {
             "id": plan.id,
@@ -106,6 +115,10 @@ def admin_available_plans(
             "yearly_price": plan.yearly_price,
             "limits": plan.limits or {},
             "features": plan.features or {},
+            "trial_days": plan.trial_days,
+            "grace_days": plan.grace_days,
+            "is_featured": plan.is_featured,
+            "badge": plan.badge,
         }
         for plan in plans
     ]
@@ -180,6 +193,331 @@ def admin_request_plan_change(
         "message": "Solicitação criada. O novo plano será ativado após a confirmação do pagamento.",
         "invoice": invoice_dict(row or invoice),
     }
+
+
+
+def _mercado_pago_gateway() -> MercadoPagoGateway:
+    gateway = get_gateway("MERCADO_PAGO")
+    if not isinstance(gateway, MercadoPagoGateway) or not gateway.pix_ready:
+        raise HTTPException(
+            status_code=503,
+            detail="Pix do Mercado Pago ainda não está configurado. Defina as credenciais seguras no Render.",
+        )
+    return gateway
+
+
+def _pix_invoice_payload(invoice: SubscriptionInvoice, *, include_qr: bool = True) -> dict:
+    payload = invoice_dict(invoice)
+    payload.update({
+        "pix_qr_code": invoice.pix_qr_code if include_qr else None,
+        "pix_qr_code_base64": invoice.pix_qr_code_base64 if include_qr else None,
+        "pix_ticket_url": invoice.checkout_url,
+    })
+    return payload
+
+
+def _sync_mp_payment(db: Session, invoice: SubscriptionInvoice, payment: dict) -> SubscriptionInvoice:
+    payment_id = str(payment.get("id") or "")
+    expected_reference = f"saas_invoice_{invoice.id}"
+    if payment.get("external_reference") != expected_reference:
+        raise ValueError("Referência do pagamento não corresponde à fatura")
+    if payment_id and invoice.external_payment_id and payment_id != str(invoice.external_payment_id):
+        raise ValueError("Pagamento não corresponde à fatura")
+
+    amount = Decimal(str(payment.get("transaction_amount") or "0")).quantize(Decimal("0.01"))
+    expected_amount = Decimal(invoice.amount or 0).quantize(Decimal("0.01"))
+    if amount != expected_amount:
+        raise ValueError("Valor confirmado pelo gateway diverge da fatura")
+    currency = str(payment.get("currency_id") or invoice.currency or "BRL").upper()
+    if currency != str(invoice.currency or "BRL").upper():
+        raise ValueError("Moeda do pagamento diverge da fatura")
+    method = str(payment.get("payment_method_id") or "").lower()
+    if method and method != "pix":
+        raise ValueError("A fatura Pix recebeu um meio de pagamento inesperado")
+
+    invoice.external_payment_id = payment_id or invoice.external_payment_id
+    mp_status = str(payment.get("status") or "pending").lower()
+    invoice.provider_status = mp_status
+    invoice.provider = "MERCADO_PAGO"
+    invoice.payment_method = "PIX"
+
+    if mp_status == "approved":
+        apply_invoice_status(db, invoice, new_status="PAID", payment_method="PIX")
+        invoice.provider_status = mp_status
+    elif mp_status in {"rejected"} and invoice.status != "PAID":
+        if invoice.status != "FAILED":
+            apply_invoice_status(
+                db,
+                invoice,
+                new_status="FAILED",
+                payment_method="PIX",
+                failure_reason=str(payment.get("status_detail") or "Pagamento Pix rejeitado"),
+            )
+        invoice.provider_status = mp_status
+    elif mp_status in {"cancelled", "canceled"} and invoice.status != "PAID":
+        if invoice.status != "CANCELED":
+            apply_invoice_status(db, invoice, new_status="CANCELED", payment_method="PIX")
+        invoice.provider_status = mp_status
+    elif mp_status in {"refunded", "charged_back"}:
+        # Não removemos acesso automaticamente após uma reversão já paga: o Super Admin
+        # recebe o estado para revisão financeira, evitando cancelamento indevido.
+        invoice.provider_status = mp_status
+        if invoice.status == "PAID":
+            invoice.failure_reason = f"Pagamento {mp_status}; requer revisão do Super Admin."
+        else:
+            invoice.status = "CANCELED"
+    elif invoice.status != "PAID":
+        invoice.status = "PENDING"
+        invoice.failure_reason = None
+
+    db.flush()
+    return invoice
+
+
+@admin_router.post("/pix/checkout", status_code=status.HTTP_201_CREATED)
+def admin_create_pix_checkout(
+    data: PixCheckoutCreate,
+    request: Request,
+    current_user: User = Depends(get_current_store_admin),
+    db: Session = Depends(get_db),
+):
+    gateway = _mercado_pago_gateway()
+    store_id = current_user.store_id
+    subscription = get_store_subscription(db, store_id)
+    if not subscription:
+        raise HTTPException(status_code=404, detail="Assinatura atual não encontrada")
+    plan = ensure_plan(db, data.plan_id)
+    if not plan or not plan.is_active or not plan.is_public:
+        raise HTTPException(status_code=404, detail="Plano não encontrado ou indisponível")
+
+    same_plan_cycle = subscription.plan_id == plan.id and subscription.billing_cycle == data.billing_cycle
+    try:
+        if same_plan_cycle:
+            invoice = (
+                db.query(SubscriptionInvoice)
+                .filter(
+                    SubscriptionInvoice.store_id == store_id,
+                    SubscriptionInvoice.subscription_id == subscription.id,
+                    SubscriptionInvoice.invoice_type == "RENEWAL",
+                    SubscriptionInvoice.status.in_(["PENDING", "FAILED"]),
+                )
+                .order_by(SubscriptionInvoice.id.desc())
+                .first()
+            )
+            if not invoice and subscription.status == "TRIAL":
+                invoice, _created = create_renewal_invoice(
+                    db, subscription, due_at=subscription.trial_ends_at or subscription.current_period_end
+                )
+            if not invoice:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Seu plano atual já está ativo. A cobrança de renovação será liberada próximo ao vencimento.",
+                )
+        else:
+            invoice, _created = create_plan_change_invoice(
+                db,
+                subscription,
+                plan=plan,
+                billing_cycle=data.billing_cycle,
+                coupon_code=data.coupon_code,
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if Decimal(invoice.amount or 0) <= 0:
+        raise HTTPException(status_code=400, detail="Esta cobrança não exige Pix")
+    if invoice.status == "PAID":
+        raise HTTPException(status_code=409, detail="Esta fatura já foi paga")
+
+    # Reaproveita um Pix ainda pendente; retry de pagamento rejeitado recebe nova chave.
+    if invoice.external_payment_id and invoice.provider_status in {"pending", "in_process"} and invoice.pix_qr_code:
+        row = get_invoice(db, invoice.id) or invoice
+        return {"created": False, "invoice": _pix_invoice_payload(row)}
+
+    invoice.provider = "MERCADO_PAGO"
+    invoice.payment_method = "PIX"
+    if invoice.status == "FAILED":
+        invoice.status = "PENDING"
+        invoice.failed_at = None
+        invoice.failure_reason = None
+    if not invoice.provider_idempotency_key or invoice.provider_status in {"rejected", "cancelled", "canceled"}:
+        invoice.provider_idempotency_key = str(uuid.uuid4())
+        invoice.external_payment_id = None
+        invoice.external_invoice_id = None
+        invoice.pix_qr_code = None
+        invoice.pix_qr_code_base64 = None
+        invoice.checkout_url = None
+    db.commit()
+
+    document = data.payer_document
+    document_type = "CPF" if len(document) == 11 else "CNPJ"
+    notification_url = settings.mercado_pago_webhook_url
+    if not notification_url and settings.public_api_base_url:
+        notification_url = f"{settings.public_api_base_url}/api/billing/webhooks/mercado-pago"
+
+    try:
+        result = gateway.create_pix_payment(
+            amount=Decimal(invoice.amount),
+            description=f"Catálogo Digital - {plan.name}",
+            payer_email=data.payer_email,
+            document_type=document_type,
+            document_number=document,
+            external_reference=f"saas_invoice_{invoice.id}",
+            idempotency_key=invoice.provider_idempotency_key,
+            notification_url=notification_url,
+        )
+    except MercadoPagoError as exc:
+        invoice = get_invoice(db, invoice.id) or invoice
+        invoice.provider_status = "gateway_error"
+        invoice.failure_reason = str(exc)[:500]
+        db.commit()
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    invoice = get_invoice(db, invoice.id) or invoice
+    invoice.external_payment_id = result.payment_id
+    invoice.external_invoice_id = result.payment_id
+    invoice.provider_status = result.status
+    invoice.pix_qr_code = result.qr_code
+    invoice.pix_qr_code_base64 = result.qr_code_base64
+    invoice.checkout_url = result.ticket_url
+    try:
+        _sync_mp_payment(db, invoice, result.raw)
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=502, detail=f"Pagamento criado, mas a validação retornou erro: {exc}") from exc
+
+    _audit(
+        db,
+        request,
+        current_user,
+        action="ADMIN_PIX_CHECKOUT_CREATED",
+        store_id=store_id,
+        entity_type="subscription_invoice",
+        entity_id=invoice.id,
+        metadata={"plan_id": plan.id, "billing_cycle": data.billing_cycle, "provider": "MERCADO_PAGO"},
+    )
+    db.commit()
+    row = get_invoice(db, invoice.id) or invoice
+    return {"created": True, "invoice": _pix_invoice_payload(row)}
+
+
+@admin_router.get("/pix/invoices/{invoice_id}")
+def admin_refresh_pix_invoice(
+    invoice_id: int,
+    store_id: int = Depends(get_current_store_id),
+    db: Session = Depends(get_db),
+):
+    gateway = _mercado_pago_gateway()
+    invoice = get_invoice(db, invoice_id)
+    if not invoice or invoice.store_id != store_id:
+        raise HTTPException(status_code=404, detail="Fatura não encontrada")
+    if invoice.provider != "MERCADO_PAGO" or not invoice.external_payment_id:
+        return {"invoice": _pix_invoice_payload(invoice)}
+    try:
+        payment = gateway.get_payment(str(invoice.external_payment_id))
+        _sync_mp_payment(db, invoice, payment)
+        db.commit()
+    except MercadoPagoError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    row = get_invoice(db, invoice.id) or invoice
+    return {"invoice": _pix_invoice_payload(row)}
+
+
+@public_router.post("/webhooks/mercado-pago")
+async def mercado_pago_webhook(request: Request, db: Session = Depends(get_db)):
+    gateway = get_gateway("MERCADO_PAGO")
+    if not isinstance(gateway, MercadoPagoGateway) or not settings.mercado_pago_webhook_secret:
+        raise HTTPException(status_code=503, detail="Webhook Mercado Pago não configurado")
+
+    raw = await request.body()
+    try:
+        body = json.loads(raw.decode("utf-8")) if raw else {}
+    except Exception:
+        body = {}
+    resource_id = (
+        request.query_params.get("data.id")
+        or request.query_params.get("data_id")
+        or str((body.get("data") or {}).get("id") or "")
+    )
+    if not resource_id:
+        raise HTTPException(status_code=400, detail="Notificação sem identificador")
+
+    if not gateway.validate_webhook_signature(
+        x_signature=request.headers.get("x-signature"),
+        x_request_id=request.headers.get("x-request-id"),
+        data_id=resource_id,
+        secret=settings.mercado_pago_webhook_secret,
+    ):
+        raise HTTPException(status_code=401, detail="Assinatura do webhook inválida")
+
+    external_event_id = str(body.get("id") or request.headers.get("x-request-id") or f"payment:{resource_id}")
+    existing = db.query(BillingWebhookEvent).filter(
+        BillingWebhookEvent.provider == "MERCADO_PAGO",
+        BillingWebhookEvent.external_event_id == external_event_id,
+    ).first()
+    if existing and existing.status in {"PROCESSED", "IGNORED"}:
+        return {"ok": True, "duplicate": True}
+
+    event = existing or BillingWebhookEvent(
+        provider="MERCADO_PAGO",
+        external_event_id=external_event_id,
+        event_type=str(body.get("type") or body.get("action") or "payment"),
+        resource_id=resource_id,
+        status="RECEIVED",
+        payload_hash=hashlib.sha256(raw).hexdigest(),
+    )
+    if existing:
+        event.status = "RECEIVED"
+        event.error_message = None
+        event.payload_hash = hashlib.sha256(raw).hexdigest()
+        event.resource_id = resource_id
+    else:
+        db.add(event)
+    db.flush()
+
+    if str(body.get("type") or "payment") not in {"payment", ""}:
+        event.status = "IGNORED"
+        db.commit()
+        return {"ok": True, "ignored": True}
+
+    try:
+        payment = gateway.get_payment(resource_id)
+        external_reference = str(payment.get("external_reference") or "")
+        invoice = None
+        if external_reference.startswith("saas_invoice_"):
+            try:
+                invoice_id = int(external_reference.rsplit("_", 1)[-1])
+            except ValueError:
+                invoice_id = 0
+            if invoice_id:
+                invoice = get_invoice(db, invoice_id)
+        if not invoice:
+            invoice = db.query(SubscriptionInvoice).filter(
+                SubscriptionInvoice.provider == "MERCADO_PAGO",
+                SubscriptionInvoice.external_payment_id == resource_id,
+            ).first()
+        if not invoice:
+            event.status = "IGNORED"
+            event.error_message = "Pagamento sem fatura SaaS correspondente"
+        else:
+            _sync_mp_payment(db, invoice, payment)
+            event.status = "PROCESSED"
+    except (MercadoPagoError, ValueError) as exc:
+        from datetime import datetime, timezone
+        event.status = "FAILED"
+        event.error_message = str(exc)[:1000]
+        event.processed_at = datetime.now(timezone.utc)
+        db.commit()
+        # Resposta não-2xx permite que o provedor repita uma notificação transitória.
+        raise HTTPException(status_code=502, detail="Falha temporária ao processar a notificação") from exc
+
+    from datetime import datetime, timezone
+    event.processed_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"ok": True}
 
 
 @super_router.get("/providers")

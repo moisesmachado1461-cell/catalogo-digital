@@ -18,6 +18,7 @@ from .observability import configure_observability
 from .routes.auth import router as auth_router
 from .routes.business import router as business_router
 from .routes.billing import admin_router as billing_admin_router
+from .routes.billing import public_router as billing_public_router
 from .routes.billing import super_router as billing_super_router
 from .routes.catalog import admin_router as catalog_admin_router
 from .routes.catalog import public_router as catalog_public_router
@@ -79,6 +80,7 @@ app.include_router(reports_admin_router)
 app.include_router(plans_public_router)
 app.include_router(subscriptions_admin_router)
 app.include_router(subscriptions_super_router)
+app.include_router(billing_public_router)
 app.include_router(billing_admin_router)
 app.include_router(billing_super_router)
 app.include_router(super_admin_router)

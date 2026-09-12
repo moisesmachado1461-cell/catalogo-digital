@@ -14,6 +14,11 @@ class PlanCreate(BaseModel):
     features: dict = Field(default_factory=dict)
     is_active: bool = True
     sort_order: int = 0
+    trial_days: int = Field(default=7, ge=0, le=90)
+    grace_days: int = Field(default=5, ge=0, le=60)
+    is_public: bool = True
+    is_featured: bool = False
+    badge: str | None = Field(default=None, max_length=60)
 
     @field_validator("code")
     @classmethod
@@ -30,6 +35,11 @@ class PlanUpdate(BaseModel):
     features: dict | None = None
     is_active: bool | None = None
     sort_order: int | None = None
+    trial_days: int | None = Field(default=None, ge=0, le=90)
+    grace_days: int | None = Field(default=None, ge=0, le=60)
+    is_public: bool | None = None
+    is_featured: bool | None = None
+    badge: str | None = Field(default=None, max_length=60)
 
 
 class StoreSubscriptionUpdate(BaseModel):

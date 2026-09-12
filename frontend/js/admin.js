@@ -22,6 +22,7 @@ let paymentSettings = null;
 let subscriptionInfo = null;
 let billingOverview = null;
 let availableBillingPlans = [];
+let pixPollTimer = null;
 let privacyRequests = [];
 let auditLogs = [];
 let reportOverview = null;
@@ -248,6 +249,7 @@ function openModal(title, eyebrow, html) {
 }
 
 function closeModal() {
+  if (pixPollTimer) { clearInterval(pixPollTimer); pixPollTimer = null; }
   $('#adminModal').classList.remove('open');
   $('#adminModal').setAttribute('aria-hidden', 'true');
   $('#modalContent').innerHTML = '';
@@ -669,6 +671,8 @@ function renderSubscription() {
   const latestInvoice = invoices[0] || null;
   const automaticProvider = (billingOverview?.providers || []).find(item => item.code === sub?.provider && item.configured);
   const paymentMethod = latestInvoice?.payment_method || (automaticProvider ? automaticProvider.display_name : 'Ainda não configurada');
+  const pixProvider = (billingOverview?.providers || []).find(item => item.code === 'MERCADO_PAGO');
+  const pixReady = Boolean(pixProvider?.available_for_checkout);
 
   root.innerHTML = `<div class="billing-admin-hero">
     <div class="billing-plan-card">
@@ -695,7 +699,7 @@ function renderSubscription() {
     <div class="panel-soft billing-feature-panel">
       <div class="billing-card-title"><div><span class="eyebrow">RECURSOS</span><h3>O que está incluído</h3></div></div>
       <div class="feature-chips">${Object.entries(featureLabels).map(([key,label]) => `<span class="feature-chip ${features[key] ? 'enabled' : 'disabled'}">${features[key] ? '✓' : '—'} ${escapeHtml(label)}</span>`).join('')}</div>
-      <p class="section-copy billing-help-copy">Você já pode escolher outro plano e aplicar um cupom promocional. Enquanto o pagamento automático não estiver conectado, a ativação ocorre após a confirmação da cobrança.</p>
+      <p class="section-copy billing-help-copy">Você pode escolher outro plano, aplicar cupom e pagar por Pix. ${pixReady ? 'A confirmação do Mercado Pago ativa o plano automaticamente.' : 'O Pix aparecerá assim que as credenciais do Mercado Pago forem configuradas com segurança.'}</p>
     </div>
     <div class="panel-soft billing-summary-panel">
       <div class="billing-card-title"><div><span class="eyebrow">COBRANÇA</span><h3>Resumo financeiro</h3></div></div>
@@ -713,11 +717,17 @@ function renderSubscription() {
     <div class="billing-plan-choice-grid">${availableBillingPlans.map(candidate => {
       const isCurrent = Number(candidate.id) === Number(plan.id);
       const featureCount = Object.values(candidate.features || {}).filter(Boolean).length;
-      return `<article class="billing-choice-card ${isCurrent ? 'is-current' : ''}">
+      const hasPendingRenewal = isCurrent && invoices.some(invoice => invoice.invoice_type === 'RENEWAL' && ['PENDING','FAILED'].includes(String(invoice.status || '').toUpperCase()));
+      const isTrialCurrent = isCurrent && String(sub?.status || '').toUpperCase() === 'TRIAL';
+      const canChangeCurrentCycle = isCurrent && candidate.yearly_price != null && cycle !== 'YEARLY';
+      const buttonEnabled = pixReady && (!isCurrent || canChangeCurrentCycle || hasPendingRenewal || isTrialCurrent);
+      const buttonLabel = !pixReady ? 'Pix em configuração' : hasPendingRenewal ? 'Pagar renovação com Pix' : isTrialCurrent ? 'Garantir plano com Pix' : isCurrent ? (canChangeCurrentCycle ? 'Mudar ciclo com Pix' : 'Plano atual') : 'Pagar com Pix';
+      return `<article class="billing-choice-card ${isCurrent ? 'is-current' : ''} ${candidate.is_featured ? 'is-featured' : ''}">
+        ${candidate.badge ? `<span class="billing-plan-badge">${escapeHtml(candidate.badge)}</span>` : ''}
         <div class="billing-choice-head"><div><b>${escapeHtml(candidate.name)}</b><small>${escapeHtml(candidate.description || 'Plano Catálogo Digital')}</small></div>${isCurrent ? '<span class="status CONFIRMADO">Atual</span>' : ''}</div>
         <div class="billing-choice-price"><strong>${money(candidate.monthly_price)}</strong><span>/mês</span></div>
-        <div class="billing-choice-meta"><span>${featureCount} recurso(s)</span><span>${candidate.yearly_price != null ? `${money(candidate.yearly_price)}/ano` : 'Mensal'}</span></div>
-        <button class="btn ${isCurrent ? 'ghost' : 'primary'} small" type="button" onclick="openPlanCheckout(${candidate.id})">${isCurrent ? 'Alterar ciclo / usar cupom' : 'Escolher plano'}</button>
+        <div class="billing-choice-meta"><span>${featureCount} recurso(s)</span><span>${Number(candidate.trial_days || 0)} dia(s) grátis</span><span>${candidate.yearly_price != null ? `${money(candidate.yearly_price)}/ano` : 'Mensal'}</span></div>
+        <button class="btn ${isCurrent ? 'ghost' : 'primary'} small" type="button" ${buttonEnabled ? `onclick="openPlanCheckout(${candidate.id})"` : 'disabled'}>${buttonLabel}</button>
       </article>`;
     }).join('') || '<div class="empty">Nenhum plano disponível.</div>'}</div>
   </div>
@@ -748,16 +758,62 @@ function billingCheckoutPreview(plan, cycle, preview = null) {
   </div>`;
 }
 
+function pixStatusLabel(status) {
+  const value = String(status || 'PENDING').toUpperCase();
+  return ({PENDING:'Aguardando pagamento',PAID:'Pagamento confirmado',FAILED:'Pagamento recusado',CANCELED:'Pagamento cancelado'})[value] || value;
+}
+
+function renderPixCheckout(invoice) {
+  if (!invoice) return;
+  const paid = String(invoice.status || '').toUpperCase() === 'PAID';
+  const failed = ['FAILED','CANCELED'].includes(String(invoice.status || '').toUpperCase());
+  const qrImage = invoice.pix_qr_code_base64 ? `<img class="billing-pix-qr" src="data:image/png;base64,${escapeHtml(invoice.pix_qr_code_base64)}" alt="QR Code Pix">` : '';
+  openModal(paid ? 'Pagamento confirmado' : 'Pague com Pix', 'Assinatura', `<div class="billing-pix-shell ${paid ? 'is-paid' : failed ? 'is-failed' : ''}">
+    <div class="billing-pix-status"><span class="billing-pix-status-icon">${paid ? '✓' : failed ? '!' : 'PIX'}</span><div><span class="eyebrow">${paid ? 'TUDO CERTO' : 'PAGAMENTO SEGURO'}</span><h3>${escapeHtml(pixStatusLabel(invoice.status))}</h3><p>${paid ? 'Seu plano foi atualizado automaticamente.' : failed ? 'Você pode fechar e gerar um novo Pix.' : 'Abra seu banco, escaneie o QR Code ou use o código Copia e Cola.'}</p></div></div>
+    ${!paid && !failed ? `<div class="billing-pix-content">${qrImage}<div class="billing-pix-payment-data"><div class="billing-pix-value"><span>Valor</span><strong>${money(invoice.amount)}</strong></div>${invoice.pix_qr_code ? `<label>Código Pix Copia e Cola</label><div class="billing-pix-copy"><textarea class="textarea" id="pixCopyCode" readonly>${escapeHtml(invoice.pix_qr_code)}</textarea><button class="btn primary" type="button" id="copyPixCodeBtn">Copiar Pix</button></div>` : '<div class="notice">QR Code em processamento. Aguarde alguns segundos.</div>'}<small>A confirmação é automática. Esta tela verifica o pagamento enquanto estiver aberta.</small></div></div>` : ''}
+    ${paid ? '<div class="billing-pix-success-card"><b>Assinatura liberada</b><span>Você já pode continuar usando os recursos do plano.</span></div>' : ''}
+    <div class="form-actions"><button class="btn ${paid ? 'primary' : 'ghost'}" type="button" onclick="closeModal()">${paid ? 'Continuar' : 'Fechar'}</button></div>
+  </div>`);
+  const copyBtn = $('#copyPixCodeBtn');
+  if (copyBtn) copyBtn.onclick = async () => {
+    try { await navigator.clipboard.writeText(invoice.pix_qr_code || ''); showToast('Código Pix copiado.'); }
+    catch (_) { const field=$('#pixCopyCode'); field?.select(); document.execCommand('copy'); showToast('Código Pix copiado.'); }
+  };
+}
+
+function startPixPolling(invoiceId) {
+  if (pixPollTimer) clearInterval(pixPollTimer);
+  pixPollTimer = setInterval(async () => {
+    if (!$('#adminModal')?.classList.contains('open')) { clearInterval(pixPollTimer); pixPollTimer = null; return; }
+    try {
+      const result = await api(`/api/admin/billing/pix/invoices/${invoiceId}`);
+      const invoice = result?.invoice;
+      if (!invoice) return;
+      const status = String(invoice.status || '').toUpperCase();
+      if (status === 'PAID' || status === 'FAILED' || status === 'CANCELED') {
+        clearInterval(pixPollTimer); pixPollTimer = null;
+        renderPixCheckout(invoice);
+        await loadSubscription();
+        if (status === 'PAID') showToast('Pix confirmado e plano atualizado.');
+      }
+    } catch (_) { /* mantém a tela; o webhook continua independente */ }
+  }, 5000);
+}
+
 window.openPlanCheckout = function openPlanCheckout(planId) {
   const plan = availableBillingPlans.find(item => Number(item.id) === Number(planId));
   if (!plan) return showToast('Plano não encontrado.', 'error');
-  openModal('Escolher plano', 'Assinatura', `<form id="planCheckoutForm" class="form-grid modal-form">
-    <div class="field full"><div class="billing-checkout-plan-title"><span class="eyebrow">${escapeHtml(plan.code || 'PLANO')}</span><h3>${escapeHtml(plan.name)}</h3><p>${escapeHtml(plan.description || 'Plano Catálogo Digital')}</p></div></div>
+  const pixReady = Boolean((billingOverview?.providers || []).find(item => item.code === 'MERCADO_PAGO')?.available_for_checkout);
+  if (!pixReady) return showToast('O Pix do Mercado Pago ainda está sendo configurado.', 'error');
+  openModal('Pagar plano com Pix', 'Assinatura', `<form id="planCheckoutForm" class="form-grid modal-form">
+    <div class="field full"><div class="billing-checkout-plan-title"><span class="eyebrow">${escapeHtml(plan.badge || plan.code || 'PLANO')}</span><h3>${escapeHtml(plan.name)}</h3><p>${escapeHtml(plan.description || 'Plano Catálogo Digital')}</p></div></div>
     <div class="field"><label>Ciclo de cobrança</label><select class="select" name="billing_cycle"><option value="MONTHLY">Mensal — ${money(plan.monthly_price)}</option>${plan.yearly_price != null ? `<option value="YEARLY">Anual — ${money(plan.yearly_price)}</option>` : ''}</select></div>
     <div class="field"><label>Cupom de desconto</label><div class="billing-coupon-input"><input class="input" name="coupon_code" maxlength="40" placeholder="Ex.: PROFISSIONAL20"><button class="btn ghost small" type="button" id="applyBillingCouponBtn">Aplicar</button></div></div>
+    <div class="field"><label>E-mail do pagador</label><input class="input" name="payer_email" type="email" required value="${escapeHtml(me?.email || '')}" autocomplete="email"></div>
+    <div class="field"><label>CPF ou CNPJ do pagador</label><input class="input" name="payer_document" inputmode="numeric" maxlength="18" required placeholder="Somente números"></div>
     <div id="billingCheckoutPreview" class="field full">${billingCheckoutPreview(plan, 'MONTHLY')}</div>
-    <div class="field full notice">A solicitação gera uma cobrança com o desconto. O novo plano é ativado quando o pagamento for confirmado. O gateway automático será conectado em uma etapa posterior.</div>
-    <div class="field full form-actions"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary" type="submit">Confirmar escolha</button></div>
+    <div class="field full notice">O Mercado Pago gera um QR Code e um Pix Copia e Cola. Assim que o pagamento for aprovado, o plano é ativado automaticamente.</div>
+    <div class="field full form-actions"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary" type="submit">Gerar Pix agora</button></div>
   </form>`);
   const form = $('#planCheckoutForm');
   let appliedPreview = null;
@@ -774,14 +830,20 @@ window.openPlanCheckout = function openPlanCheckout(planId) {
   };
   form.onsubmit = async event => {
     event.preventDefault();
+    const submit = form.querySelector('[type="submit"]');
+    if (submit) { submit.disabled = true; submit.textContent = 'Gerando Pix...'; }
     try {
-      const result = await api('/api/admin/billing/change-plan', {method:'POST', body:JSON.stringify({
-        plan_id:plan.id, billing_cycle:form.billing_cycle.value, coupon_code:form.coupon_code.value.trim() || null,
+      const result = await api('/api/admin/billing/pix/checkout', {method:'POST', body:JSON.stringify({
+        plan_id:plan.id,
+        billing_cycle:form.billing_cycle.value,
+        coupon_code:form.coupon_code.value.trim() || null,
+        payer_email:form.payer_email.value.trim(),
+        payer_document:form.payer_document.value.replace(/\D/g,''),
       })});
-      closeModal();
-      await loadSubscription();
-      showToast(result.message || 'Solicitação de plano criada.');
-    } catch (error) { showToast(error.message, 'error'); }
+      renderPixCheckout(result.invoice);
+      if (String(result.invoice?.status || '').toUpperCase() === 'PENDING') startPixPolling(result.invoice.id);
+      else await loadSubscription();
+    } catch (error) { showToast(error.message, 'error'); if (submit) { submit.disabled = false; submit.textContent = 'Gerar Pix agora'; } }
   };
 };
 

@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.6.3
+# Catálogo Digital — Fase 24.7.0
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.6.3 — Carrinho separado da vitrine pública**
+**24.7.0 — Planos dinâmicos + Pix imediato via Mercado Pago**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -41,7 +41,7 @@ A plataforma mantém separadas as duas áreas financeiras:
 - auditoria das operações financeiras;
 - script repetível para processamento do ciclo de cobrança.
 
-Nenhum banco/gateway externo é simulado nesta fase. Mercado Pago, Pix Automático e PicPay continuam desacoplados e serão conectados por adaptadores próprios quando houver credenciais elegíveis.
+A Fase 24.7 conecta o primeiro gateway real: Mercado Pago para Pix imediato da mensalidade SaaS. Pix Automático, PicPay e outros permanecem previstos pela arquitetura multi-gateway.
 
 ## Desenvolvimento local
 
@@ -83,7 +83,7 @@ backend/backups
 
 
 ## Fase 19.3 — Plano e cobrança
-O Admin possui visão detalhada da própria assinatura e o Super Admin possui uma Central de Cobrança operacional. O primeiro gateway automático real permanece desacoplado e será conectado depois.
+O Admin possui visão detalhada da própria assinatura e o Super Admin possui uma Central de Cobrança operacional. O primeiro gateway real, Mercado Pago via Pix imediato, é conectado na Fase 24.7.
 
 
 ## Fase 20 — Design System
@@ -241,3 +241,18 @@ Novo segmento comercial baseado no modelo Híbrido, preparado para negócios que
 ## Fase 24.6.3 — Carrinho separado da vitrine pública
 
 A vitrine de produtos passa a ocupar toda a largura útil da loja. O carrinho deixa de ocupar uma coluna fixa ao lado dos produtos e passa a ser acessado por um botão temático no topo, com ícone e contador de itens. Ao clicar, abre um drawer lateral responsivo para revisar itens e finalizar o pedido. O comportamento vale para desktop e celular, mantendo a temática de cores da loja e liberando mais espaço para o catálogo. Sem nova migration; backend em `24.6.3`.
+
+
+## Fase 24.7 — Planos dinâmicos + Pix imediato
+
+- três planos comerciais iniciais: Essencial R$ 49,90, Profissional R$ 89,90 e Premium R$ 149,90;
+- preços, limites, recursos, teste, tolerância, selo, destaque, ordem e disponibilidade editáveis pelo Super Admin;
+- plano Gratuito mantido apenas como contingência interna;
+- snapshot das condições comerciais protege assinantes existentes contra alterações silenciosas de preço;
+- Mercado Pago conectado para Pix imediato com QR Code e Copia e Cola;
+- idempotência, validação de webhook e reconciliação do pagamento antes de ativar o plano;
+- vitrine desktop com 3 produtos por linha;
+- tipografia mais robusta em Cliente, Admin e Super Admin;
+- migration `019_dynamic_plans_pix`; backend `24.7.0`.
+
+Veja `docs/FASE_24_7_PLANOS_PIX_MERCADO_PAGO.md`.

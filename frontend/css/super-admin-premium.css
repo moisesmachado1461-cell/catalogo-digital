@@ -104,3 +104,8 @@ body:has(#superView:not(.hidden)){background:#f5f7fb}
 .super-stats-premium .metric-revenue,.super-stats-premium .metric-receivable{--metric-accent:color-mix(in srgb,var(--brand2) 48%,#b45309)}
 .super-stats-premium .metric-late{--metric-accent:#b54708}
 .super-stats-premium .metric-appointments,.super-stats-premium .metric-admins{--metric-accent:color-mix(in srgb,var(--brand) 55%,#0369a1)}
+
+/* Fase 24.7 — edição comercial dos planos */
+.super-plan-card.is-featured{border-color:color-mix(in srgb,var(--brand) 38%,var(--line));box-shadow:0 16px 38px color-mix(in srgb,var(--brand) 10%,transparent)}
+.super-plan-badge{position:relative;z-index:1;justify-self:start;display:inline-flex;padding:5px 9px;border-radius:999px;background:color-mix(in srgb,var(--brand) 10%,#fff);border:1px solid color-mix(in srgb,var(--brand) 20%,var(--line));color:color-mix(in srgb,var(--brand) 84%,#172033);font-size:.64rem;font-weight:900}
+.super-plan-commercial{display:flex;gap:6px;flex-wrap:wrap}.super-plan-commercial span{padding:5px 8px;border-radius:9px;background:#fff;border:1px dashed #e4e7ec;color:#667085;font-size:.63rem;font-weight:700}

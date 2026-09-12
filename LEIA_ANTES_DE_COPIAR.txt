@@ -1,6 +1,12 @@
-CATÁLOGO DIGITAL — ATUALIZAÇÃO 24.6.3
+CATÁLOGO DIGITAL — ATUALIZAÇÃO 24.7.0
 
-Este pacote é incremental e não contém .env, .venv, banco, uploads, backups ou .git.
-Pode copiar todo o conteúdo para a pasta principal do projeto e substituir os arquivos existentes.
+Este é um pacote incremental seguro para copiar sobre sua pasta principal.
+Ele NÃO inclui .env real, .venv, banco SQLite, uploads, backups nem .git.
 
-Mudança principal: produtos em largura total + carrinho separado no topo e aberto em painel lateral.
+Depois de copiar, rode somente:
+python backend\scripts\phase24_5_release_gate.py
+
+Se o gate for aprovado, faça commit/push e aguarde o Render.
+As credenciais reais do Mercado Pago devem ser configuradas somente no Render, nunca neste ZIP ou no GitHub.
+
+Detalhes: INSTALAR_FASE_24_7.txt

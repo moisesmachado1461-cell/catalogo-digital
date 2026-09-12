@@ -25,6 +25,7 @@ from app.models import (
 )
 from app.security import hash_password
 from app.utils.text import slugify
+from app.services.subscription_service import snapshot_subscription_terms
 
 MODELS = [
     ("Varejo", "VAREJO", "Compra produtos", "COMPRAR", {"catalog": True, "cart": True, "checkout": True, "inventory": True, "payments": True}),
@@ -610,37 +611,38 @@ def seed_payment_settings(db, now):
 PLANS = [
     {
         "name": "Gratuito", "code": "GRATUITO",
-        "description": "Para começar e validar a loja com limites menores.",
-        "monthly_price": Decimal("0.00"), "yearly_price": Decimal("0.00"),
+        "description": "Plano interno de contingência da plataforma.",
+        "monthly_price": Decimal("0.00"), "yearly_price": None,
         "limits": {"products": 20, "services": 10, "professionals": 1},
         "features": {"coupons": False, "promotions": False, "custom_branding": False, "reports": False, "priority_support": False, "custom_domain": False, "online_payments": False},
-        "sort_order": 1,
+        "sort_order": 0, "trial_days": 0, "grace_days": 0, "is_public": False, "is_featured": False, "badge": None,
     },
     {
-        "name": "Básico", "code": "BASICO",
-        "description": "Para pequenos negócios que já atendem clientes pelo Catálogo Digital.",
-        "monthly_price": Decimal("29.90"), "yearly_price": Decimal("299.00"),
-        "limits": {"products": 100, "services": 30, "professionals": 3},
+        "name": "Essencial", "code": "ESSENCIAL",
+        "description": "Para pequenos negócios que querem vender e atender com uma presença digital profissional.",
+        "monthly_price": Decimal("49.90"), "yearly_price": None,
+        "limits": {"products": 150, "services": 40, "professionals": 4},
         "features": {"coupons": True, "promotions": False, "custom_branding": True, "reports": False, "priority_support": False, "custom_domain": False, "online_payments": False},
-        "sort_order": 2,
+        "sort_order": 1, "trial_days": 7, "grace_days": 5, "is_public": True, "is_featured": False, "badge": "Comece profissional",
     },
     {
         "name": "Profissional", "code": "PROFISSIONAL",
-        "description": "Para empresas em crescimento, com marketing e maior capacidade operacional.",
-        "monthly_price": Decimal("59.90"), "yearly_price": Decimal("599.00"),
-        "limits": {"products": 500, "services": 100, "professionals": 20},
+        "description": "Para empresas em crescimento que precisam de marketing, relatórios e maior capacidade operacional.",
+        "monthly_price": Decimal("89.90"), "yearly_price": None,
+        "limits": {"products": 600, "services": 150, "professionals": 20},
         "features": {"coupons": True, "promotions": True, "custom_branding": True, "reports": True, "priority_support": False, "custom_domain": False, "online_payments": True},
-        "sort_order": 3,
+        "sort_order": 2, "trial_days": 7, "grace_days": 5, "is_public": True, "is_featured": True, "badge": "Mais escolhido",
     },
     {
-        "name": "Empresa", "code": "EMPRESA",
-        "description": "Plano completo para operações maiores e necessidades avançadas.",
-        "monthly_price": Decimal("119.90"), "yearly_price": Decimal("1199.00"),
+        "name": "Premium", "code": "PREMIUM",
+        "description": "Para operações maiores que querem todos os recursos, limites amplos e atendimento prioritário.",
+        "monthly_price": Decimal("149.90"), "yearly_price": None,
         "limits": {"products": -1, "services": -1, "professionals": -1},
         "features": {"coupons": True, "promotions": True, "custom_branding": True, "reports": True, "priority_support": True, "custom_domain": True, "online_payments": True},
-        "sort_order": 4,
+        "sort_order": 3, "trial_days": 7, "grace_days": 7, "is_public": True, "is_featured": False, "badge": "Tudo liberado",
     },
 ]
+
 
 
 def seed_plans_and_subscriptions(db, now):
@@ -652,29 +654,24 @@ def seed_plans_and_subscriptions(db, now):
                 name=spec["name"], code=spec["code"], description=spec["description"],
                 monthly_price=spec["monthly_price"], yearly_price=spec["yearly_price"],
                 limits=spec["limits"], features=spec["features"], is_active=True,
-                sort_order=spec["sort_order"], created_at=now, updated_at=now,
+                sort_order=spec["sort_order"], trial_days=spec["trial_days"], grace_days=spec["grace_days"],
+                is_public=spec["is_public"], is_featured=spec["is_featured"], badge=spec["badge"],
+                created_at=now, updated_at=now,
             )
             db.add(plan); db.flush()
-        else:
-            plan.name = spec["name"]
-            plan.description = spec["description"]
-            plan.monthly_price = spec["monthly_price"]
-            plan.yearly_price = spec["yearly_price"]
-            plan.limits = spec["limits"]
-            plan.features = spec["features"]
-            plan.is_active = True
-            plan.sort_order = spec["sort_order"]
-            plan.updated_at = now
+        # Planos existentes são deliberadamente preservados: o Super Admin é a fonte de verdade comercial.
         plan_map[spec["code"]] = plan
 
     professional = plan_map["PROFISSIONAL"]
     for store in db.query(Store).all():
         has_any = db.query(Subscription.id).filter(Subscription.store_id == store.id).first()
         if not has_any:
-            db.add(Subscription(
+            subscription = Subscription(
                 store_id=store.id, plan_id=professional.id, status="ACTIVE", billing_cycle="MONTHLY",
                 starts_at=now, current_period_start=now, provider="MANUAL", created_at=now, updated_at=now,
-            ))
+            )
+            snapshot_subscription_terms(subscription, professional, now=now)
+            db.add(subscription)
     return plan_map
 
 def main():
@@ -753,7 +750,7 @@ def main():
         print("Aluga Fácil: admin@alugafacildemo.com / Admin@44556")
         print("Pagamentos: PIX manual, dinheiro, cartão no atendimento/entrega e WhatsApp")
         print("PIX demo do Mercado usa chave fictícia; configure sua chave real no painel antes de uso comercial")
-        print("Planos: Gratuito, Básico, Profissional e Empresa")
+        print("Planos: Essencial, Profissional e Premium (Gratuito interno de contingência)")
         print("Lojas existentes recebem o plano Profissional apenas se ainda não possuírem assinatura")
     finally:
         db.close()

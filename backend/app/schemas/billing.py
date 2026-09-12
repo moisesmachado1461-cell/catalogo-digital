@@ -160,3 +160,35 @@ class AdminPlanChangeRequest(BaseModel):
         if value not in {"MONTHLY", "YEARLY"}:
             raise ValueError("billing_cycle deve ser MONTHLY ou YEARLY")
         return value
+
+
+class PixCheckoutCreate(BaseModel):
+    plan_id: int = Field(gt=0)
+    billing_cycle: str = "MONTHLY"
+    coupon_code: str | None = Field(default=None, max_length=40)
+    payer_email: str = Field(min_length=5, max_length=255)
+    payer_document: str = Field(min_length=11, max_length=24)
+
+    @field_validator("billing_cycle")
+    @classmethod
+    def validate_pix_cycle(cls, value: str):
+        value = value.strip().upper()
+        if value not in {"MONTHLY", "YEARLY"}:
+            raise ValueError("billing_cycle deve ser MONTHLY ou YEARLY")
+        return value
+
+    @field_validator("payer_email")
+    @classmethod
+    def normalize_payer_email(cls, value: str):
+        value = value.strip().lower()
+        if "@" not in value or "." not in value.rsplit("@", 1)[-1]:
+            raise ValueError("Informe um e-mail válido")
+        return value
+
+    @field_validator("payer_document")
+    @classmethod
+    def normalize_payer_document(cls, value: str):
+        digits = "".join(ch for ch in value if ch.isdigit())
+        if len(digits) not in {11, 14}:
+            raise ValueError("Informe um CPF com 11 dígitos ou CNPJ com 14 dígitos")
+        return digits

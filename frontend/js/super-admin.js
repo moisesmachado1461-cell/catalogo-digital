@@ -214,7 +214,7 @@ async function loadBusinessCategories() {
 window.loadPlans = async function() {
   plans = await api('/api/super-admin/plans');
   const select = $s('#newStorePlanSelect');
-  if (select) select.innerHTML = plans.filter(plan=>plan.is_active).map(plan => `<option value="${plan.id}" ${plan.code==='GRATUITO'?'selected':''}>${escapeHtml(plan.name)} — ${money(plan.monthly_price)}/mês</option>`).join('');
+  if (select) { const publicPlans = plans.filter(plan=>plan.is_active && plan.is_public); select.innerHTML = publicPlans.map(plan => `<option value="${plan.id}" ${plan.code==='PROFISSIONAL'?'selected':''}>${escapeHtml(plan.name)} — ${money(plan.monthly_price)}/mês</option>`).join(''); }
   renderPlans();
 };
 
@@ -224,12 +224,14 @@ function renderPlans() {
   root.innerHTML = plans.length ? plans.map(plan => {
     const activeFeatures = Object.entries(plan.features || {}).filter(([,value]) => value).map(([key]) => featureLabel(key));
     const description = plan.description || 'Plano comercial do Catálogo Digital.';
-    return `<article class="super-plan-card ${plan.is_active?'':'is-inactive'}">
+    return `<article class="super-plan-card ${plan.is_active?'':'is-inactive'} ${plan.is_featured?'is-featured':''}">
+      ${plan.badge ? `<span class="super-plan-badge">${escapeHtml(plan.badge)}</span>` : ''}
       <div class="super-plan-card-head"><div><h3>${escapeHtml(plan.name)}</h3><span class="super-plan-code">${escapeHtml(plan.code)}</span></div><span class="status ${plan.is_active?'CONFIRMADO':'CANCELADO'}">${plan.is_active?'Ativo':'Inativo'}</span></div>
       <div class="super-plan-price"><strong>${money(plan.monthly_price)}</strong><span>/ mês</span></div>
       <p class="super-plan-description">${escapeHtml(description)}</p>
       <div class="super-plan-limits"><span class="super-plan-chip">${limitText(plan.limits?.products)} produtos</span><span class="super-plan-chip">${limitText(plan.limits?.services)} serviços</span><span class="super-plan-chip">${limitText(plan.limits?.professionals)} profissionais</span></div>
       <div class="super-plan-features">${activeFeatures.length ? activeFeatures.slice(0,5).map(feature => `<span class="super-plan-feature">${escapeHtml(feature)}</span>`).join('') : '<span class="super-plan-chip">Recursos essenciais</span>'}</div>
+      <div class="super-plan-commercial"><span>${Number(plan.trial_days || 0)} dia(s) grátis</span><span>${Number(plan.grace_days || 0)} dia(s) de tolerância</span><span>${plan.is_public ? 'Contratação pública' : 'Plano interno'}</span></div>
       <div class="super-plan-footer"><small>${plan.yearly_price ? `${money(plan.yearly_price)}/ano` : 'Sem preço anual'}</small><button class="btn ghost small" onclick="openPlanModal(${plan.id})">Editar plano</button></div>
     </article>`;
   }).join('') : '<div class="empty">Nenhum plano cadastrado.</div>';
@@ -458,11 +460,17 @@ window.openPlanModal = function(id = null) {
   form.elements['monthly_price'].value = Number(plan?.monthly_price || 0);
   form.elements['yearly_price'].value = plan?.yearly_price ?? '';
   form.elements['description'].value = plan?.description || '';
+  form.elements['trial_days'].value = plan?.trial_days ?? 7;
+  form.elements['grace_days'].value = plan?.grace_days ?? 5;
+  form.elements['badge'].value = plan?.badge || '';
+  form.elements['sort_order'].value = plan?.sort_order ?? plans.length + 1;
   form.elements['limit_products'].value = plan?.limits?.products ?? 20;
   form.elements['limit_services'].value = plan?.limits?.services ?? 10;
   form.elements['limit_professionals'].value = plan?.limits?.professionals ?? 1;
   ['coupons','promotions','custom_branding','reports','priority_support','custom_domain','online_payments'].forEach(key => form.elements[`feature_${key}`].checked = Boolean(plan?.features?.[key]));
   form.elements['is_active'].checked = plan?.is_active ?? true;
+  form.elements['is_public'].checked = plan?.is_public ?? true;
+  form.elements['is_featured'].checked = plan?.is_featured ?? false;
   $s('#planModalTitle').textContent = plan ? `Editar ${plan.name}` : 'Novo plano';
   $s('#planModal').classList.add('open');
 };
@@ -479,7 +487,12 @@ $s('#planForm').onsubmit = async event => {
     limits:{products:Number(form.elements['limit_products'].value),services:Number(form.elements['limit_services'].value),professionals:Number(form.elements['limit_professionals'].value)},
     features:{coupons:form.elements['feature_coupons'].checked,promotions:form.elements['feature_promotions'].checked,custom_branding:form.elements['feature_custom_branding'].checked,reports:form.elements['feature_reports'].checked,priority_support:form.elements['feature_priority_support'].checked,custom_domain:form.elements['feature_custom_domain'].checked,online_payments:form.elements['feature_online_payments'].checked},
     is_active:form.elements['is_active'].checked,
-    sort_order:id ? (plans.find(plan=>plan.id===id)?.sort_order || 0) : plans.length + 1,
+    is_public:form.elements['is_public'].checked,
+    is_featured:form.elements['is_featured'].checked,
+    badge:form.elements['badge'].value.trim() || null,
+    trial_days:Number(form.elements['trial_days'].value || 0),
+    grace_days:Number(form.elements['grace_days'].value || 0),
+    sort_order:Number(form.elements['sort_order'].value || 0),
   };
   if (!id) payload.code = form.elements['code'].value;
   try {

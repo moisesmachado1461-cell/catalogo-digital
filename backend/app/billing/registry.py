@@ -18,7 +18,7 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         code="MERCADO_PAGO",
         display_name="Mercado Pago",
         automatic=True,
-        supports=("RECURRENCE",),
+        supports=("PIX", "RECURRENCE_FUTURE"),
     ),
     "PIX_AUTOMATICO": ProviderDescriptor(
         code="PIX_AUTOMATICO",
