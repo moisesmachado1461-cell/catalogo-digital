@@ -38,17 +38,8 @@ function renderPremiumShell() {
   contactButton.classList.remove('hidden');
   contactButton.onclick = () => openStoreSection('contactSection');
 
-  const caps = store.capabilities || {};
-  const aside = [];
-  if (caps.catalog) aside.push(['Catálogo organizado', 'Produtos, preços e opções reunidos em uma vitrine clara.']);
-  if (caps.appointments) aside.push(['Agendamento online', 'Escolha serviço, profissional, data e horário pelo próprio site.']);
-  else if (caps.services) aside.push(['Serviços em destaque', 'Veja detalhes e avance para o atendimento ideal.']);
-  if (caps.reservations) aside.push(['Reserva digital', 'Consulte opções e solicite sua reserva em poucos passos.']);
-  if (caps.rentals) aside.push(['Locação simplificada', 'Escolha o item e consulte disponibilidade pelo período desejado.']);
-  if (caps.payments) aside.push(['Pagamento orientado', 'As formas habilitadas pela empresa aparecem no momento certo.']);
-  aside.push(['Canais oficiais', 'Contato, endereço e informações da empresa no mesmo lugar.']);
-  $('#storeAsideItems').innerHTML = aside.slice(0, 3).map(([title, text]) => `<div class="store-aside-item"><span class="store-aside-dot"></span><div><strong>${escapeHtml(title)}</strong><small>${escapeHtml(text)}</small></div></div>`).join('');
-  $('#storeAsideTitle').textContent = caps.appointments ? 'Escolha e agende com facilidade' : (caps.catalog ? 'Escolha e compre com facilidade' : 'Tudo em um só lugar');
+  // A vitrine pública prioriza conteúdo útil da loja; textos promocionais genéricos foram removidos.
+
 }
 
 function setTheme() {
@@ -56,6 +47,7 @@ function setTheme() {
   const secondary = store.secondary_color || '#4F46E5';
   document.documentElement.style.setProperty('--brand', primary);
   document.documentElement.style.setProperty('--brand2', secondary);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', primary);
   document.title = `${store.name} — Catálogo Digital`;
   $('#storeMetaDescription').setAttribute('content', store.description || `Conheça ${store.name} no Catálogo Digital.`);
   $('#storeName').textContent = store.name;

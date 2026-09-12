@@ -19,6 +19,7 @@ MAX_PIXELS = 40_000_000
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 KIND_LIMITS = {
     "logo": (900, 900),
+    "panel_logo": (900, 900),
     "banner": (2000, 1000),
     "product": (1600, 1600),
     "category": (1600, 1200),

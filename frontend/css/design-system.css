@@ -282,3 +282,112 @@ body{
   .ui-v20 body,.ui-v20 .ds-reveal,.ui-v20 .ds-reveal.ds-visible{opacity:1;transform:none;transition:none}
   .ds-skeleton::after{animation:none}
 }
+
+/* Ajuste pré-lançamento — botões com mais vida, feedback e sensação tátil */
+:where(.btn,.tab-btn,.side-btn,.super-quick-action,button[data-action]){
+  -webkit-tap-highlight-color:transparent;
+}
+
+.btn{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  will-change:transform;
+}
+.btn::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:-2px auto -2px -38%;
+  width:34%;
+  transform:skewX(-18deg) translateX(-220%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.34),transparent);
+  opacity:0;
+  pointer-events:none;
+  transition:transform 520ms var(--ease),opacity 180ms var(--ease);
+}
+.btn:hover::before{transform:skewX(-18deg) translateX(520%);opacity:1}
+.btn:hover{transform:translateY(-2px) scale(1.012)}
+.btn:active{transform:translateY(1px) scale(.972);box-shadow:var(--shadow-xs)}
+.btn.primary:hover{filter:saturate(1.08) brightness(1.025)}
+.btn.primary:active{filter:saturate(.98) brightness(.98)}
+.btn:where(:hover,:focus-visible) svg{transform:translateX(1px) rotate(-2deg)}
+.btn svg{transition:transform var(--duration-fast) var(--ease)}
+
+.tab-btn,.side-btn,.super-quick-action{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  will-change:transform;
+}
+.tab-btn:hover{transform:translateY(-1px)}
+.tab-btn:active{transform:translateY(0) scale(.975)}
+.side-btn:hover{transform:translateX(4px)}
+.side-btn:active{transform:translateX(2px) scale(.985)}
+.super-quick-action:hover{transform:translateY(-2px) scale(1.006)}
+.super-quick-action:active{transform:translateY(0) scale(.985)}
+
+/* O ripple é criado por ui-system.js e funciona com mouse, toque e caneta. */
+.ds-ripple{
+  position:absolute;
+  z-index:5;
+  width:14px;
+  height:14px;
+  margin:-7px 0 0 -7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.52);
+  pointer-events:none;
+  transform:scale(0);
+  opacity:.78;
+  animation:ds-ripple-pop 560ms var(--ease) forwards;
+  mix-blend-mode:soft-light;
+}
+.btn.ghost .ds-ripple,.tab-btn .ds-ripple{background:color-mix(in srgb,var(--brand) 28%,#fff)}
+.side-btn .ds-ripple,.super-quick-action .ds-ripple{background:rgba(255,255,255,.42)}
+@keyframes ds-ripple-pop{
+  55%{opacity:.38}
+  100%{transform:scale(18);opacity:0}
+}
+
+@media (hover:none){
+  .btn:hover,.tab-btn:hover,.super-quick-action:hover{transform:none}
+  .side-btn:hover{transform:none}
+  .btn:active{transform:scale(.972)}
+  .tab-btn:active,.side-btn:active,.super-quick-action:active{transform:scale(.98)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .btn,.btn::before,.btn svg,.tab-btn,.side-btn,.super-quick-action{transition:none!important;transform:none!important}
+  .ds-ripple{display:none!important}
+}
+
+
+/* Ajuste pré-lançamento — tema expandido por loja */
+:root{
+  --theme-soft:color-mix(in srgb,var(--brand) 7%,#fff);
+  --theme-soft-2:color-mix(in srgb,var(--brand2) 7%,#fff);
+  --theme-soft-strong:color-mix(in srgb,var(--brand) 13%,#fff);
+  --theme-line:color-mix(in srgb,var(--brand) 17%,#e8eaf0);
+  --theme-ink:color-mix(in srgb,var(--brand) 18%,#111827);
+}
+body{background:
+  radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--brand) 7%,transparent),transparent 30rem),
+  radial-gradient(circle at 96% 14%,color-mix(in srgb,var(--brand2) 5%,transparent),transparent 26rem),
+  var(--bg);
+}
+.panel,.stat-card,.store-card,.product-card,.service-card,.legal-card{
+  border-color:var(--theme-line);
+}
+.input:focus,.select:focus,.textarea:focus{
+  border-color:color-mix(in srgb,var(--brand) 45%,var(--line));
+  box-shadow:var(--focus-ring);
+}
+.badge,.category-chip{
+  border-color:var(--theme-line);
+}
+.category-chip:hover,.category-chip.active{
+  background:var(--theme-soft);
+  color:var(--theme-ink);
+}
+.table thead th{background:linear-gradient(180deg,var(--theme-soft),#fff)}
+.table tbody tr:hover{background:color-mix(in srgb,var(--brand) 5%,#fff)}

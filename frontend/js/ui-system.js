@@ -51,6 +51,26 @@
     });
   }
 
+  function setupButtonFeedback() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const selector = '.btn, .tab-btn, .side-btn, .super-quick-action, button[data-action]';
+
+    document.addEventListener('pointerdown', event => {
+      const target = event.target.closest?.(selector);
+      if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true') return;
+
+      const rect = target.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'ds-ripple';
+      ripple.setAttribute('aria-hidden', 'true');
+      ripple.style.left = `${event.clientX - rect.left}px`;
+      ripple.style.top = `${event.clientY - rect.top}px`;
+      target.appendChild(ripple);
+      window.setTimeout(() => ripple.remove(), 620);
+    }, {passive:true});
+  }
+
   function setupMutationObserver() {
     if (!('MutationObserver' in window)) return;
     const observer = new MutationObserver(mutations => {
@@ -71,6 +91,7 @@
     updateTopbar();
     revealExisting();
     setupMutationObserver();
+    setupButtonFeedback();
 
     window.addEventListener('scroll', updateTopbar, {passive:true});
     window.addEventListener('online', () => toast('Conexão restabelecida.', 'success'));

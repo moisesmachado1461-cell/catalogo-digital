@@ -40,8 +40,8 @@
 </section>
 
 <section id="adminView" class="admin-shell hidden">
-  <aside class="sidebar admin-sidebar-premium">
-    <a class="brand sidebar-brand" href="index.html"><span class="brand-mark">CD</span><span>Catálogo Digital<small>Painel da loja</small></span></a>
+  <aside id="adminSidebar" class="sidebar admin-sidebar-premium" aria-label="Menu administrativo">
+    <a class="brand sidebar-brand" href="index.html"><span id="adminBrandMark" class="brand-mark">CD</span><span><span id="adminBrandName">Catálogo Digital</span><small>Painel da loja</small></span></a>
     <div class="side-store">
       <div id="sideStoreAvatar" class="side-store-avatar">CD</div>
       <div class="side-store-copy"><b id="sideStoreName">Sua loja</b><small id="sideStoreModel">Carregando...</small></div>
@@ -53,9 +53,13 @@
       <button id="logoutBtn" class="side-btn logout-side"><span class="side-icon" aria-hidden="true">↪</span><span>Sair</span></button>
     </div>
   </aside>
+  <button id="adminSidebarBackdrop" class="admin-sidebar-backdrop" type="button" aria-label="Fechar menu"></button>
 
   <main class="admin-main">
-    <div class="mobile-admin-menu" id="mobileMenu"></div>
+    <div class="admin-mobile-nav">
+      <button id="adminSidebarToggle" class="admin-mobile-menu-button" type="button" aria-controls="adminSidebar" aria-expanded="false"><span aria-hidden="true">☰</span><span>Menu</span></button>
+      <strong id="adminMobileSection">Dashboard</strong>
+    </div>
     <header class="admin-header admin-header-premium">
       <div class="admin-heading">
         <div class="admin-breadcrumb-row"><span class="admin-status-dot"></span><small id="adminBreadcrumb">Painel administrativo</small></div>
@@ -73,7 +77,7 @@
         <div class="admin-welcome-copy">
           <span class="eyebrow">VISÃO GERAL</span>
           <h2 id="dashboardGreeting">Bem-vindo ao seu painel</h2>
-          <p id="dashboardGreetingCopy">Acompanhe o que precisa de atenção e acesse as principais ações da sua loja.</p>
+          <p id="dashboardGreetingCopy">Acompanhe o que precisa de atenção e os principais indicadores da sua loja.</p>
           <div class="admin-welcome-meta"><span id="dashboardPlanBadge" class="admin-plan-badge">Plano ativo</span><span id="dashboardToday">Hoje</span></div>
         </div>
         <div id="dashboardAttention" class="admin-attention"></div>
@@ -83,10 +87,6 @@
         <div class="panel">
           <div class="panel-head"><h2>Resumo da loja</h2></div>
           <div id="summaryContent" class="section-copy">Carregando dados...</div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h2>Ações rápidas</h2></div>
-          <div id="quickActions" class="quick-actions"></div>
         </div>
       </div>
       <div id="dashboardReportPreview" class="panel report-preview-panel hidden">

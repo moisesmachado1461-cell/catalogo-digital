@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.5.0**.
+Versão consolidada até a **Fase 24.5.1**.
 
 ## Concluído
 
@@ -177,3 +177,14 @@ Ainda é necessário cadastrar os secrets no GitHub e executar pelo menos um res
 - após o deploy, executar `python backend\scripts\production_smoke_check.py`;
 - executar uma vez o workflow `Restore drill do PostgreSQL` no GitHub Actions;
 - fazer apenas uma conferência visual curta da loja pública e dos painéis em desktop e celular.
+
+
+## Fase 24.5.1 — refinamento visual pré-lançamento
+
+- dashboard da loja simplificado, sem o bloco de ações rápidas;
+- navegação mobile convertida para sidebar recolhível;
+- botões com feedback visual mais rico e acessível;
+- tema por loja expandido para mais componentes;
+- nova identificação personalizável do painel (`panel_brand_name` e `panel_logo_url`), com upload via storage/Cloudinary;
+- área pública simplificada, removendo blocos genéricos de texto promocional;
+- migration `016_admin_branding`; backend `24.5.1`.

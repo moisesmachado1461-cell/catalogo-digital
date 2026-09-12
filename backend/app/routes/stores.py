@@ -20,6 +20,8 @@ def _store_dict(store: Store):
         "description": store.description,
         "logo_url": store.logo_url,
         "banner_url": store.banner_url,
+        "panel_brand_name": store.panel_brand_name,
+        "panel_logo_url": store.panel_logo_url,
         "primary_color": store.primary_color,
         "secondary_color": store.secondary_color,
         "whatsapp": store.whatsapp,

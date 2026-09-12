@@ -124,3 +124,46 @@
 }
 .product-coupon-tag:hover { transform: translateY(-1px); }
 .product-coupon-tag:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 28%, transparent); outline-offset: 2px; }
+
+
+/* Ajuste pré-lançamento — identidade visual expandida da loja */
+.premium-store-topbar{
+  background:color-mix(in srgb,var(--brand) 3%,rgba(255,255,255,.96));
+  border-bottom-color:var(--theme-line);
+}
+.store-hero-v2.has-banner:before{
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--brand) 28%,rgba(9,14,27,.88)) 0%,
+    color-mix(in srgb,var(--brand2) 18%,rgba(9,14,27,.64)) 48%,
+    rgba(9,14,27,.26) 100%);
+}
+.store-nav-v2,.store-experience-strip{
+  background:color-mix(in srgb,var(--brand) 3%,#fff);
+  border-color:var(--theme-line);
+}
+.premium-store-main{
+  background:linear-gradient(180deg,var(--theme-soft) 0,rgba(255,255,255,0) 220px);
+}
+.toolbar-v2,.product-card-v2,.service-card-v2,.professional-card,.contact-card,.cart-v2{
+  border-color:var(--theme-line);
+}
+.toolbar-v2{background:linear-gradient(145deg,#fff,var(--theme-soft))}
+.search-wrap .input,.category-select{background:color-mix(in srgb,var(--brand) 4%,#f7f8fb)}
+.product-card-v2,.service-card-v2{
+  background:linear-gradient(180deg,#fff 68%,var(--theme-soft) 135%);
+}
+.product-card-v2:hover,.service-card-v2:hover{
+  border-color:color-mix(in srgb,var(--brand) 32%,var(--line));
+  box-shadow:0 24px 50px color-mix(in srgb,var(--brand) 12%,rgba(15,23,42,.10));
+}
+.cart-v2{background:linear-gradient(180deg,#fff,var(--theme-soft))}
+.contact-card{background:linear-gradient(145deg,#fff,var(--theme-soft-2))}
+.modal{border:1px solid var(--theme-line)}
+.premium-store-footer{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 28%,#101828),color-mix(in srgb,var(--brand2) 18%,#101828));
+}
+
+
+/* Ajuste pré-lançamento — hero mais direto, sem bloco textual promocional */
+.premium-hero-inner{grid-template-columns:1fr!important}
+.premium-hero-main{max-width:900px}

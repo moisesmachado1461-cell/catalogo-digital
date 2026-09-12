@@ -22,6 +22,8 @@ class Store(Base):
     description: Mapped[str | None] = mapped_column(Text)
     logo_url: Mapped[str | None] = mapped_column(String(500))
     banner_url: Mapped[str | None] = mapped_column(String(500))
+    panel_brand_name: Mapped[str | None] = mapped_column(String(80))
+    panel_logo_url: Mapped[str | None] = mapped_column(String(500))
     primary_color: Mapped[str] = mapped_column(String(20), default="#7C3AED", nullable=False)
     secondary_color: Mapped[str] = mapped_column(String(20), default="#4F46E5", nullable=False)
     whatsapp: Mapped[str | None] = mapped_column(String(30))

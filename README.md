@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.5.0
+# Catálogo Digital — Fase 24.5.1
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.5.0 — Validação final de produção com release gate simplificado**
+**24.5.1 — refinamento visual pré-lançamento e identidade do painel**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -195,4 +195,15 @@ Depois que o Render ficar Live:
 python backend\scripts\production_smoke_check.py
 ```
 
-O primeiro comando executa auditoria, revisão integrada e regressão funcional em banco temporário. O segundo confirma versão online, banco, Cloudinary persistente, CORS, headers de segurança e páginas públicas do deploy. Nenhuma migration foi adicionada. Backend em `24.5.0`.
+O primeiro comando executa auditoria, revisão integrada e regressão funcional em banco temporário. O segundo confirma versão online, banco, Cloudinary persistente, CORS, headers de segurança e páginas públicas do deploy. Nenhuma migration foi adicionada. Backend base validado em `24.5.0`; refinamento visual atual em `24.5.1`.
+
+
+## Fase 24.5.1 — refinamento visual pré-lançamento
+
+- remove o bloco de ações rápidas do dashboard da loja;
+- usa menu lateral recolhível também no celular;
+- adiciona feedback visual/ripple aos botões com respeito a redução de movimento;
+- amplia a aplicação das cores escolhidas pela loja em fundos, cards, navegação e estados interativos;
+- permite definir nome e logo próprios para a identificação principal do painel;
+- usa a logo real da loja no identificador lateral quando disponível e mantém iniciais como fallback;
+- remove textos promocionais genéricos da área pública para priorizar produtos, serviços e informações úteis.

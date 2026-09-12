@@ -6,6 +6,8 @@ class StoreUpdate(BaseModel):
     description: str | None = Field(default=None, max_length=3000)
     logo_url: str | None = Field(default=None, max_length=500)
     banner_url: str | None = Field(default=None, max_length=500)
+    panel_brand_name: str | None = Field(default=None, min_length=2, max_length=80)
+    panel_logo_url: str | None = Field(default=None, max_length=500)
     primary_color: str | None = Field(default=None, max_length=20)
     secondary_color: str | None = Field(default=None, max_length=20)
     whatsapp: str | None = Field(default=None, max_length=30)

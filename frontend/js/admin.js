@@ -106,9 +106,18 @@ function renderAdminIdentity() {
   const userEl = $('#adminUserName');
   const userAvatar = $('#adminUserAvatar');
   const storeAvatar = $('#sideStoreAvatar');
+  const brandName = store?.panel_brand_name || 'Catálogo Digital';
+  const brandNameEl = $('#adminBrandName');
+  const brandMark = $('#adminBrandMark');
   if (userEl) userEl.textContent = userName;
   if (userAvatar) userAvatar.textContent = initials(userName, 'A');
-  if (storeAvatar) storeAvatar.textContent = initials(storeName);
+  if (brandNameEl) brandNameEl.textContent = brandName;
+  if (brandMark) brandMark.innerHTML = store?.panel_logo_url
+    ? `<img src="${escapeHtml(assetUrl(store.panel_logo_url))}" alt="Logo de ${escapeHtml(brandName)}">`
+    : escapeHtml(initials(brandName));
+  if (storeAvatar) storeAvatar.innerHTML = store?.logo_url
+    ? `<img src="${escapeHtml(assetUrl(store.logo_url))}" alt="Logo de ${escapeHtml(storeName)}">`
+    : escapeHtml(initials(storeName));
   const greet = $('#dashboardGreeting');
   if (greet) greet.textContent = `${greeting}, ${userName.split(' ')[0]}!`;
   const greetCopy = $('#dashboardGreetingCopy');
@@ -250,7 +259,10 @@ $('#adminModal').addEventListener('click', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') closeModal();
+  if (event.key === 'Escape') {
+    closeModal();
+    setAdminSidebarOpen(false);
+  }
 });
 
 $('#loginForm').onsubmit = async (event) => {
@@ -277,6 +289,13 @@ $('#refreshBtn').onclick = async () => {
   await loadAll();
   showToast('Painel atualizado.');
 };
+
+$('#adminSidebarToggle').onclick = () => {
+  const sidebar = $('#adminSidebar');
+  setAdminSidebarOpen(!sidebar?.classList.contains('mobile-open'));
+};
+
+$('#adminSidebarBackdrop').onclick = () => setAdminSidebarOpen(false);
 
 async function startAdmin() {
   try {
@@ -309,6 +328,22 @@ async function startAdmin() {
 function applyStoreTheme() {
   document.documentElement.style.setProperty('--brand', store?.primary_color || '#7C3AED');
   document.documentElement.style.setProperty('--brand2', store?.secondary_color || '#4F46E5');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', store?.primary_color || '#7C3AED');
+}
+
+function setAdminSidebarOpen(open) {
+  const sidebar = $('#adminSidebar');
+  const backdrop = $('#adminSidebarBackdrop');
+  const toggle = $('#adminSidebarToggle');
+  if (!sidebar || !backdrop || !toggle) return;
+  sidebar.classList.toggle('mobile-open', open);
+  backdrop.classList.toggle('open', open);
+  toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  document.body.classList.toggle('admin-sidebar-open', open);
+}
+
+function closeAdminSidebarOnMobile() {
+  if (window.matchMedia('(max-width: 980px)').matches) setAdminSidebarOpen(false);
 }
 
 function buildMenu() {
@@ -336,10 +371,6 @@ function buildMenu() {
     })
     .join('');
 
-  $('#mobileMenu').innerHTML = items
-    .map((id, index) => `<button class="tab-btn ${index === 0 ? 'active' : ''}" data-section="${id}"><span class="side-icon">${adminIcon(id)}</span><span>${labels[id]}</span></button>`)
-    .join('');
-
   $$('[data-section]').forEach((button) => {
     button.onclick = () => switchSection(button.dataset.section);
   });
@@ -354,6 +385,9 @@ window.switchSection = function switchSection(id) {
   $('#adminTitle').textContent = labels[id] || id;
   const breadcrumb = $('#adminBreadcrumb');
   if (breadcrumb) breadcrumb.textContent = id === 'dashboard' ? 'Painel administrativo' : `Painel / ${labels[id] || id}`;
+  const mobileSection = $('#adminMobileSection');
+  if (mobileSection) mobileSection.textContent = labels[id] || id;
+  closeAdminSidebarOnMobile();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -377,7 +411,6 @@ async function loadAll() {
 
   await Promise.allSettled(jobs);
   renderStats();
-  renderQuickActions();
 }
 
 function renderStats() {
@@ -417,27 +450,6 @@ function renderStats() {
     <p>Plano atual: <b>${escapeHtml(subscriptionInfo?.plan?.name || store.subscription?.plan?.name || 'Gratuito')}</b>.</p>
     <p>O painel exibe apenas os módulos habilitados para esta empresa. Todas as operações administrativas continuam isoladas pelo <code>store_id</code> do usuário autenticado.</p>
   `;
-}
-
-function renderQuickActions() {
-  const caps = store.capabilities || {};
-  const planFeatures = subscriptionInfo?.features || store.subscription?.features || {};
-  const actions = [];
-  if (caps.catalog) actions.push(['Novo produto', "openProductModal()", 'products', 'Cadastre um item no catálogo'], ['Ver pedidos', "switchSection('orders')", 'orders', 'Acompanhe vendas e status']);
-  if (caps.coupons && planFeatures.coupons) actions.push(['Novo cupom', "openCouponModal()", 'coupons', 'Crie um desconto']);
-  if (caps.promotions && planFeatures.promotions) actions.push(['Nova promoção', "openPromotionModal()", 'promotions', 'Destaque uma oferta']);
-  if (caps.services) actions.push(['Novo serviço', "openServiceModal()", 'services', 'Adicione um atendimento']);
-  if (caps.appointments) actions.push(['Novo profissional', "openProfessionalModal()", 'professionals', 'Organize sua equipe'], ['Agendamentos', "switchSection('appointments')", 'appointments', 'Veja sua agenda']);
-  if (caps.quotes) actions.push(['Orçamentos', "switchSection('quotes')", 'quotes', 'Responda solicitações']);
-  if (caps.reservations) actions.push(['Novo recurso', "openResourceModal()", 'resources', 'Cadastre um recurso'], ['Reservas', "switchSection('reservations')", 'reservations', 'Controle disponibilidades']);
-  if (caps.rentals) actions.push(['Novo item de locação', "openRentalItemModal()", 'rentalItems', 'Cadastre para aluguel'], ['Locações', "switchSection('rentals')", 'rentals', 'Acompanhe retiradas']);
-  if (caps.payments) actions.push(['Pagamentos', "switchSection('payments')", 'payments', 'Confira recebimentos']);
-  if (planFeatures.reports) actions.push(['Relatórios', "switchSection('reports')", 'reports', 'Analise resultados']);
-  actions.push(['Meu plano', "switchSection('subscription')", 'subscription', 'Assinatura e limites'], ['Personalizar loja', "switchSection('settings')", 'settings', 'Ajuste identidade e dados']);
-
-  $('#quickActions').innerHTML = actions.slice(0, 8)
-    .map(([label, action, icon, note]) => `<button class="quick-action" type="button" onclick="${action}"><span class="quick-action-main"><span class="quick-action-icon">${adminIcon(icon)}</span><span class="quick-action-copy"><b>${escapeHtml(label)}</b><small>${escapeHtml(note)}</small></span></span><span class="quick-action-arrow">→</span></button>`)
-    .join('');
 }
 
 
@@ -1591,6 +1603,9 @@ function renderPaymentSettings() {
 function renderSettings() {
   const form = $('#settingsForm');
   form.innerHTML = `
+    <div class="field full settings-group-title"><b>Identidade do painel</b><small>Use apenas para identificar o sistema da sua empresa no painel administrativo.</small></div>
+    <div class="field full"><label>Nome exibido no painel</label><input class="input" name="panel_brand_name" value="${escapeHtml(store.panel_brand_name || 'Catálogo Digital')}" maxlength="80" placeholder="Ex.: Minha Central"></div>
+    ${imageUploadField('panel_logo_url', 'Logo do painel', 'panel_logo', store.panel_logo_url || '', 'Opcional · usada somente em pontos principais do painel · JPG, PNG ou WebP · máximo 8 MB')}
     <div class="field full settings-group-title"><b>Identidade da empresa</b><small>Essas informações aparecem para seus clientes.</small></div>
     <div class="field full"><label>Nome da loja</label><input class="input" name="name" value="${escapeHtml(store.name || '')}" required></div>
     <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="4">${escapeHtml(store.description || '')}</textarea></div>
@@ -1618,7 +1633,7 @@ function renderSettings() {
 
   form.onsubmit = async (event) => {
     event.preventDefault();
-    const names = ['name','description','primary_color','secondary_color','whatsapp','phone','email','address','city','state','zip_code','logo_url','banner_url'];
+    const names = ['panel_brand_name','panel_logo_url','name','description','primary_color','secondary_color','whatsapp','phone','email','address','city','state','zip_code','logo_url','banner_url'];
     const data = {};
     names.forEach((name) => {
       const value = form.elements[name]?.value;
@@ -1628,6 +1643,7 @@ function renderSettings() {
       store = await api('/api/admin/store', { method: 'PATCH', body: JSON.stringify(data) });
       applyStoreTheme();
       $('#sideStoreName').textContent = store.name;
+      renderAdminIdentity();
       $('#openStoreBtn').href = `loja.html?slug=${encodeURIComponent(store.slug)}`;
       renderSettings();
       showToast('Configurações salvas.');
