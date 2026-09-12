@@ -120,7 +120,7 @@ def check_secret_hygiene() -> None:
         except Exception:
             continue
         if path.name == ".env.example":
-            text = text.replace("postgresql://usuario:senha@host:5432/banco", "")
+            continue
         if any(pattern.search(text) for pattern in risky_patterns):
             found.append(str(path.relative_to(ROOT)))
     if found:
@@ -137,10 +137,10 @@ def check_cors_and_version() -> None:
         fail("Proteção contra CORS '*' em produção não encontrada")
     else:
         ok("CORS wildcard é bloqueado em produção")
-    if "APP_VERSION" not in main or 'APP_VERSION = "24.2.0"' not in version:
-        fail("Versão centralizada 24.2.0 não encontrada")
+    if "APP_VERSION" not in main or 'APP_VERSION = "24.3.0"' not in version:
+        fail("Versão centralizada 24.3.0 não encontrada")
     else:
-        ok("Versão do backend centralizada em APP_VERSION=24.2.0")
+        ok("Versão do backend centralizada em APP_VERSION=24.3.0")
 
 
 def check_route_guards() -> None:
@@ -190,6 +190,25 @@ def check_frontend_links() -> None:
         ok("HTMLs não possuem referências locais quebradas detectáveis")
 
 
+
+def check_backup_recovery() -> None:
+    required = [
+        ROOT / ".github" / "workflows" / "database-backup.yml",
+        ROOT / ".github" / "workflows" / "restore-drill.yml",
+        BACKEND / "scripts" / "backup_common.py",
+        BACKEND / "scripts" / "backup_database.py",
+        BACKEND / "scripts" / "verify_backup.py",
+        BACKEND / "scripts" / "restore_database.py",
+        BACKEND / "scripts" / "disaster_recovery_drill.py",
+        BACKEND / ".env.example",
+    ]
+    missing = [str(path.relative_to(ROOT)) for path in required if not path.exists()]
+    if missing:
+        fail("Arquivos de backup/recuperação ausentes: " + ", ".join(missing))
+    else:
+        ok("Backup criptografado, restore drill e workflows de recuperação estão presentes")
+
+
 def main() -> int:
     checks = [
         check_python_syntax,
@@ -200,11 +219,12 @@ def main() -> int:
         check_cors_and_version,
         check_route_guards,
         check_frontend_links,
+        check_backup_recovery,
     ]
     for check in checks:
         check()
 
-    print("CATÁLOGO DIGITAL — AUDITORIA FASE 24.2")
+    print("CATÁLOGO DIGITAL — AUDITORIA FASE 24.3")
     for message in passes:
         print(f"[OK] {message}")
     for message in warnings:

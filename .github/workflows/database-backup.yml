@@ -1,0 +1,48 @@
+name: Backup criptografado do PostgreSQL
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 3 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Dependências mínimas
+        run: pip install "sqlalchemy>=2" "psycopg[binary]>=3.2" "cryptography>=43"
+
+      - name: Criar backup criptografado
+        working-directory: backend
+        run: python scripts/backup_database.py --non-interactive --require-encryption --output-dir backups
+
+      - name: Verificar backup
+        working-directory: backend
+        shell: bash
+        run: |
+          FILE="$(ls -1t backups/*.fernet | head -n 1)"
+          python scripts/verify_backup.py "$FILE"
+
+      - name: Armazenar cópia offsite por 30 dias
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalogo-postgres-backup-${{ github.run_id }}
+          path: backend/backups/*.fernet
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0

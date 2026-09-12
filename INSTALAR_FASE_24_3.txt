@@ -1,0 +1,14 @@
+FASE 24.3 — BACKUP E RECUPERAÇÃO
+
+1. Copie o conteúdo deste ZIP sobre a raiz do projeto.
+2. Não há migration de banco nesta fase.
+3. git status
+4. git add .
+5. git commit -m "Fase 24.3 - backup e recuperacao de desastre"
+6. git push
+7. Aguarde o Render e confirme /api/health = 24.3.0.
+
+IMPORTANTE:
+Os workflows de backup só ficam operacionais depois de configurar GitHub Secrets.
+Não envie BACKUP_DATABASE_URL, BACKUP_ENCRYPTION_KEY ou RESTORE_TEST_DATABASE_URL pelo Git.
+O restore drill deve usar um banco PostgreSQL SEPARADO e descartável.

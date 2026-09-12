@@ -26,3 +26,5 @@ backend/backups/
 backups/
 *.dump
 *.backup
+*.fernet
+*.enc

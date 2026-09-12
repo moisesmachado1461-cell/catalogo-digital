@@ -118,3 +118,18 @@ Os testes autenticados de isolamento e a regressão funcional passam a ser cober
 - automação/offsite de backup;
 - rotação final de credenciais sensíveis antes do lançamento;
 - revisão final manual em celular/tablet/desktop das telas principais.
+
+## Fase 24.3 — backup e recuperação
+
+- backup lógico v2 com SHA-256 e contagens por tabela;
+- criptografia Fernet para backups automáticos;
+- backup diário offsite via GitHub Actions, após configuração dos secrets;
+- retenção de 30 dias nos artifacts do workflow;
+- restore seguro em banco separado com migrations, transação e ajuste de sequences;
+- restore drill manual automatizado;
+- plano de recuperação de desastre documentado;
+- sem migration; backend `24.3.0`.
+
+### Para concluir operacionalmente a Fase 24.3
+
+Ainda é necessário cadastrar os secrets no GitHub e executar pelo menos um restore drill real em um PostgreSQL separado. Até esse teste real, a capacidade de restauração em PostgreSQL deve ser considerada preparada, mas não comprovada em produção.

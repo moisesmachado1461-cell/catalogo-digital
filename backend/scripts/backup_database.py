@@ -1,101 +1,122 @@
-"""Backup lógico simples do PostgreSQL do Catálogo Digital.
+"""Backup lógico, verificável e opcionalmente criptografado.
 
-Este utilitário foi pensado como uma camada extra de segurança para bancos
-pequenos. Para produção comercial, use também backups automáticos gerenciados
-pelo provedor do PostgreSQL.
+Produção (não interativo, recomendado):
+    BACKUP_DATABASE_URL="..." BACKUP_ENCRYPTION_KEY="..." \
+      python scripts/backup_database.py --non-interactive --require-encryption
 
-Execute dentro de backend com o .venv ativo:
+Uso manual:
     python scripts/backup_database.py
 
-Quando solicitado, cole a EXTERNAL Database URL do Render. A URL fica oculta.
-O arquivo é criado em backend/backups/ e essa pasta é ignorada pelo Git.
+A URL nunca é gravada no arquivo. Backups automatizados devem ser criptografados.
+Este backup é uma camada adicional e não substitui snapshots/PITR do provedor.
 """
-
 from __future__ import annotations
 
-import base64
-import gzip
+import argparse
 import getpass
-import json
-from datetime import date, datetime, time, timezone
-from decimal import Decimal
+import os
+from datetime import datetime, timezone
 from pathlib import Path
-from uuid import UUID
 
-from sqlalchemy import MetaData, create_engine, select
+from sqlalchemy import MetaData, create_engine, select, text
 
-
-def normalize_url(url: str) -> str:
-    value = url.strip()
-    if value.startswith("postgres://"):
-        return "postgresql+psycopg://" + value[len("postgres://"):]
-    if value.startswith("postgresql://"):
-        return "postgresql+psycopg://" + value[len("postgresql://"):]
-    if value.startswith("postgresql+psycopg://"):
-        return value
-    raise ValueError("URL PostgreSQL inválida")
+from backup_common import (
+    BACKUP_FORMAT_V2,
+    database_fingerprint,
+    encode_payload,
+    get_encryption_key,
+    normalize_database_url,
+    serialize,
+    table_digest,
+)
 
 
-def serialize(value):
-    if value is None or isinstance(value, (str, int, float, bool)):
-        return value
-    if isinstance(value, Decimal):
-        return {"__type__": "decimal", "value": str(value)}
-    if isinstance(value, datetime):
-        return {"__type__": "datetime", "value": value.isoformat()}
-    if isinstance(value, date):
-        return {"__type__": "date", "value": value.isoformat()}
-    if isinstance(value, time):
-        return {"__type__": "time", "value": value.isoformat()}
-    if isinstance(value, UUID):
-        return {"__type__": "uuid", "value": str(value)}
-    if isinstance(value, bytes):
-        return {"__type__": "bytes", "value": base64.b64encode(value).decode("ascii")}
-    return {"__type__": type(value).__name__, "value": str(value)}
+def read_schema_revision(connection) -> str | None:
+    try:
+        return connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one_or_none()
+    except Exception:
+        return None
 
 
-def main() -> None:
-    print("CATÁLOGO DIGITAL — BACKUP LÓGICO DO POSTGRESQL")
-    print("Use a External Database URL do Render. Ela não será exibida.")
-    raw_url = getpass.getpass("External Database URL: ").strip()
-    url = normalize_url(raw_url)
-
+def create_backup(database_url: str, output_dir: Path, encryption_key: str | None) -> Path:
+    url = normalize_database_url(database_url)
     engine = create_engine(url, pool_pre_ping=True)
     metadata = MetaData()
-
-    output_dir = Path(__file__).resolve().parents[1] / "backups"
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-    output_path = output_dir / f"catalogo-postgres-{timestamp}.json.gz"
+    suffix = ".json.gz.fernet" if encryption_key else ".json.gz"
+    output_path = output_dir / f"catalogo-postgres-{timestamp}{suffix}"
 
     try:
         with engine.connect() as connection:
             metadata.reflect(bind=connection)
             payload = {
-                "format": "catalogo-digital-logical-backup-v1",
+                "format": BACKUP_FORMAT_V2,
                 "created_at_utc": datetime.now(timezone.utc).isoformat(),
+                "schema_revision": read_schema_revision(connection),
+                "database_dialect": engine.dialect.name,
+                "database_fingerprint": database_fingerprint(database_url),
                 "tables": {},
+                "total_rows": 0,
             }
-
-            total = 0
             for table in metadata.sorted_tables:
-                rows = []
-                for row in connection.execute(select(table)).mappings():
-                    rows.append({key: serialize(value) for key, value in row.items()})
-                payload["tables"][table.name] = rows
-                total += len(rows)
+                rows = [
+                    {key: serialize(value) for key, value in row.items()}
+                    for row in connection.execute(select(table)).mappings()
+                ]
+                payload["tables"][table.name] = {
+                    "row_count": len(rows),
+                    "sha256": table_digest(rows),
+                    "rows": rows,
+                }
+                payload["total_rows"] += len(rows)
                 print(f"  OK {table.name}: {len(rows)} registro(s)")
 
-        with gzip.open(output_path, "wt", encoding="utf-8") as handle:
-            json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
-
-        print()
-        print(f"Backup concluído: {output_path}")
-        print(f"Registros exportados: {total}")
-        print("Guarde uma cópia fora do computador principal.")
+        output_path.write_bytes(encode_payload(payload, encryption_key=encryption_key))
+        return output_path
     finally:
         engine.dispose()
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Backup lógico do Catálogo Digital")
+    parser.add_argument("--non-interactive", action="store_true", help="usa BACKUP_DATABASE_URL/DATABASE_URL")
+    parser.add_argument("--output-dir", default=None, help="pasta de saída; padrão backend/backups")
+    parser.add_argument("--require-encryption", action="store_true", help="falha se BACKUP_ENCRYPTION_KEY não estiver definido")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    print("CATÁLOGO DIGITAL — BACKUP LÓGICO")
+
+    if args.non_interactive:
+        raw_url = os.getenv("BACKUP_DATABASE_URL", "").strip() or os.getenv("DATABASE_URL", "").strip()
+        if not raw_url:
+            print("ERRO: defina BACKUP_DATABASE_URL (preferível) ou DATABASE_URL.")
+            return 2
+    else:
+        print("Use a External Database URL do PostgreSQL. Ela não será exibida nem salva.")
+        raw_url = getpass.getpass("Database URL: ").strip()
+
+    key = get_encryption_key()
+    if args.require_encryption and not key:
+        print("ERRO: BACKUP_ENCRYPTION_KEY é obrigatório para este backup.")
+        return 2
+
+    output_dir = Path(args.output_dir).expanduser().resolve() if args.output_dir else Path(__file__).resolve().parents[1] / "backups"
+    try:
+        path = create_backup(raw_url, output_dir, key)
+    except Exception as exc:
+        print(f"ERRO no backup: {exc}")
+        return 1
+
+    print()
+    print(f"Backup concluído: {path}")
+    print("Criptografia: ATIVA" if key else "Criptografia: NÃO ATIVA (uso manual/local)")
+    print("Guarde cópias fora do computador principal e valide restauração periodicamente.")
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

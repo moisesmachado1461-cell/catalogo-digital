@@ -168,3 +168,7 @@ A primeira etapa da revisão final adiciona hardening de autenticação/configur
 ## Fase 24.2 — testes funcionais e isolamento multi-tenant
 
 A regressão funcional automatizada usa um banco temporário e valida login, papéis, isolamento entre duas lojas, acesso cruzado, fluxos públicos por segmento, edição de loja, cupons por produto, cupons de planos e áreas de assinatura/cobrança. Não há migration. Backend em `24.2.0`.
+
+## Fase 24.3 — backup automático e recuperação de desastre
+
+A proteção de dados recebeu backup lógico v2 verificável, criptografia para cópias automáticas, restore transacional em banco separado, workflow diário offsite e restore drill manual. Não há migration. Backend em `24.3.0`.
