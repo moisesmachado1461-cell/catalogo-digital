@@ -1,0 +1,22 @@
+ATUALIZACAO INCREMENTAL — CATALOGO DIGITAL 24.4.1
+
+Use este pacote SOBRE a pasta principal catalogo-digital-arquitetura-v1-corrigido somente depois de consolidar a Fase 24.3.1 no Git.
+
+Este pacote altera/adiciona apenas arquivos de codigo e documentacao da Fase 24.4.1.
+Ele NAO contem e NAO deve substituir:
+- backend/.env
+- backend/.venv
+- bancos .db
+- backend/uploads
+- backend/backups
+- .git
+
+Passos:
+1. Feche servidores que estejam rodando.
+2. Faça commit/push da Fase 24.3.1.
+3. Extraia este ZIP.
+4. Copie TODO o conteudo extraido para a raiz de catalogo-digital-arquitetura-v1-corrigido.
+5. Quando o Windows perguntar, escolha substituir os arquivos de mesmo nome.
+6. Abra o VS Code na pasta principal e rode git status --short.
+
+Versao esperada apos a copia: 24.4.1

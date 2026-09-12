@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.2**.
+Versão consolidada até a **Fase 24.4.1**.
 
 ## Concluído
 
@@ -68,7 +68,7 @@ A conexão com Mercado Pago continua desacoplada e pode ser adicionada posterior
 
 ## Próximo passo
 
-Fazer uma revisão integrada de **Cliente + Admin + Super Admin** para corrigir inconsistências visuais e funcionais remanescentes, seguida pela fase de testes finais, segurança, domínio/SEO/PWA e preparação comercial. A integração real com Mercado Pago pode ser retomada assim que houver um responsável adulto disponível para configurar a conta e as credenciais.
+Concluir a validação operacional que depende de ambiente real: executar a regressão funcional com as dependências instaladas, executar o workflow de restore drill com PostgreSQL temporário no GitHub Actions e fazer a revisão visual manual em celular/tablet/notebook/desktop. Depois disso, avançar para domínio, SEO/PWA final, checklist de produção e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.
@@ -134,5 +134,29 @@ Os testes autenticados de isolamento e a regressão funcional passam a ser cober
 
 Ainda é necessário cadastrar os secrets no GitHub e executar pelo menos um restore drill real em um PostgreSQL separado. Até esse teste real, a capacidade de restauração em PostgreSQL deve ser considerada preparada, mas não comprovada em produção.
 
-### Fase 24.3.1
-Restore drill ajustado para usar PostgreSQL temporário no GitHub Actions. Não é necessário segundo PostgreSQL no Render nem o secret RESTORE_TEST_DATABASE_URL.
+## Fase 24.4 — revisão integrada Cliente + Admin + Super Admin
+
+- auditoria estrutural dedicada às três superfícies principais;
+- validação do Design System e CSS premium por área;
+- conferência automatizada de viewport, runtime compartilhado e PWA;
+- verificação das referências DOM estáticas e dinâmicas do frontend;
+- validação de separação de papéis Admin x Super Admin no cliente;
+- confirmação da arquitetura pública baseada em capabilities;
+- sem migration; backend `24.4.1`.
+
+### Ainda pendente antes do lançamento
+
+- regressão funcional completa em ambiente com as dependências instaladas;
+- restore drill real pelo workflow GitHub Actions com PostgreSQL temporário;
+- revisão visual manual multi-dispositivo;
+- rotação final das credenciais de produção;
+- domínio, SEO/PWA final e checklist comercial.
+
+
+## Correção 24.4.1 — reincorporação da Fase 24.3.1
+
+- `restore-drill.yml` sobe PostgreSQL 18 temporário como service no GitHub Actions;
+- não exige segundo PostgreSQL no Render;
+- não exige o secret `RESTORE_TEST_DATABASE_URL`;
+- continuam necessários `BACKUP_DATABASE_URL` e `BACKUP_ENCRYPTION_KEY`;
+- o banco temporário é descartado ao final do workflow.

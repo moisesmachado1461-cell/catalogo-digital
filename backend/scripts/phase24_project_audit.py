@@ -101,9 +101,32 @@ def check_gitignore() -> None:
         ok(".gitignore protege ambiente, banco local, uploads e backups")
 
 
+def _versionable_files() -> list[Path]:
+    """Return tracked and non-ignored untracked files.
+
+    This keeps local environments (.venv), databases, uploads and other
+    gitignored runtime data out of the secret hygiene audit.
+    """
+    git = shutil.which("git")
+    if git:
+        proc = subprocess.run(
+            [git, "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode == 0:
+            return [ROOT / line for line in proc.stdout.splitlines() if line.strip()]
+
+    excluded_parts = {".git", ".venv", "venv", "__pycache__", "backups", "uploads"}
+    return [
+        path
+        for path in ROOT.rglob("*")
+        if path.is_file() and not any(part in excluded_parts for part in path.parts)
+    ]
+
+
 def check_secret_hygiene() -> None:
-    tracked = [p for p in ROOT.rglob("*") if p.is_file()]
-    tracked = [p for p in tracked if ".git" not in p.parts and "backups" not in p.parts]
+    tracked = _versionable_files()
     risky_patterns = [
         re.compile(r"AKIA[0-9A-Z]{16}"),
         re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
@@ -137,10 +160,10 @@ def check_cors_and_version() -> None:
         fail("Proteção contra CORS '*' em produção não encontrada")
     else:
         ok("CORS wildcard é bloqueado em produção")
-    if "APP_VERSION" not in main or 'APP_VERSION = "24.3.0"' not in version:
-        fail("Versão centralizada 24.3.0 não encontrada")
+    if "APP_VERSION" not in main or 'APP_VERSION = "24.4.1"' not in version:
+        fail("Versão centralizada 24.4.1 não encontrada")
     else:
-        ok("Versão do backend centralizada em APP_VERSION=24.3.0")
+        ok("Versão do backend centralizada em APP_VERSION=24.4.1")
 
 
 def check_route_guards() -> None:
@@ -224,7 +247,7 @@ def main() -> int:
     for check in checks:
         check()
 
-    print("CATÁLOGO DIGITAL — AUDITORIA FASE 24.3")
+    print("CATÁLOGO DIGITAL — AUDITORIA FASE 24.4.1")
     for message in passes:
         print(f"[OK] {message}")
     for message in warnings:

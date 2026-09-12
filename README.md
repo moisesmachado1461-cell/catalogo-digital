@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 22
+# Catálogo Digital — Fase 24.4.1
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**22.0 — Admin Premium**
+**24.4.1 — Revisão integrada + restore drill temporário no GitHub Actions**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -69,7 +69,7 @@ python -m http.server 5500 --bind 0.0.0.0
 - Banco: Render PostgreSQL
 - Código: GitHub privado
 
-Consulte `docs/FASE_19_2_MOTOR_ASSINATURAS.md`.
+Consulte `docs/FASE_24_4_REVISAO_INTEGRADA.md` e `docs/FASE_24_3_1_RESTORE_GITHUB.md` para o estado mais recente.
 
 ## Dados locais que nunca devem ir para o GitHub
 
@@ -173,5 +173,7 @@ A regressão funcional automatizada usa um banco temporário e valida login, pap
 
 A proteção de dados recebeu backup lógico v2 verificável, criptografia para cópias automáticas, restore transacional em banco separado, workflow diário offsite e restore drill manual. Não há migration. Backend em `24.3.0`.
 
-### Fase 24.3.1
-O restore drill usa PostgreSQL temporário no GitHub Actions, evitando a necessidade de um segundo banco gratuito no Render.
+
+## Correção 24.4.1 — restore drill simplificado
+
+A melhoria da Fase 24.3.1 foi reincorporada à base consolidada: o workflow manual de restore sobe um PostgreSQL 18 temporário no GitHub Actions. Assim, o teste não exige um segundo PostgreSQL no Render nem o secret `RESTORE_TEST_DATABASE_URL`.
