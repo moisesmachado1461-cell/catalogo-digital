@@ -1,31 +1,10 @@
-CATÁLOGO DIGITAL — ATUALIZAÇÃO 24.6.0
+ATUALIZAÇÃO INCREMENTAL — CATÁLOGO DIGITAL 24.6.2
 
-PACOTE INCREMENTAL SEGURO
+Esta atualização adiciona o segmento:
+Estamparia / Personalizados / Brindes
 
-1) Extraia este ZIP.
-2) Copie TODO o conteúdo desta pasta para:
-   C:\Users\SUNLIGHT\Downloads\catalogo-digital-arquitetura-v1-corrigido
-3) Quando o Windows perguntar, escolha "Substituir os arquivos no destino".
+Modelo operacional: HÍBRIDO
+Fluxos: produtos prontos + serviços personalizados + orçamento.
 
-Este pacote NÃO contém .env, .venv, banco local, uploads, backups nem .git.
-
-TESTE ÚNICO APÓS COPIAR:
-python backend\scripts\phase24_5_release_gate.py
-
-Se aparecer RELEASE GATE APROVADO:
-git add .
-git commit -m "Fase 24.6 - portal do cliente e acompanhamento"
-git push
-
-Depois espere o Render ficar Live e confirme:
-https://catalogo-digital-api.onrender.com/api/health
-Versão esperada: 24.6.0
-
-Principais entregas:
-- melhorias visuais solicitadas no Admin/Super Admin/loja pública;
-- sidebar recolhível no desktop e drawer no celular;
-- ícones e ações de produto mais claros e temáticos;
-- conta/login separado para clientes finais de cada loja;
-- histórico de pedidos e agendamentos;
-- link/página segura para acompanhar pedido ou agendamento;
-- migration 017_customer_portal.
+Pode copiar todo o conteúdo desta pasta para a raiz do projeto e substituir os arquivos no destino.
+O pacote NÃO contém .env, .venv, banco local, uploads, backups ou .git.

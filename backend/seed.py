@@ -68,8 +68,24 @@ CATS = [
     ("Hotel / Pousada", "hotel-pousada", "RESERVA"),
     ("Espaço para eventos / Festas", "espaco-eventos-festas", "RESERVA"),
     ("Aluguel de equipamentos e produtos", "aluguel-equipamentos-produtos", "LOCACAO"),
+    ("Estamparia / Personalizados / Brindes", "estamparia-personalizados-brindes", "HIBRIDO"),
     ("Outro negócio", "outro-negocio", "HIBRIDO"),
 ]
+
+CATEGORY_CAPABILITY_OVERRIDES = {
+    "estamparia-personalizados-brindes": {
+        "catalog": True,
+        "services": True,
+        "cart": True,
+        "checkout": True,
+        "inventory": True,
+        "quotes": True,
+        "payments": True,
+        "delivery": True,
+        "coupons": True,
+        "promotions": True,
+    },
+}
 
 
 SUPER_ADMIN_EMAIL = "superadmin@catalogodigital.dev"
@@ -689,12 +705,16 @@ def main():
         mmap = {m.code: m for m in db.query(BusinessModel).all()}
         for i, (name, slug, code) in enumerate(CATS, 1):
             category = db.query(BusinessCategory).filter_by(slug=slug).first()
+            category_capabilities = {
+                **(mmap[code].default_capabilities or {}),
+                **CATEGORY_CAPABILITY_OVERRIDES.get(slug, {}),
+            }
             if not category:
                 category = BusinessCategory(
                     name=name,
                     slug=slug,
                     business_model_id=mmap[code].id,
-                    default_capabilities=mmap[code].default_capabilities,
+                    default_capabilities=category_capabilities,
                     sort_order=i,
                     active=True,
                     created_at=now,
@@ -704,7 +724,7 @@ def main():
             else:
                 category.name = name
                 category.business_model_id = mmap[code].id
-                category.default_capabilities = mmap[code].default_capabilities
+                category.default_capabilities = category_capabilities
                 category.sort_order = i
                 category.updated_at = now
         db.commit()

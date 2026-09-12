@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.6.1**.
+Versão consolidada até a **Fase 24.6.2**.
 
 ## Concluído
 
@@ -68,7 +68,7 @@ A conexão com Mercado Pago continua desacoplada e pode ser adicionada posterior
 
 ## Próximo passo
 
-Validar e publicar a Fase 24.6.0 com o release gate já existente e o smoke de produção. Depois, avançar para a Fase 24.7: domínio, SEO/PWA final, restore drill operacional, credenciais de produção e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
+Após publicar e validar a Fase 24.6.2, avançar para a Fase 24.7: domínio, SEO/PWA final, restore drill operacional, credenciais de produção e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.
@@ -217,3 +217,14 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - login do cliente passa a ter hero temático, acompanhamento ilustrativo, campos refinados, mostrar/ocultar senha e botões mais interativos;
 - acesso à conta fica disponível permanentemente no cabeçalho da loja, exibindo `Entrar` ou `Minha conta` conforme a sessão;
 - backend em `24.6.1`; sem migration nova.
+
+## Fase 24.6.2 — segmento Estamparia / Personalizados / Brindes
+
+- categoria comercial nova para estamparia, sublimação, brindes e produtos personalizados;
+- modelo operacional Híbrido;
+- venda de produtos prontos com catálogo, carrinho, checkout e estoque;
+- serviços personalizados e solicitações de orçamento no mesmo estabelecimento;
+- pagamentos e entrega habilitados;
+- cupons e promoções integrados quando liberados pelo plano;
+- migration `018_personalizados_segment`; backend em `24.6.2`.
+

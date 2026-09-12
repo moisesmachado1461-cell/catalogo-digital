@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.6.0
+# Catálogo Digital — Fase 24.6.2
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.6.0 — Portal do Cliente, acompanhamento e refinamentos finais de interface**
+**24.6.2 — Segmento Estamparia / Personalizados / Brindes**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -231,3 +231,8 @@ Também foram concluídos os refinamentos visuais solicitados antes do lançamen
 ## Fase 24.6.1 — experiência do cliente e sidebar
 
 Refinamento visual sem migration: a sidebar recolhida do Admin agora ocupa o mínimo possível e não exibe as opções do menu; o controle de expandir/recolher fica mais visível e fora da área rolável. A área do cliente ganhou uma tela de login/cadastro própria, premium, interativa e fortemente tematizada com as cores e logo da loja. O acesso `Entrar / Minha conta` permanece disponível diretamente no cabeçalho da loja, sem depender do checkout. Backend em `24.6.1`.
+
+## Fase 24.6.2 — Estamparia, Personalizados e Brindes
+
+Novo segmento comercial baseado no modelo Híbrido, preparado para negócios que vendem produtos prontos e também trabalham com personalização e encomendas sob orçamento. O segmento habilita catálogo, carrinho, checkout, estoque, serviços, orçamentos, pagamentos, entrega, cupons e promoções conforme o plano. Migration `018_personalizados_segment`; backend em `24.6.2`.
+
