@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.6.2**.
+Versão consolidada até a **Fase 24.6.3**.
 
 ## Concluído
 
@@ -68,7 +68,7 @@ A conexão com Mercado Pago continua desacoplada e pode ser adicionada posterior
 
 ## Próximo passo
 
-Após publicar e validar a Fase 24.6.2, avançar para a Fase 24.7: domínio, SEO/PWA final, restore drill operacional, credenciais de produção e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
+Após publicar e validar a Fase 24.6.3, avançar para a Fase 24.7: domínio, SEO/PWA final, restore drill operacional, credenciais de produção e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.
@@ -228,3 +228,14 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - cupons e promoções integrados quando liberados pelo plano;
 - migration `018_personalizados_segment`; backend em `24.6.2`.
 
+
+
+## Fase 24.6.3 — carrinho separado da vitrine
+
+- catálogo público usa toda a largura disponível para produtos;
+- carrinho não ocupa mais uma coluna fixa ao lado da vitrine;
+- novo botão de carrinho no topo da navegação da loja, com ícone e contador;
+- carrinho abre em drawer lateral responsivo com fechamento por botão, fundo ou tecla Esc;
+- checkout e lógica do carrinho foram preservados;
+- cache PWA atualizado para `catalogo-digital-v24-6-3`;
+- sem nova migration; backend em `24.6.3`.

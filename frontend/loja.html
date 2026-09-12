@@ -39,7 +39,16 @@
 </section>
 
 <nav class="store-nav store-nav-v2">
-  <div class="container store-nav-inner" id="storeTabs"></div>
+  <div class="container store-nav-shell">
+    <div class="store-nav-inner" id="storeTabs"></div>
+    <button id="storeCartButton" class="store-cart-trigger hidden" type="button" aria-controls="cartPanel" aria-expanded="false" title="Abrir carrinho">
+      <span class="store-cart-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h15l-1.5 8.5H8L6 3H3"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+      </span>
+      <span class="store-cart-label">Carrinho</span>
+      <span id="storeCartBadge" class="store-cart-badge">0</span>
+    </button>
+  </div>
 </nav>
 
 <main class="store-main premium-store-main">
@@ -65,13 +74,6 @@
       <div id="categoryChips" class="category-chips"></div>
       <div class="shop-layout shop-layout-v2">
         <div id="productGrid" class="product-grid product-grid-v2"></div>
-        <aside id="cartPanel" class="panel cart cart-v2">
-          <div class="cart-head"><div><span class="section-kicker">Seu pedido</span><h2>Carrinho</h2></div><span id="cartCountBadge" class="cart-count-badge">0</span></div>
-          <div id="cartItems"></div>
-          <div class="cart-total"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
-          <button id="checkoutBtn" class="btn primary full-btn">Finalizar pedido</button>
-          <small class="cart-safe">O valor final é validado pelo servidor.</small>
-        </aside>
       </div>
     </section>
 
@@ -102,10 +104,26 @@
   </div>
 </main>
 
-<button id="mobileCartBar" class="mobile-cart-bar hidden" type="button">
-  <span><b id="mobileCartCount">0 itens</b><small>Ver carrinho</small></span>
-  <strong id="mobileCartTotal">R$ 0,00</strong>
-</button>
+<div id="cartDrawerBackdrop" class="cart-drawer-backdrop" aria-hidden="true"></div>
+<aside id="cartPanel" class="cart-drawer" aria-hidden="true" aria-label="Carrinho de compras">
+  <div class="cart-drawer-head">
+    <div>
+      <span class="section-kicker">Seu pedido</span>
+      <h2>Carrinho</h2>
+      <p>Revise seus itens antes de finalizar.</p>
+    </div>
+    <button id="cartCloseButton" class="cart-drawer-close" type="button" aria-label="Fechar carrinho">×</button>
+  </div>
+  <div class="cart-drawer-body">
+    <div class="cart-head cart-drawer-summary"><strong>Itens do pedido</strong><span id="cartCountBadge" class="cart-count-badge">0</span></div>
+    <div id="cartItems"></div>
+  </div>
+  <div class="cart-drawer-footer">
+    <div class="cart-total"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
+    <button id="checkoutBtn" class="btn primary full-btn">Finalizar pedido</button>
+    <small class="cart-safe">O valor final é validado pelo servidor.</small>
+  </div>
+</aside>
 
 <div id="productConfigModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><div><span class="section-kicker">Personalizar produto</span><h2 id="productConfigTitle">Produto</h2></div><button class="close-btn" data-close="productConfigModal">×</button></div><form id="productConfigForm" class="stack-form" style="margin-top:18px"><input type="hidden" name="product_id"><div id="productConfigContent"></div><div class="cart-total"><span>Valor por unidade</span><strong id="productConfigPrice">R$ 0,00</strong></div><button class="btn primary full-btn" type="submit">Adicionar ao carrinho</button></form></div></div>
 

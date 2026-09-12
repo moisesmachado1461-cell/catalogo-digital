@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.6.2
+# Catálogo Digital — Fase 24.6.3
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.6.2 — Segmento Estamparia / Personalizados / Brindes**
+**24.6.3 — Carrinho separado da vitrine pública**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -236,3 +236,8 @@ Refinamento visual sem migration: a sidebar recolhida do Admin agora ocupa o mí
 
 Novo segmento comercial baseado no modelo Híbrido, preparado para negócios que vendem produtos prontos e também trabalham com personalização e encomendas sob orçamento. O segmento habilita catálogo, carrinho, checkout, estoque, serviços, orçamentos, pagamentos, entrega, cupons e promoções conforme o plano. Migration `018_personalizados_segment`; backend em `24.6.2`.
 
+
+
+## Fase 24.6.3 — Carrinho separado da vitrine pública
+
+A vitrine de produtos passa a ocupar toda a largura útil da loja. O carrinho deixa de ocupar uma coluna fixa ao lado dos produtos e passa a ser acessado por um botão temático no topo, com ícone e contador de itens. Ao clicar, abre um drawer lateral responsivo para revisar itens e finalizar o pedido. O comportamento vale para desktop e celular, mantendo a temática de cores da loja e liberando mais espaço para o catálogo. Sem nova migration; backend em `24.6.3`.

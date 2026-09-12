@@ -1,0 +1,13 @@
+CATÁLOGO DIGITAL — FASE 24.6.3
+
+1. Extraia o ZIP.
+2. Copie todo o conteúdo para a pasta principal catalogo-digital-arquitetura-v1-corrigido.
+3. Substitua os arquivos quando o Windows solicitar.
+4. Com a .venv ativa, rode:
+   python backend\scripts\phase24_5_release_gate.py
+5. Se o RELEASE GATE for aprovado:
+   git add .
+   git commit -m "Fase 24.6.3 - carrinho separado da vitrine"
+   git push
+
+Não há nova migration nesta fase.

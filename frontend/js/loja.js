@@ -238,6 +238,8 @@ async function init() {
     setTheme();
     await loadPaymentOptions();
     const caps = store.capabilities || {};
+    const cartButton = $('#storeCartButton');
+    if (cartButton) cartButton.classList.toggle('hidden', !caps.catalog);
     if (caps.coupons) await loadPublicCoupons();
     let first = null;
     if (caps.catalog) { const b = addTab('catalogSection', 'Produtos'); first ||= b; await loadCatalog(); }
@@ -409,12 +411,40 @@ function renderCart() {
   box.innerHTML = cart.length ? cart.map((x, i) => `<div class="cart-item"><div><b>${escapeHtml(x.name)}</b>${x.variant_name ? `<br><small>${escapeHtml(x.variant_name)}</small>` : ''}${(x.selected_options || []).length ? `<br><small>${x.selected_options.map(escapeHtml).join(' · ')}</small>` : ''}<br><small>${money(x.price)} × ${x.quantity}</small></div><div class="cart-actions"><button class="qty" onclick="changeQty(${i},-1)">−</button><b>${x.quantity}</b><button class="qty" onclick="changeQty(${i},1)">+</button></div></div>`).join('') : '<div class="empty">Seu carrinho está vazio.</div>';
   $('#cartTotal').textContent = money(total);
   $('#cartCountBadge').textContent = totalQty;
-  $('#mobileCartCount').textContent = `${totalQty} ${totalQty === 1 ? 'item' : 'itens'}`;
-  $('#mobileCartTotal').textContent = money(total);
-  $('#mobileCartBar').classList.toggle('hidden', totalQty === 0);
+  const topBadge = $('#storeCartBadge');
+  if (topBadge) {
+    topBadge.textContent = totalQty;
+    topBadge.classList.toggle('has-items', totalQty > 0);
+  }
+  const cartButton = $('#storeCartButton');
+  if (cartButton) {
+    cartButton.classList.toggle('has-items', totalQty > 0);
+    cartButton.setAttribute('aria-label', totalQty ? `Abrir carrinho com ${totalQty} ${totalQty === 1 ? 'item' : 'itens'}` : 'Abrir carrinho vazio');
+  }
 }
 
-$('#mobileCartBar').onclick = () => $('#cartPanel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+function setCartDrawer(open) {
+  const drawer = $('#cartPanel');
+  const backdrop = $('#cartDrawerBackdrop');
+  const trigger = $('#storeCartButton');
+  if (!drawer || !backdrop) return;
+  drawer.classList.toggle('open', open);
+  backdrop.classList.toggle('open', open);
+  drawer.setAttribute('aria-hidden', String(!open));
+  backdrop.setAttribute('aria-hidden', String(!open));
+  trigger?.setAttribute('aria-expanded', String(open));
+  document.body.classList.toggle('cart-drawer-open', open);
+  if (open) setTimeout(() => $('#cartCloseButton')?.focus(), 120);
+}
+
+function openCartDrawer() { setCartDrawer(true); }
+function closeCartDrawer() { setCartDrawer(false); }
+window.openCartDrawer = openCartDrawer;
+window.closeCartDrawer = closeCartDrawer;
+$('#storeCartButton')?.addEventListener('click', openCartDrawer);
+$('#cartCloseButton')?.addEventListener('click', closeCartDrawer);
+$('#cartDrawerBackdrop')?.addEventListener('click', closeCartDrawer);
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeCartDrawer(); });
 
 async function loadServices() {
   serviceData = await api(`/api/public/stores/${encodeURIComponent(slug)}/services`);
@@ -553,6 +583,7 @@ $('#quoteForm').onsubmit = async e => {
 
 $('#checkoutBtn').onclick = () => {
   if (!cart.length) return showToast('Adicione um produto ao carrinho.', 'error');
+  closeCartDrawer();
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   $('#checkoutSummary').textContent = `Subtotal estimado: ${money(total)}. Promoções e cupom serão validados no servidor.`;
   if (selectedCouponCode && $('#checkoutCouponCode') && !$('#checkoutCouponCode').value) $('#checkoutCouponCode').value = selectedCouponCode;

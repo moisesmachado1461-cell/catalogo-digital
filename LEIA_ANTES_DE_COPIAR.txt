@@ -1,10 +1,6 @@
-ATUALIZAÇÃO INCREMENTAL — CATÁLOGO DIGITAL 24.6.2
+CATÁLOGO DIGITAL — ATUALIZAÇÃO 24.6.3
 
-Esta atualização adiciona o segmento:
-Estamparia / Personalizados / Brindes
+Este pacote é incremental e não contém .env, .venv, banco, uploads, backups ou .git.
+Pode copiar todo o conteúdo para a pasta principal do projeto e substituir os arquivos existentes.
 
-Modelo operacional: HÍBRIDO
-Fluxos: produtos prontos + serviços personalizados + orçamento.
-
-Pode copiar todo o conteúdo desta pasta para a raiz do projeto e substituir os arquivos no destino.
-O pacote NÃO contém .env, .venv, banco local, uploads, backups ou .git.
+Mudança principal: produtos em largura total + carrinho separado no topo e aberto em painel lateral.
