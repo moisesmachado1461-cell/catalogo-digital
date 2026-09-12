@@ -259,6 +259,81 @@
   </div>
 </div>
 
+
+<div id="editStoreModal" class="modal-backdrop">
+  <div class="modal super-modal super-edit-store-modal">
+    <div class="modal-head">
+      <div>
+        <span class="super-panel-kicker">GESTÃO DA LOJA</span>
+        <h2>Editar loja</h2>
+        <small>Atualize os dados do estabelecimento sem alterar o histórico nem o store_id.</small>
+      </div>
+      <button class="close-btn" onclick="closeEditStoreModal()">×</button>
+    </div>
+    <form id="editStoreForm" class="form-grid super-form-grid">
+      <input type="hidden" name="id">
+      <div class="field"><label>Nome da empresa</label><input class="input" name="name" required></div>
+      <div class="field"><label>Slug / endereço público</label><input class="input" name="slug" required placeholder="nome-da-loja"></div>
+      <div class="field full"><label>Segmento</label><select class="select" name="business_category_id" id="editBusinessCategorySelect" required></select></div>
+      <div class="field"><label>Cor principal</label><input class="input" name="primary_color" type="color" value="#7C3AED"></div>
+      <div class="field"><label>Cor secundária</label><input class="input" name="secondary_color" type="color" value="#4F46E5"></div>
+      <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3"></textarea></div>
+      <div class="field full super-form-divider"><span>Contato da loja</span></div>
+      <div class="field"><label>WhatsApp</label><input class="input" name="whatsapp"></div>
+      <div class="field"><label>Telefone</label><input class="input" name="phone"></div>
+      <div class="field full"><label>E-mail da loja</label><input class="input" name="email" type="email"></div>
+      <div class="field full super-form-divider"><span>Endereço</span></div>
+      <div class="field full"><label>Endereço</label><input class="input" name="address"></div>
+      <div class="field"><label>Cidade</label><input class="input" name="city"></div>
+      <div class="field"><label>Estado (UF)</label><input class="input" name="state" maxlength="2" placeholder="SP"></div>
+      <div class="field full"><label>CEP</label><input class="input" name="zip_code"></div>
+      <div class="field full super-form-divider"><span>Administrador principal <small>não altera a senha</small></span></div>
+      <div class="field"><label>Nome do administrador</label><input class="input" name="admin_name"></div>
+      <div class="field"><label>E-mail do administrador</label><input class="input" name="admin_email" type="email"></div>
+      <div class="field full super-edit-store-note">
+        <strong>O que não muda</strong>
+        <span>Pedidos, clientes, produtos, agendamentos, assinatura e histórico da loja continuam vinculados ao mesmo store_id.</span>
+      </div>
+      <div class="field full"><button class="btn primary super-modal-submit" type="submit">Salvar alterações da loja</button></div>
+    </form>
+  </div>
+</div>
+
+
+<div id="storeCouponsModal" class="modal-backdrop">
+  <div class="modal super-modal super-coupon-modal">
+    <div class="modal-head">
+      <div><span class="super-panel-kicker">CUPONS DA LOJA</span><h2 id="storeCouponsTitle">Cupons</h2><small>Crie e edite os cupons da loja e defina quais aparecem no site público.</small></div>
+      <button class="close-btn" onclick="closeStoreCouponsModal()">×</button>
+    </div>
+
+    <div id="storeCouponsListView">
+      <div class="super-coupon-toolbar"><p>Cupons públicos aparecem para o cliente. Cupons ocultos continuam válidos quando o código é informado no checkout.</p><button class="btn primary" type="button" onclick="openSuperCouponEditor()">+ Novo cupom</button></div>
+      <div id="storeCouponsTable" class="table-wrap"></div>
+    </div>
+
+    <div id="storeCouponEditorView" class="hidden">
+      <div class="super-coupon-editor-head"><button class="btn ghost small" type="button" onclick="backToStoreCouponList()">← Voltar</button><div><span class="super-panel-kicker">EDIÇÃO</span><h3 id="superCouponEditorTitle">Novo cupom</h3></div></div>
+      <form id="superCouponForm" class="form-grid super-form-grid">
+        <input type="hidden" name="id">
+        <div class="field"><label>Código</label><input class="input" name="code" maxlength="40" required placeholder="BEMVINDO10"></div>
+        <div class="field"><label>Tipo</label><select class="select" name="discount_type"><option value="PERCENT">Percentual</option><option value="FIXED">Valor fixo</option></select></div>
+        <div class="field"><label>Valor do desconto</label><input class="input" name="value" type="number" min="0" step="0.01" required value="10"></div>
+        <div class="field"><label>Pedido mínimo</label><input class="input" name="min_order_value" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label>Desconto máximo</label><input class="input" name="max_discount" type="number" min="0" step="0.01" placeholder="Opcional"></div>
+        <div class="field"><label>Limite de usos</label><input class="input" name="usage_limit" type="number" min="1" placeholder="Ilimitado"></div>
+        <div class="field"><label>Início da validade</label><input class="input" name="starts_at" type="datetime-local"></div>
+        <div class="field"><label>Fim da validade</label><input class="input" name="ends_at" type="datetime-local"></div>
+        <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3" placeholder="Ex.: 10% de desconto na primeira compra"></textarea></div>
+        <div class="field checkbox-field"><label><input type="checkbox" name="is_public"> Exibir no site público da loja</label></div>
+        <div class="field checkbox-field"><label><input type="checkbox" name="is_active" checked> Cupom ativo</label></div>
+        <div class="field full notice">Para aparecer no site, o cupom precisa estar ativo, dentro da validade, com usos disponíveis e com “Exibir no site” marcado.</div>
+        <div class="field full form-actions"><button class="btn ghost" type="button" onclick="backToStoreCouponList()">Cancelar</button><button class="btn primary" type="submit">Salvar cupom</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div id="planModal" class="modal-backdrop">
   <div class="modal super-modal">
     <div class="modal-head"><div><span id="planModalEyebrow" class="super-panel-kicker">PLANOS</span><h2 id="planModalTitle">Novo plano</h2><small>Defina preço, limites e recursos do plano comercial.</small></div><button class="close-btn" onclick="closePlanModal()">×</button></div>

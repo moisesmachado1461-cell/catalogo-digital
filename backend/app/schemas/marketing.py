@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class CouponCreate(BaseModel):
@@ -15,11 +15,21 @@ class CouponCreate(BaseModel):
     ends_at: datetime | None = None
     usage_limit: int | None = Field(default=None, ge=1)
     is_active: bool = True
+    is_public: bool = False
 
     @field_validator("code")
     @classmethod
     def normalize_code(cls, value: str) -> str:
-        return value.strip().upper().replace(" ", "")
+        normalized = value.strip().upper().replace(" ", "")
+        if not all(ch.isalnum() or ch in "-_" for ch in normalized):
+            raise ValueError("Use apenas letras, números, hífen ou sublinhado no código")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_period(self):
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            raise ValueError("A data final do cupom deve ser posterior à data inicial")
+        return self
 
 
 class CouponUpdate(CouponCreate):

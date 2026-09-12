@@ -98,3 +98,36 @@ def active_promotions_for_store(db: Session, store_id: int):
             "ends_at": promotion.ends_at.isoformat() if promotion.ends_at else None,
         })
     return result
+
+
+def active_public_coupons_for_store(db: Session, store_id: int):
+    coupons = (
+        db.query(Coupon)
+        .filter(
+            Coupon.store_id == store_id,
+            Coupon.is_active.is_(True),
+            Coupon.is_public.is_(True),
+        )
+        .order_by(Coupon.created_at.desc(), Coupon.id.desc())
+        .all()
+    )
+    result = []
+    for coupon in coupons:
+        if not _window_active(coupon.starts_at, coupon.ends_at):
+            continue
+        if coupon.usage_limit is not None and coupon.usage_count >= coupon.usage_limit:
+            continue
+        remaining = None if coupon.usage_limit is None else max(coupon.usage_limit - coupon.usage_count, 0)
+        result.append({
+            "id": coupon.id,
+            "code": coupon.code,
+            "description": coupon.description,
+            "discount_type": coupon.discount_type,
+            "value": coupon.value,
+            "min_order_value": coupon.min_order_value,
+            "max_discount": coupon.max_discount,
+            "starts_at": coupon.starts_at.isoformat() if coupon.starts_at else None,
+            "ends_at": coupon.ends_at.isoformat() if coupon.ends_at else None,
+            "usage_remaining": remaining,
+        })
+    return result

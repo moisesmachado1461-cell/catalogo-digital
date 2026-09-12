@@ -8,6 +8,8 @@ let billingInvoices = [];
 let billingProviders = [];
 let superDashboardData = null;
 let currentSuperSection = 'dashboard';
+let selectedCouponStoreId = null;
+let selectedStoreCoupons = [];
 
 function initials(value, fallback = 'SA') {
   const parts = String(value || '').trim().split(/\s+/).filter(Boolean);
@@ -161,7 +163,7 @@ window.renderSuperStores = function() {
       <td>${escapeHtml(store.admin?.name || '—')}<br><small>${escapeHtml(store.admin?.email || '')}</small></td>
       <td><div class="super-indicators"><span class="super-indicator-chip">${store.metrics.products} produtos</span><span class="super-indicator-chip">${store.metrics.orders} pedidos</span><span class="super-indicator-chip">${store.metrics.customers} clientes</span><span class="super-indicator-chip">${store.metrics.appointments} agendas</span><span class="super-indicator-chip">${store.metrics.quotes} orçamentos</span></div></td>
       <td><span class="status ${store.is_active?'CONFIRMADO':'CANCELADO'}">${store.is_active?'Ativa':'Inativa'}</span></td>
-      <td><div class="super-table-actions"><a class="btn ghost small" target="_blank" href="loja.html?slug=${encodeURIComponent(store.slug)}">Abrir</a><button class="btn ${store.is_active?'danger':'primary'} small" onclick="toggleStoreStatus(${store.id},${!store.is_active})">${store.is_active?'Desativar':'Ativar'}</button></div></td>
+      <td><div class="super-table-actions"><a class="btn ghost small" target="_blank" href="loja.html?slug=${encodeURIComponent(store.slug)}">Abrir</a><button class="btn ghost small" onclick="openEditStoreModal(${store.id})">Editar</button><button class="btn ghost small" onclick="openStoreCouponsModal(${store.id})">Cupons</button><button class="btn ${store.is_active?'danger':'primary'} small" onclick="toggleStoreStatus(${store.id},${!store.is_active})">${store.is_active?'Desativar':'Ativar'}</button></div></td>
     </tr>`).join('')}</tbody></table>` : '<div class="empty">Nenhuma loja encontrada com os filtros atuais.</div>';
 };
 
@@ -184,7 +186,10 @@ window.toggleStoreStatus = async function(id, isActive) {
 async function loadBusinessCategories() {
   businessCategories = await api('/api/business/categories');
   const select = $s('#businessCategorySelect');
-  if (select) select.innerHTML = '<option value="">Selecione...</option>' + businessCategories.map(category => `<option value="${category.id}">${escapeHtml(category.name)}</option>`).join('');
+  const options = '<option value="">Selecione...</option>' + businessCategories.map(category => `<option value="${category.id}">${escapeHtml(category.name)}</option>`).join('');
+  if (select) select.innerHTML = options;
+  const editSelect = $s('#editBusinessCategorySelect');
+  if (editSelect) editSelect.innerHTML = options;
 }
 
 window.loadPlans = async function() {
@@ -213,6 +218,194 @@ function renderPlans() {
 
 function limitText(value) { return value == null || Number(value) < 0 ? '∞' : Number(value); }
 function featureLabel(key) { return ({coupons:'Cupons',promotions:'Promoções',custom_branding:'Marca própria',reports:'Relatórios',priority_support:'Suporte prioritário',custom_domain:'Domínio próprio',online_payments:'Pagamentos online'})[key] || key; }
+
+
+window.closeEditStoreModal = () => $s('#editStoreModal')?.classList.remove('open');
+
+
+function superCouponDateTimeLocal(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function superCouponDiscount(coupon) {
+  return coupon.discount_type === 'PERCENT' ? `${Number(coupon.value)}%` : money(coupon.value);
+}
+
+function superCouponValidity(coupon) {
+  if (!coupon.starts_at && !coupon.ends_at) return 'Sem prazo';
+  const start = coupon.starts_at ? new Date(coupon.starts_at).toLocaleDateString('pt-BR') : 'agora';
+  const end = coupon.ends_at ? new Date(coupon.ends_at).toLocaleDateString('pt-BR') : 'sem fim';
+  return `${start} → ${end}`;
+}
+
+window.closeStoreCouponsModal = () => {
+  $s('#storeCouponsModal')?.classList.remove('open');
+  selectedCouponStoreId = null;
+  selectedStoreCoupons = [];
+};
+
+async function loadSelectedStoreCoupons() {
+  if (!selectedCouponStoreId) return;
+  selectedStoreCoupons = await api(`/api/super-admin/stores/${selectedCouponStoreId}/coupons`);
+  renderSelectedStoreCoupons();
+}
+
+function renderSelectedStoreCoupons() {
+  const root = $s('#storeCouponsTable');
+  if (!root) return;
+  root.innerHTML = selectedStoreCoupons.length ? `<table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Validade</th><th>No site</th><th>Status</th><th>Ação</th></tr></thead><tbody>${selectedStoreCoupons.map(coupon => `<tr><td><b>${escapeHtml(coupon.code)}</b><br><small>${escapeHtml(coupon.description || '')}</small></td><td>${superCouponDiscount(coupon)}<br><small>mín. ${money(coupon.min_order_value || 0)}</small></td><td><small>${escapeHtml(superCouponValidity(coupon))}</small></td><td><span class="status ${coupon.is_public?'CONFIRMADO':'PENDENTE'}">${coupon.is_public?'Visível':'Oculto'}</span></td><td><span class="status ${coupon.is_active?'CONFIRMADO':'CANCELADO'}">${coupon.is_active?'Ativo':'Inativo'}</span></td><td><button class="btn ghost small" type="button" onclick="openSuperCouponEditor(${coupon.id})">Editar</button></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Esta loja ainda não possui cupons.</div>';
+}
+
+window.openStoreCouponsModal = async function(storeId) {
+  selectedCouponStoreId = storeId;
+  const store = superStores.find(item => item.id === storeId);
+  const title = $s('#storeCouponsTitle');
+  if (title) title.textContent = `Cupons · ${store?.name || `Loja #${storeId}`}`;
+  $s('#storeCouponsListView')?.classList.remove('hidden');
+  $s('#storeCouponEditorView')?.classList.add('hidden');
+  $s('#storeCouponsModal')?.classList.add('open');
+  try {
+    await loadSelectedStoreCoupons();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+window.openSuperCouponEditor = function(couponId = null) {
+  const coupon = couponId ? selectedStoreCoupons.find(item => item.id === couponId) : null;
+  const form = $s('#superCouponForm');
+  if (!form) return;
+  form.reset();
+  form.elements['id'].value = coupon?.id || '';
+  form.elements['code'].value = coupon?.code || '';
+  form.elements['discount_type'].value = coupon?.discount_type || 'PERCENT';
+  form.elements['value'].value = coupon?.value ?? 10;
+  form.elements['min_order_value'].value = coupon?.min_order_value ?? 0;
+  form.elements['max_discount'].value = coupon?.max_discount ?? '';
+  form.elements['usage_limit'].value = coupon?.usage_limit ?? '';
+  form.elements['starts_at'].value = superCouponDateTimeLocal(coupon?.starts_at);
+  form.elements['ends_at'].value = superCouponDateTimeLocal(coupon?.ends_at);
+  form.elements['description'].value = coupon?.description || '';
+  form.elements['is_public'].checked = Boolean(coupon?.is_public);
+  form.elements['is_active'].checked = coupon?.is_active ?? true;
+  const title = $s('#superCouponEditorTitle');
+  if (title) title.textContent = coupon ? `Editar ${coupon.code}` : 'Novo cupom';
+  $s('#storeCouponsListView')?.classList.add('hidden');
+  $s('#storeCouponEditorView')?.classList.remove('hidden');
+};
+
+window.backToStoreCouponList = function() {
+  $s('#storeCouponEditorView')?.classList.add('hidden');
+  $s('#storeCouponsListView')?.classList.remove('hidden');
+};
+
+const superCouponForm = $s('#superCouponForm');
+if (superCouponForm) {
+  superCouponForm.onsubmit = async event => {
+    event.preventDefault();
+    if (!selectedCouponStoreId) return;
+    const form = event.currentTarget;
+    if (form.elements['starts_at'].value && form.elements['ends_at'].value && new Date(form.elements['ends_at'].value) <= new Date(form.elements['starts_at'].value)) {
+      return showToast('A data final deve ser posterior à inicial.', 'error');
+    }
+    const couponId = Number(form.elements['id'].value || 0);
+    const payload = {
+      code: form.elements['code'].value,
+      description: form.elements['description'].value.trim() || null,
+      discount_type: form.elements['discount_type'].value,
+      value: Number(form.elements['value'].value),
+      min_order_value: Number(form.elements['min_order_value'].value || 0),
+      max_discount: form.elements['max_discount'].value === '' ? null : Number(form.elements['max_discount'].value),
+      starts_at: form.elements['starts_at'].value ? new Date(form.elements['starts_at'].value).toISOString() : null,
+      ends_at: form.elements['ends_at'].value ? new Date(form.elements['ends_at'].value).toISOString() : null,
+      usage_limit: form.elements['usage_limit'].value === '' ? null : Number(form.elements['usage_limit'].value),
+      is_active: form.elements['is_active'].checked,
+      is_public: form.elements['is_public'].checked,
+    };
+    try {
+      await api(couponId ? `/api/super-admin/stores/${selectedCouponStoreId}/coupons/${couponId}` : `/api/super-admin/stores/${selectedCouponStoreId}/coupons`, {
+        method: couponId ? 'PATCH' : 'POST',
+        body: JSON.stringify(payload),
+      });
+      await loadSelectedStoreCoupons();
+      backToStoreCouponList();
+      showToast(couponId ? 'Cupom atualizado.' : 'Cupom criado.');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+}
+
+window.openEditStoreModal = async function(storeId) {
+  try {
+    const store = await api(`/api/super-admin/stores/${storeId}`);
+    const form = $s('#editStoreForm');
+    if (!form) return;
+    if (!businessCategories.length) await loadBusinessCategories();
+
+    form.elements['id'].value = store.id;
+    form.elements['name'].value = store.name || '';
+    form.elements['slug'].value = store.slug || '';
+    form.elements['business_category_id'].value = store.business_category?.id || '';
+    form.elements['primary_color'].value = store.primary_color || '#7C3AED';
+    form.elements['secondary_color'].value = store.secondary_color || '#4F46E5';
+    form.elements['description'].value = store.description || '';
+    form.elements['whatsapp'].value = store.whatsapp || '';
+    form.elements['phone'].value = store.phone || '';
+    form.elements['email'].value = store.email || '';
+    form.elements['address'].value = store.address || '';
+    form.elements['city'].value = store.city || '';
+    form.elements['state'].value = store.state || '';
+    form.elements['zip_code'].value = store.zip_code || '';
+    form.elements['admin_name'].value = store.admin?.name || '';
+    form.elements['admin_email'].value = store.admin?.email || '';
+
+    $s('#editStoreModal')?.classList.add('open');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+const editStoreForm = $s('#editStoreForm');
+if (editStoreForm) {
+  editStoreForm.onsubmit = async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const storeId = Number(form.elements['id'].value);
+    const payload = {
+      name: form.elements['name'].value.trim(),
+      slug: form.elements['slug'].value.trim(),
+      business_category_id: Number(form.elements['business_category_id'].value),
+      primary_color: form.elements['primary_color'].value,
+      secondary_color: form.elements['secondary_color'].value,
+      description: form.elements['description'].value.trim() || null,
+      whatsapp: form.elements['whatsapp'].value.trim() || null,
+      phone: form.elements['phone'].value.trim() || null,
+      email: form.elements['email'].value.trim() || null,
+      address: form.elements['address'].value.trim() || null,
+      city: form.elements['city'].value.trim() || null,
+      state: form.elements['state'].value.trim() || null,
+      zip_code: form.elements['zip_code'].value.trim() || null,
+      admin_name: form.elements['admin_name'].value.trim() || null,
+      admin_email: form.elements['admin_email'].value.trim() || null,
+    };
+    try {
+      const updated = await api(`/api/super-admin/stores/${storeId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+      closeEditStoreModal();
+      showToast(`Loja ${updated.name} atualizada com sucesso.`);
+      await Promise.all([loadSuperDashboard(), loadSuperStores()]);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+}
 
 window.openSuperModal = () => $s('#superStoreModal').classList.add('open');
 window.closeSuperModal = () => $s('#superStoreModal').classList.remove('open');

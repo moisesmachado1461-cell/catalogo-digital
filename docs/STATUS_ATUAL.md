@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 23.1**.
+Versão consolidada até a **Fase 23.3**.
 
 ## Concluído
 
@@ -22,7 +22,9 @@ Versão consolidada até a **Fase 23.1**.
 - área do cliente premium;
 - Admin Premium;
 - Super Admin Premium;
-- perfil e segurança do Super Admin, com troca de e-mail/senha e revogação de outras sessões.
+- perfil e segurança do Super Admin, com troca de e-mail/senha e revogação de outras sessões;
+- edição completa das lojas pelo Super Admin;
+- gestão e exposição pública controlada de cupons.
 
 ## Gateway real
 
@@ -52,6 +54,19 @@ A conexão com Mercado Pago continua desacoplada e pode ser adicionada posterior
 - migration `013_super_admin_account_security`;
 - backend em `23.1.0`.
 
+## Fase 23.3 — Lojas e Cupons
+
+- Fase 23.2 incorporada de forma cumulativa: edição completa de lojas no Super Admin;
+- cupons podem ser criados/editados pelo Admin e pelo Super Admin;
+- validade, limite, pedido mínimo, desconto máximo, ativação e visibilidade pública;
+- nova seção de cupons na loja pública;
+- cupons privados continuam ocultos;
+- migration `014_public_coupons`;
+- backend em `23.3.0`.
+
 ## Próximo passo
 
 Fazer uma revisão integrada de **Cliente + Admin + Super Admin** para corrigir inconsistências visuais e funcionais remanescentes, seguida pela fase de testes finais, segurança, domínio/SEO/PWA e preparação comercial. A integração real com Mercado Pago pode ser retomada assim que houver um responsável adulto disponível para configurar a conta e as credenciais.
+
+
+- Fase 23.2: edição completa de lojas restaurada no Super Admin.

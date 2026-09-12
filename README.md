@@ -142,3 +142,10 @@ O Super Admin agora pode gerenciar a própria conta em uma área dedicada:
 
 A migration `013_super_admin_account_security` adiciona versionamento de tokens à tabela `users`.
 Backend em `23.1.0`.
+
+
+## Fase 23.2 — edição de lojas no Super Admin
+O Super Admin volta a editar dados completos das lojas pelo painel, preservando store_id e histórico.
+
+## Fase 23.3 — lojas e cupons
+Atualização cumulativa que mantém a edição de lojas e amplia cupons no Admin, Super Admin e loja pública. Cupons só aparecem publicamente quando marcados como visíveis. A migration `014_public_coupons` adiciona esse controle de exposição. Backend em `23.3.0`.

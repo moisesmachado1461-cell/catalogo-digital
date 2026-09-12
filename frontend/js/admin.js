@@ -147,6 +147,21 @@ function optionSelected(a, b) {
   return String(a ?? '') === String(b ?? '') ? 'selected' : '';
 }
 
+function toDateTimeLocal(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function couponValidityLabel(coupon) {
+  if (!coupon.starts_at && !coupon.ends_at) return 'Sem prazo';
+  const start = coupon.starts_at ? new Date(coupon.starts_at).toLocaleDateString('pt-BR') : 'agora';
+  const end = coupon.ends_at ? new Date(coupon.ends_at).toLocaleDateString('pt-BR') : 'sem fim';
+  return `${start} → ${end}`;
+}
+
 
 function imageUploadField(name, label, kind, current = '', hint = 'JPG, PNG ou WebP · máximo 8 MB') {
   const value = current || '';
@@ -938,13 +953,57 @@ window.openInventoryModal = function openInventoryModal(id) {
 
 window.loadCoupons = async function loadCoupons() {
   coupons = await api('/api/admin/coupons');
-  $('#couponsTable').innerHTML = coupons.length ? `<table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Pedido mínimo</th><th>Usos</th><th>Status</th><th>Ação</th></tr></thead><tbody>${coupons.map(c=>`<tr><td><b>${escapeHtml(c.code)}</b><br><small>${escapeHtml(c.description||'')}</small></td><td>${c.discount_type==='PERCENT'?`${c.value}%`:money(c.value)}</td><td>${money(c.min_order_value)}</td><td>${c.usage_count}${c.usage_limit?` / ${c.usage_limit}`:''}</td><td><span class="status ${c.is_active?'CONFIRMADO':'CANCELADO'}">${c.is_active?'Ativo':'Inativo'}</span></td><td><button class="btn ghost small" onclick="openCouponModal(${c.id})">Editar</button></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Nenhum cupom cadastrado.</div>';
+  $('#couponsTable').innerHTML = coupons.length ? `<table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Pedido mínimo</th><th>Validade</th><th>Usos</th><th>No site</th><th>Status</th><th>Ações</th></tr></thead><tbody>${coupons.map(c=>`<tr><td><b>${escapeHtml(c.code)}</b><br><small>${escapeHtml(c.description||'Sem descrição')}</small></td><td>${c.discount_type==='PERCENT'?`${c.value}%`:money(c.value)}${c.max_discount?`<br><small>máx. ${money(c.max_discount)}</small>`:''}</td><td>${money(c.min_order_value)}</td><td><small>${escapeHtml(couponValidityLabel(c))}</small></td><td>${c.usage_count}${c.usage_limit?` / ${c.usage_limit}`:' / ∞'}</td><td><span class="status ${c.is_public?'CONFIRMADO':'PENDENTE'}">${c.is_public?'Visível':'Oculto'}</span></td><td><span class="status ${c.is_active?'CONFIRMADO':'CANCELADO'}">${c.is_active?'Ativo':'Inativo'}</span></td><td><div class="row-actions"><button class="btn ghost small" onclick="openCouponModal(${c.id})">Editar</button><button class="btn ${c.is_active?'danger':'ghost'} small" onclick="toggleCoupon(${c.id})">${c.is_active?'Desativar':'Ativar'}</button></div></td></tr>`).join('')}</tbody></table>` : '<div class="empty">Nenhum cupom cadastrado. Crie um cupom e escolha se ele deve aparecer publicamente na loja.</div>';
 };
 
 window.openCouponModal = function openCouponModal(id=null) {
   const c = id ? coupons.find(x=>x.id===id) : null;
-  openModal(c?'Editar cupom':'Novo cupom','Marketing',`<form id="couponForm" class="form-grid modal-form"><div class="field"><label>Código</label><input class="input" name="code" required value="${escapeHtml(c?.code||'')}"></div><div class="field"><label>Tipo</label><select class="select" name="discount_type"><option value="PERCENT" ${optionSelected(c?.discount_type,'PERCENT')}>Percentual</option><option value="FIXED" ${optionSelected(c?.discount_type,'FIXED')}>Valor fixo</option></select></div><div class="field"><label>Valor</label><input class="input" name="value" type="number" min="0" step="0.01" required value="${c?.value??10}"></div><div class="field"><label>Pedido mínimo</label><input class="input" name="min_order_value" type="number" min="0" step="0.01" value="${c?.min_order_value??0}"></div><div class="field"><label>Desconto máximo</label><input class="input" name="max_discount" type="number" min="0" step="0.01" value="${c?.max_discount??''}"></div><div class="field"><label>Limite de usos</label><input class="input" name="usage_limit" type="number" min="1" value="${c?.usage_limit??''}"></div><div class="field full"><label>Descrição</label><textarea class="textarea" name="description">${escapeHtml(c?.description||'')}</textarea></div><div class="field checkbox-field"><label><input type="checkbox" name="is_active" ${checked(c?.is_active??true)}> Ativo</label></div><div class="field full form-actions"><button class="btn primary" type="submit">Salvar</button></div></form>`);
-  $('#couponForm').onsubmit=async e=>{e.preventDefault();const f=e.currentTarget;const payload={code:f.code.value,description:nullable(f.description.value),discount_type:f.discount_type.value,value:Number(f.value.value),min_order_value:Number(f.min_order_value.value||0),max_discount:f.max_discount.value===''?null:Number(f.max_discount.value),starts_at:null,ends_at:null,usage_limit:f.usage_limit.value===''?null:Number(f.usage_limit.value),is_active:f.is_active.checked};try{await api(c?`/api/admin/coupons/${c.id}`:'/api/admin/coupons',{method:c?'PUT':'POST',body:JSON.stringify(payload)});closeModal();await loadCoupons();showToast('Cupom salvo.');}catch(err){showToast(err.message,'error')}};
+  openModal(c?'Editar cupom':'Novo cupom','Marketing',`<form id="couponForm" class="form-grid modal-form">
+    <div class="field"><label>Código</label><input class="input" name="code" required maxlength="40" value="${escapeHtml(c?.code||'')}" placeholder="BEMVINDO10"></div>
+    <div class="field"><label>Tipo</label><select class="select" name="discount_type"><option value="PERCENT" ${optionSelected(c?.discount_type,'PERCENT')}>Percentual</option><option value="FIXED" ${optionSelected(c?.discount_type,'FIXED')}>Valor fixo</option></select></div>
+    <div class="field"><label>Valor do desconto</label><input class="input" name="value" type="number" min="0" step="0.01" required value="${c?.value??10}"></div>
+    <div class="field"><label>Pedido mínimo</label><input class="input" name="min_order_value" type="number" min="0" step="0.01" value="${c?.min_order_value??0}"></div>
+    <div class="field"><label>Desconto máximo</label><input class="input" name="max_discount" type="number" min="0" step="0.01" value="${c?.max_discount??''}" placeholder="Opcional"></div>
+    <div class="field"><label>Limite de usos</label><input class="input" name="usage_limit" type="number" min="1" value="${c?.usage_limit??''}" placeholder="Ilimitado"></div>
+    <div class="field"><label>Início da validade</label><input class="input" name="starts_at" type="datetime-local" value="${toDateTimeLocal(c?.starts_at)}"></div>
+    <div class="field"><label>Fim da validade</label><input class="input" name="ends_at" type="datetime-local" value="${toDateTimeLocal(c?.ends_at)}"></div>
+    <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3" placeholder="Ex.: 10% de desconto na primeira compra">${escapeHtml(c?.description||'')}</textarea></div>
+    <div class="field checkbox-field"><label><input type="checkbox" name="is_public" ${checked(c?.is_public??false)}> Exibir este cupom no site da loja</label></div>
+    <div class="field checkbox-field"><label><input type="checkbox" name="is_active" ${checked(c?.is_active??true)}> Cupom ativo</label></div>
+    <div class="field full notice">Cupons marcados como públicos aparecem na área “Cupons” da loja. Cupons privados continuam funcionando no checkout quando o cliente conhece o código.</div>
+    <div class="field full form-actions"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary" type="submit">Salvar cupom</button></div>
+  </form>`);
+  $('#couponForm').onsubmit=async e=>{
+    e.preventDefault();
+    const f=e.currentTarget;
+    if (f.starts_at.value && f.ends_at.value && new Date(f.ends_at.value) <= new Date(f.starts_at.value)) return showToast('A data final deve ser posterior à inicial.','error');
+    const payload={
+      code:f.code.value,description:nullable(f.description.value),discount_type:f.discount_type.value,value:Number(f.value.value),
+      min_order_value:Number(f.min_order_value.value||0),max_discount:f.max_discount.value===''?null:Number(f.max_discount.value),
+      starts_at:f.starts_at.value?new Date(f.starts_at.value).toISOString():null,ends_at:f.ends_at.value?new Date(f.ends_at.value).toISOString():null,
+      usage_limit:f.usage_limit.value===''?null:Number(f.usage_limit.value),is_active:f.is_active.checked,is_public:f.is_public.checked
+    };
+    try{
+      await api(c?`/api/admin/coupons/${c.id}`:'/api/admin/coupons',{method:c?'PUT':'POST',body:JSON.stringify(payload)});
+      closeModal();await loadCoupons();showToast(c?'Cupom atualizado.':'Cupom criado.');
+    }catch(err){showToast(err.message,'error')}
+  };
+};
+
+window.toggleCoupon = async function toggleCoupon(id) {
+  const c = coupons.find(item => item.id === id);
+  if (!c) return;
+  const payload = {
+    code:c.code, description:c.description || null, discount_type:c.discount_type, value:Number(c.value),
+    min_order_value:Number(c.min_order_value || 0), max_discount:c.max_discount == null ? null : Number(c.max_discount),
+    starts_at:c.starts_at || null, ends_at:c.ends_at || null, usage_limit:c.usage_limit == null ? null : Number(c.usage_limit),
+    is_active:!c.is_active, is_public:Boolean(c.is_public),
+  };
+  try {
+    await api(`/api/admin/coupons/${id}`, {method:'PUT', body:JSON.stringify(payload)});
+    await loadCoupons();
+    showToast(payload.is_active ? 'Cupom ativado.' : 'Cupom desativado.');
+  } catch (err) { showToast(err.message, 'error'); }
 };
 
 window.loadPromotions = async function loadPromotions() {

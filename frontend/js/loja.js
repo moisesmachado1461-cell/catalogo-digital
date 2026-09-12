@@ -1,6 +1,7 @@
 const params = new URLSearchParams(location.search);
 const slug = params.get('slug') || 'mercado-bom-preco';
-let store = null, catalog = null, serviceData = null, promotions = [], resourcesData = null, rentalItemsData = null, paymentOptions = [];
+let store = null, catalog = null, serviceData = null, promotions = [], publicCoupons = [], resourcesData = null, rentalItemsData = null, paymentOptions = [];
+let selectedCouponCode = null;
 let cart = JSON.parse(localStorage.getItem(`cart_${slug}`) || '[]');
 const $ = sel => document.querySelector(sel);
 
@@ -120,6 +121,60 @@ window.openStoreSection = function openStoreSection(id) {
 };
 
 
+
+function publicCouponDiscountLabel(coupon) {
+  return coupon.discount_type === 'PERCENT' ? `${Number(coupon.value)}% OFF` : `${money(coupon.value)} OFF`;
+}
+
+function publicCouponRules(coupon) {
+  const rules = [];
+  if (Number(coupon.min_order_value || 0) > 0) rules.push(`Pedido mínimo ${money(coupon.min_order_value)}`);
+  if (coupon.max_discount != null) rules.push(`Desconto máximo ${money(coupon.max_discount)}`);
+  if (coupon.ends_at) rules.push(`Válido até ${new Date(coupon.ends_at).toLocaleDateString('pt-BR')}`);
+  if (coupon.usage_remaining != null) rules.push(`${coupon.usage_remaining} uso(s) restante(s)`);
+  return rules.length ? rules.join(' · ') : 'Sem pedido mínimo informado';
+}
+
+async function loadPublicCoupons() {
+  try {
+    publicCoupons = await api(`/api/public/stores/${encodeURIComponent(slug)}/coupons`);
+  } catch (_error) {
+    publicCoupons = [];
+  }
+  renderPublicCoupons();
+  return publicCoupons;
+}
+
+function renderPublicCoupons() {
+  const root = $('#publicCouponGrid');
+  if (!root) return;
+  const count = $('#couponResultsCount');
+  if (count) count.textContent = `${publicCoupons.length} ${publicCoupons.length === 1 ? 'cupom' : 'cupons'}`;
+  root.innerHTML = publicCoupons.length ? publicCoupons.map(coupon => `
+    <article class="public-coupon-card">
+      <div class="public-coupon-card-top"><span class="public-coupon-badge">${escapeHtml(publicCouponDiscountLabel(coupon))}</span><span class="public-coupon-code">${escapeHtml(coupon.code)}</span></div>
+      <h3>${escapeHtml(coupon.description || 'Cupom especial da loja')}</h3>
+      <p>${escapeHtml(publicCouponRules(coupon))}</p>
+      <div class="public-coupon-actions"><button class="btn primary small" type="button" onclick="usePublicCoupon('${String(coupon.code).replace(/'/g, "\\'")}')">Usar cupom</button><button class="btn ghost small" type="button" onclick="copyPublicCoupon('${String(coupon.code).replace(/'/g, "\\'")}')">Copiar código</button></div>
+    </article>`).join('') : '<div class="empty empty-wide">Nenhum cupom público disponível no momento.</div>';
+}
+
+window.copyPublicCoupon = async function copyPublicCoupon(code) {
+  try { await navigator.clipboard.writeText(code); } catch (_error) {}
+  showToast(`Cupom ${code} copiado.`);
+};
+
+window.usePublicCoupon = async function usePublicCoupon(code) {
+  selectedCouponCode = code;
+  const input = $('#checkoutCouponCode');
+  if (input) input.value = code;
+  const hint = $('#checkoutCouponHint');
+  if (hint) { hint.textContent = `Cupom ${code} selecionado. O desconto será validado ao criar o pedido.`; hint.classList.remove('hidden'); }
+  try { await navigator.clipboard.writeText(code); } catch (_error) {}
+  if (cart.length) showToast(`Cupom ${code} selecionado para o checkout.`);
+  else showToast(`Cupom ${code} copiado. Adicione produtos ao carrinho para usar.`);
+};
+
 async function loadPaymentOptions() {
   if (!store?.capabilities?.payments) {
     paymentOptions = [];
@@ -182,8 +237,10 @@ async function init() {
     setTheme();
     await loadPaymentOptions();
     const caps = store.capabilities || {};
+    if (caps.coupons) await loadPublicCoupons();
     let first = null;
     if (caps.catalog) { const b = addTab('catalogSection', 'Produtos'); first ||= b; await loadCatalog(); }
+    if (publicCoupons.length) addTab('couponsSection', 'Cupons');
     if (caps.services) { const b = addTab('servicesSection', 'Serviços'); first ||= b; await loadServices(); }
     if (caps.reservations) { const b = addTab('reservationsSection', 'Reservas'); first ||= b; await loadResources(); }
     if (caps.rentals) { const b = addTab('rentalsSection', 'Locações'); first ||= b; await loadRentalItems(); }
@@ -494,6 +551,12 @@ $('#checkoutBtn').onclick = () => {
   if (!cart.length) return showToast('Adicione um produto ao carrinho.', 'error');
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   $('#checkoutSummary').textContent = `Subtotal estimado: ${money(total)}. Promoções e cupom serão validados no servidor.`;
+  if (selectedCouponCode && $('#checkoutCouponCode') && !$('#checkoutCouponCode').value) $('#checkoutCouponCode').value = selectedCouponCode;
+  const hint = $('#checkoutCouponHint');
+  if (hint) {
+    if ($('#checkoutCouponCode')?.value) { hint.textContent = `Cupom ${$('#checkoutCouponCode').value.toUpperCase()} será validado no servidor.`; hint.classList.remove('hidden'); }
+    else hint.classList.add('hidden');
+  }
   openModal('checkoutModal');
 };
 
@@ -512,7 +575,7 @@ $('#checkoutForm').onsubmit = async e => {
       payment_method: f.payment_method.value, fulfillment_method: f.fulfillment_method.value, coupon_code: f.coupon_code.value || null,
       notes: f.notes.value || null, delivery_address: f.delivery_address.value || null, delivery_city: f.delivery_city.value || null, delivery_state: f.delivery_state.value || null, delivery_zip_code: f.delivery_zip_code.value || null,
     }) });
-    cart = []; saveCart(); closeModal('checkoutModal'); f.reset(); $('#deliveryFields').classList.add('hidden');
+    cart = []; saveCart(); selectedCouponCode = null; closeModal('checkoutModal'); f.reset(); $('#checkoutCouponHint')?.classList.add('hidden'); $('#deliveryFields').classList.add('hidden');
     const discountText = Number(result.discount_amount) > 0 ? ` Desconto: ${money(result.discount_amount)}.` : '';
     showToast(`Pedido ${result.order_number} criado. Total: ${money(result.total)}.${discountText}`);
     if (result.payment) showPaymentModal(result.payment, `Pagamento do pedido ${result.order_number}`);

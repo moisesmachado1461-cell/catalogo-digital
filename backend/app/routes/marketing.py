@@ -9,7 +9,7 @@ from ..models.catalog import Product
 from ..models.marketing import Coupon, Promotion, PromotionItem
 from ..repositories.catalog_repository import get_store_by_slug
 from ..schemas.marketing import CouponCreate, CouponUpdate, PromotionCreate, PromotionUpdate
-from ..services.marketing_service import active_promotions_for_store
+from ..services.marketing_service import active_promotions_for_store, active_public_coupons_for_store
 from ..services.subscription_service import feature_enabled, require_feature
 
 public_router = APIRouter(prefix="/api/public", tags=["marketing-public"])
@@ -23,6 +23,7 @@ def coupon_dict(c: Coupon):
         "starts_at": c.starts_at.isoformat() if c.starts_at else None,
         "ends_at": c.ends_at.isoformat() if c.ends_at else None,
         "usage_limit": c.usage_limit, "usage_count": c.usage_count, "is_active": c.is_active,
+        "is_public": c.is_public,
     }
 
 
@@ -43,6 +44,16 @@ def public_promotions(slug: str, db: Session = Depends(get_db)):
     if not store.capabilities.get("promotions", False) or not feature_enabled(db, store.id, "promotions"):
         return []
     return active_promotions_for_store(db, store.id)
+
+
+@public_router.get("/stores/{slug}/coupons")
+def public_coupons(slug: str, db: Session = Depends(get_db)):
+    store = get_store_by_slug(db, slug)
+    if not store:
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
+    if not store.capabilities.get("coupons", False) or not feature_enabled(db, store.id, "coupons"):
+        return []
+    return active_public_coupons_for_store(db, store.id)
 
 
 @admin_router.get("/coupons")

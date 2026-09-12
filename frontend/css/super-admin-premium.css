@@ -44,3 +44,44 @@ body:has(#superView:not(.hidden)){background:#f5f7fb}
 .super-session-note{margin-top:12px!important;background:#f8fafc!important;border-color:#e9edf2!important;color:#667085!important;font-size:.7rem!important}
 @media(max-width:900px){.super-profile-grid{grid-template-columns:1fr}.super-session-panel{grid-column:auto}.super-security-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.super-security-badge{width:100%;min-width:0}}
 @media(max-width:620px){.super-account-form{grid-template-columns:1fr}.super-account-form .full,.super-account-actions{grid-column:auto}.super-account-actions .btn{width:100%}.super-security-facts{grid-template-columns:1fr}.super-revoke-form{grid-template-columns:1fr}.super-revoke-form .btn{width:100%}}
+
+
+/* Fase 23.2 — edição de lojas no Super Admin */
+.super-edit-store-modal{width:min(94vw,860px)!important;max-height:92vh;overflow:auto}
+.super-edit-store-note{display:grid;gap:4px;padding:12px 14px;border:1px solid #e9edf2;border-radius:14px;background:#f8fafc;color:#667085}
+.super-edit-store-note strong{font-size:.76rem;color:#344054}.super-edit-store-note span{font-size:.69rem;line-height:1.45}
+.super-table-actions{flex-wrap:wrap}
+@media(max-width:720px){.super-edit-store-modal{width:min(96vw,860px)!important}.super-table-actions .btn{min-width:78px}}
+
+/* Fase 23.3 — gestão de cupons por loja */
+.super-coupon-modal { max-width: 1040px; }
+
+.super-coupon-toolbar,
+.super-coupon-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.super-coupon-toolbar p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--ds-text-muted);
+  line-height: 1.55;
+}
+
+.super-coupon-editor-head {
+  justify-content: flex-start;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.super-coupon-editor-head h3 { margin: 2px 0 0; }
+
+@media (max-width: 720px) {
+  .super-coupon-toolbar { align-items: stretch; flex-direction: column; }
+  .super-coupon-toolbar .btn { width: 100%; }
+  .super-coupon-editor-head { align-items: flex-start; }
+}
