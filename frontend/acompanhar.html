@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Acompanhe seu pedido ou agendamento">
+  <title>Acompanhar — Catálogo Digital</title>
+  <meta name="theme-color" content="#6d5dfc">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/customer-portal.css">
+</head>
+<body class="tracking-page customer-tracking-page">
+<header class="topbar">
+  <div class="container nav">
+    <a id="trackingBrand" class="brand" href="index.html"><span id="trackingBrandMark" class="brand-mark">CD</span><span id="trackingBrandName">Catálogo Digital</span></a>
+    <div class="tracking-header-actions"><a id="trackingAccountLink" class="btn ghost" href="cliente.html">Minha conta</a><a id="trackingBackStore" class="btn ghost" href="index.html">Voltar à loja</a></div>
+  </div>
+</header>
+<main class="tracking-main container customer-tracking-main">
+  <section class="tracking-hero">
+    <span id="trackingEyebrow" class="eyebrow">ACOMPANHAMENTO</span>
+    <h1 id="trackingTitle">Acompanhe sua solicitação</h1>
+    <p id="trackingSubtitle">Veja o status atualizado sem precisar entrar em uma conta.</p>
+  </section>
+  <section id="trackingCard" class="panel tracking-card customer-tracking-card">
+    <div class="loading-state">Carregando...</div>
+  </section>
+</main>
+<script src="js/runtime-config.js"></script><script src="js/api.js"></script>
+<script src="js/acompanhamento.js"></script>
+<script src="js/ui-system.js"></script><script src="js/pwa.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Área do cliente">
+  <title>Minha conta — Catálogo Digital</title>
+  <meta name="theme-color" content="#6d5dfc">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/customer-portal.css">
+</head>
+<body class="customer-page">
+<header class="topbar customer-topbar">
+  <div class="container nav">
+    <a id="customerBrand" class="store-header-brand customer-brand" href="index.html">
+      <span id="customerBrandMark" class="store-header-mark">CD</span>
+      <span class="store-header-copy"><strong id="customerBrandName">Catálogo Digital</strong><small>Área do cliente</small></span>
+    </a>
+    <a id="customerBackStore" class="btn ghost" href="index.html">Voltar à loja</a>
+  </div>
+</header>
+
+<main class="customer-main container">
+  <section id="customerStoreIntro" class="customer-store-intro panel">
+    <div>
+      <span class="eyebrow">MINHA CONTA</span>
+      <h1 id="customerStoreTitle">Carregando loja...</h1>
+      <p>Entre para acompanhar seus pedidos e agendamentos em um só lugar.</p>
+    </div>
+    <div id="customerStoreBadge" class="customer-store-badge">CD</div>
+  </section>
+
+  <section id="customerAuthView" class="customer-auth-grid">
+    <article class="panel customer-auth-card">
+      <div class="customer-auth-tabs" role="tablist">
+        <button id="customerLoginTab" class="customer-auth-tab active" type="button">Entrar</button>
+        <button id="customerRegisterTab" class="customer-auth-tab" type="button">Criar conta</button>
+      </div>
+
+      <form id="customerLoginForm" class="stack-form customer-auth-form">
+        <div class="field"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="username" required placeholder="voce@email.com"></div>
+        <div class="field"><label>Senha</label><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="Sua senha"></div>
+        <button class="btn primary full-btn" type="submit">Entrar na minha conta</button>
+      </form>
+
+      <form id="customerRegisterForm" class="stack-form customer-auth-form hidden">
+        <div class="field"><label>Nome</label><input class="input" name="name" autocomplete="name" required></div>
+        <div class="field"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label>WhatsApp / telefone</label><input class="input" name="phone" autocomplete="tel"></div>
+        <div class="field"><label>Senha</label><input class="input" name="password" type="password" minlength="8" autocomplete="new-password" required placeholder="Mínimo 8 caracteres, com letras e números"></div>
+        <div class="field"><label>Confirmar senha</label><input class="input" name="password_confirm" type="password" minlength="8" autocomplete="new-password" required></div>
+        <div id="customerClaimNotice" class="notice customer-claim-notice hidden"></div>
+        <button class="btn primary full-btn" type="submit">Criar minha conta</button>
+      </form>
+      <p class="customer-auth-help">Sua conta pertence somente a esta loja. Cada estabelecimento mantém seus clientes separados.</p>
+    </article>
+
+    <aside class="panel customer-auth-benefits">
+      <span class="section-kicker">ACOMPANHAMENTO</span>
+      <h2>Tudo o que é seu, organizado.</h2>
+      <div class="customer-benefit"><span>✓</span><div><b>Pedidos</b><small>Veja o status do preparo, retirada ou entrega.</small></div></div>
+      <div class="customer-benefit"><span>✓</span><div><b>Agendamentos</b><small>Acompanhe horários confirmados, concluídos ou cancelados.</small></div></div>
+      <div class="customer-benefit"><span>✓</span><div><b>Histórico</b><small>Encontre seus atendimentos sem depender de mensagens antigas.</small></div></div>
+    </aside>
+  </section>
+
+  <section id="customerPortalView" class="hidden">
+    <div class="customer-portal-head">
+      <div><span class="eyebrow">ÁREA DO CLIENTE</span><h1 id="customerGreeting">Olá!</h1><p id="customerPortalSubtitle">Acompanhe sua atividade.</p></div>
+      <button id="customerLogoutBtn" class="btn ghost" type="button">Sair</button>
+    </div>
+
+    <div id="customerSummary" class="customer-summary-grid"></div>
+
+    <div class="customer-portal-tabs">
+      <button class="customer-portal-tab active" type="button" data-customer-tab="orders">Pedidos</button>
+      <button class="customer-portal-tab" type="button" data-customer-tab="appointments">Agendamentos</button>
+    </div>
+
+    <section id="customerOrdersPanel" class="customer-portal-panel">
+      <div class="panel-head"><div><h2>Meus pedidos</h2><small>Acompanhe cada etapa do seu pedido.</small></div></div>
+      <div id="customerOrdersList" class="customer-record-list"></div>
+    </section>
+
+    <section id="customerAppointmentsPanel" class="customer-portal-panel hidden">
+      <div class="panel-head"><div><h2>Meus agendamentos</h2><small>Consulte horários, profissionais e situação atual.</small></div></div>
+      <div id="customerAppointmentsList" class="customer-record-list"></div>
+    </section>
+  </section>
+</main>
+
+<script src="js/runtime-config.js"></script><script src="js/api.js"></script>
+<script src="js/cliente.js"></script>
+<script src="js/ui-system.js"></script><script src="js/pwa.js"></script>
+</body>
+</html>

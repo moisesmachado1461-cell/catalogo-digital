@@ -87,7 +87,7 @@ def _professional_dict(professional: Professional):
     }
 
 
-def _appointment_dict(appointment: Appointment, payment=None):
+def _appointment_dict(appointment: Appointment, payment=None, *, public_view: bool = False):
     def iso_utc(value):
         if value is None:
             return None
@@ -100,12 +100,12 @@ def _appointment_dict(appointment: Appointment, payment=None):
         "public_token": appointment.public_token,
         "store_id": appointment.store_id,
         "customer": (
-            {
+            ({"name": appointment.customer.name} if public_view else {
                 "id": appointment.customer.id,
                 "name": appointment.customer.name,
                 "email": appointment.customer.email,
                 "phone": appointment.customer.phone,
-            }
+            })
             if appointment.customer
             else None
         ),
@@ -242,8 +242,11 @@ def public_get_appointment(
     )
     if not appointment:
         raise HTTPException(status_code=404, detail="Agendamento não encontrado")
-    result = _appointment_dict(appointment, payment_for_reference(db, store.id, "APPOINTMENT", appointment.id))
-    result["store"] = {"name": store.name, "slug": store.slug, "phone": store.phone, "whatsapp": store.whatsapp}
+    result = _appointment_dict(appointment, payment_for_reference(db, store.id, "APPOINTMENT", appointment.id), public_view=True)
+    result["store"] = {
+        "name": store.name, "slug": store.slug, "phone": store.phone, "whatsapp": store.whatsapp,
+        "logo_url": store.logo_url, "primary_color": store.primary_color, "secondary_color": store.secondary_color,
+    }
     return result
 
 
@@ -277,7 +280,7 @@ def public_cancel_appointment(
     cancel_reference_payment(db, store.id, "APPOINTMENT", appointment.id)
     db.commit()
     db.refresh(appointment)
-    return _appointment_dict(appointment, payment_for_reference(db, store.id, "APPOINTMENT", appointment.id))
+    return _appointment_dict(appointment, payment_for_reference(db, store.id, "APPOINTMENT", appointment.id), public_view=True)
 
 
 @admin_router.get("/appointment-blocks")

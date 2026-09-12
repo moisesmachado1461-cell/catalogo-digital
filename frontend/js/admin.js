@@ -297,6 +297,23 @@ $('#adminSidebarToggle').onclick = () => {
 
 $('#adminSidebarBackdrop').onclick = () => setAdminSidebarOpen(false);
 
+function setAdminSidebarCollapsed(collapsed, persist = true) {
+  const shell = $('#adminView');
+  const button = $('#adminSidebarCollapse');
+  if (!shell || !button) return;
+  shell.classList.toggle('sidebar-collapsed', collapsed);
+  button.textContent = collapsed ? '›' : '‹';
+  button.title = collapsed ? 'Expandir menu' : 'Recolher menu';
+  button.setAttribute('aria-label', button.title);
+  button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  if (persist) localStorage.setItem('catalogo_admin_sidebar_collapsed', collapsed ? '1' : '0');
+}
+
+$('#adminSidebarCollapse')?.addEventListener('click', () => {
+  if (window.matchMedia('(max-width: 980px)').matches) return;
+  setAdminSidebarCollapsed(!$('#adminView')?.classList.contains('sidebar-collapsed'));
+});
+
 async function startAdmin() {
   try {
     me = await api('/api/auth/me');
@@ -309,6 +326,7 @@ async function startAdmin() {
     applyStoreTheme();
     $('#loginView').classList.add('hidden');
     $('#adminView').classList.remove('hidden');
+    setAdminSidebarCollapsed(localStorage.getItem('catalogo_admin_sidebar_collapsed') === '1' && !window.matchMedia('(max-width: 980px)').matches, false);
     $('#sideStoreName').textContent = store.name;
     $('#sideStoreModel').textContent = store.business_model?.name || 'Negócio';
     $('#openStoreBtn').href = `loja.html?slug=${encodeURIComponent(store.slug)}`;
@@ -438,7 +456,7 @@ function renderStats() {
     'Reservas':'reservations','Locações':'rentals','Pagamentos pendentes':'payments'
   };
   $('#stats').innerHTML = rows.length
-    ? rows.slice(0, 4).map(([label, value]) => `<div class="stat-card"><span class="metric-icon">${adminIcon(metricIds[label] || 'dashboard')}</span><span>${escapeHtml(label)}</span><strong>${value}</strong><span class="metric-note">Atualizado agora</span></div>`).join('')
+    ? rows.slice(0, 4).map(([label, value]) => { const metricId = metricIds[label] || 'dashboard'; return `<div class="stat-card metric-card metric-${metricId}"><span class="metric-icon">${adminIcon(metricId)}</span><span>${escapeHtml(label)}</span><strong>${value}</strong><span class="metric-note">Atualizado agora</span></div>`; }).join('')
     : '<div class="empty">Nenhuma métrica disponível ainda.</div>';
 
   renderDashboardAttention();
@@ -859,12 +877,12 @@ function renderProducts() {
         <td>${money(product.price)}${product.compare_at_price ? `<br><small class="strike">${money(product.compare_at_price)}</small>` : ''}</td>
         <td>${product.track_inventory ? (product.inventory?.quantity ?? 'Variantes') : 'Não controla'}</td>
         <td><span class="status ${product.is_active ? 'CONFIRMADO' : 'CANCELADO'}">${product.is_active ? 'Ativo' : 'Inativo'}</span></td>
-        <td><div class="row-actions">
-          <button class="btn ghost small" onclick="openProductModal(${product.id})">Editar</button>
-          <button class="btn ghost small" onclick="openCouponModal(null, ${product.id})">Cupom</button>
-          <button class="btn ghost small" onclick="openProductExtrasModal(${product.id})">Variações</button>
-          ${product.inventory ? `<button class="btn ghost small" onclick="openInventoryModal(${product.inventory.id})">Estoque</button>` : ''}
-          <button class="btn ${product.is_active ? 'danger' : 'ghost'} small" onclick="toggleProduct(${product.id})">${product.is_active ? 'Desativar' : 'Ativar'}</button>
+        <td><div class="row-actions product-action-grid">
+          <button class="btn ghost small product-action" onclick="openProductModal(${product.id})"><span>${adminIcon('settings')}</span>Editar</button>
+          <button class="btn ghost small product-action" onclick="openCouponModal(null, ${product.id})"><span>${adminIcon('coupons')}</span>Cupom</button>
+          <button class="btn ghost small product-action" onclick="openProductExtrasModal(${product.id})"><span>${adminIcon('products')}</span>Variações</button>
+          ${product.inventory ? `<button class="btn ghost small product-action" onclick="openInventoryModal(${product.inventory.id})"><span>${adminIcon('inventory')}</span>Estoque</button>` : ''}
+          <button class="btn small product-action product-action-status ${product.is_active ? 'is-deactivate' : 'is-activate'}" onclick="toggleProduct(${product.id})"><span>${adminIcon(product.is_active ? 'privacy' : 'dashboard')}</span>${product.is_active ? 'Desativar' : 'Ativar'}</button>
         </div></td>
       </tr>`).join('')}</tbody></table>`
     : '<div class="empty">Nenhum produto encontrado.</div>';

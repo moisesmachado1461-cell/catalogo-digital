@@ -19,8 +19,25 @@ function initials(value, fallback = 'SA') {
   return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
 }
 
-function metricCard(label, value, iconText, note) {
-  return `<div class="stat-card"><span class="super-metric-icon">${escapeHtml(iconText)}</span><span>${escapeHtml(label)}</span><strong>${value}</strong><small class="super-metric-note">${escapeHtml(note)}</small></div>`;
+const superMetricPaths = {
+  stores:'<path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/>',
+  subscriptions:'<path d="M12 2 5 5v6c0 5 3 9 7 11 4-2 7-6 7-11V5l-7-3Z"/><path d="m9 12 2 2 4-4"/>',
+  orders:'<path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  customers:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 20a6 6 0 0 1 12 0M14 20a4 4 0 0 1 7 0"/>',
+  revenue:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
+  products:'<path d="M6 7h12l1 13H5L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/>',
+  appointments:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m9 15 2 2 4-4"/>',
+  admins:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M18 5v6M15 8h6"/>',
+  late:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 17h.01"/>',
+  receivable:'<path d="M12 3v18M17 7.5c0-1.7-2-3-5-3s-5 1.3-5 3 2 3 5 3 5 1.3 5 3-2 3-5 3-5-1.3-5-3"/>',
+  received:'<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/>',
+  default:'<circle cx="12" cy="12" r="8"/>'
+};
+function superMetricIcon(key) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${superMetricPaths[key] || superMetricPaths.default}</svg>`;
+}
+function metricCard(label, value, iconKey, note) {
+  return `<div class="stat-card super-metric-card metric-${escapeHtml(iconKey)}"><span class="super-metric-icon">${superMetricIcon(iconKey)}</span><span>${escapeHtml(label)}</span><strong>${value}</strong><small class="super-metric-note">${escapeHtml(note)}</small></div>`;
 }
 
 function renderSuperIdentity() {
@@ -105,14 +122,14 @@ window.loadSuperDashboard = async function() {
   const root = $s('#superStats');
   if (!root) return;
   root.innerHTML = [
-    metricCard('Lojas ativas', `${data.active_stores}/${data.stores}`, 'L', 'Operação ativa'),
-    metricCard('Assinaturas', data.active_subscriptions ?? '—', 'A', 'Planos ativos'),
-    metricCard('Pedidos', data.orders, 'P', 'Volume acumulado'),
-    metricCard('Clientes', data.customers, 'C', 'Base cadastrada'),
-    metricCard('Valor bruto', money(data.gross_order_value), 'R$', 'Pedidos da plataforma'),
-    metricCard('Produtos', data.products, 'PR', 'Itens cadastrados'),
-    metricCard('Agendamentos', data.appointments, 'AG', 'Serviços agendados'),
-    metricCard('Admins de loja', data.store_admins, 'AD', 'Gestores cadastrados'),
+    metricCard('Lojas ativas', `${data.active_stores}/${data.stores}`, 'stores', 'Operação ativa'),
+    metricCard('Assinaturas', data.active_subscriptions ?? '—', 'subscriptions', 'Planos ativos'),
+    metricCard('Pedidos', data.orders, 'orders', 'Volume acumulado'),
+    metricCard('Clientes', data.customers, 'customers', 'Base cadastrada'),
+    metricCard('Valor bruto', money(data.gross_order_value), 'revenue', 'Pedidos da plataforma'),
+    metricCard('Produtos', data.products, 'products', 'Itens cadastrados'),
+    metricCard('Agendamentos', data.appointments, 'appointments', 'Serviços agendados'),
+    metricCard('Admins de loja', data.store_admins, 'admins', 'Gestores cadastrados'),
   ].join('');
 };
 
@@ -658,10 +675,10 @@ function renderBillingStats() {
   const open = billingInvoices.filter(row=>['PENDING','FAILED'].includes(row.status));
   const paid = billingInvoices.filter(row=>row.status==='PAID');
   root.innerHTML = [
-    metricCard('Assinaturas ativas', active, 'A', 'Clientes em operação'),
-    metricCard('Em atraso', late, '!', late ? 'Requer acompanhamento' : 'Sem atrasos'),
-    metricCard('A receber', money(open.reduce((sum,row)=>sum+Number(row.amount||0),0)), 'R$', `${open.length} fatura(s) aberta(s)`),
-    metricCard('Recebido', money(paid.reduce((sum,row)=>sum+Number(row.amount||0),0)), '✓', `${paid.length} fatura(s) paga(s)`),
+    metricCard('Assinaturas ativas', active, 'subscriptions', 'Clientes em operação'),
+    metricCard('Em atraso', late, 'late', late ? 'Requer acompanhamento' : 'Sem atrasos'),
+    metricCard('A receber', money(open.reduce((sum,row)=>sum+Number(row.amount||0),0)), 'receivable', `${open.length} fatura(s) aberta(s)`) ,
+    metricCard('Recebido', money(paid.reduce((sum,row)=>sum+Number(row.amount||0),0)), 'received', `${paid.length} fatura(s) paga(s)`),
   ].join('');
 }
 

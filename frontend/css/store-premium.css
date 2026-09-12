@@ -167,3 +167,6 @@
 /* Ajuste pré-lançamento — hero mais direto, sem bloco textual promocional */
 .premium-hero-inner{grid-template-columns:1fr!important}
 .premium-hero-main{max-width:900px}
+
+/* Fase 24.6 — acesso do cliente e acompanhamento após checkout */
+.order-account-link{margin-top:10px;justify-content:center;text-align:center;border-color:color-mix(in srgb,var(--brand) 18%,var(--line))!important;background:color-mix(in srgb,var(--brand) 4%,#fff)!important}

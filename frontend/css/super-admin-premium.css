@@ -92,3 +92,15 @@ body:has(#superView:not(.hidden)){background:#f5f7fb}
 #billingCouponPlansGrid,#superCouponProductsGrid{max-height:220px;overflow:auto;padding:10px;border:1px solid #edf0f4;border-radius:13px;background:#fbfcfe}
 #billingCouponPlansGrid label,#superCouponProductsGrid label{align-items:center}
 @media(max-width:720px){.super-billing-coupon-modal{width:min(96vw,900px)!important}}
+
+/* Fase 24.6 — ícones semânticos nas métricas do Super Admin */
+.super-stats-premium .super-metric-card{position:relative;overflow:hidden;--metric-accent:var(--brand)}
+.super-stats-premium .super-metric-card::after{content:"";position:absolute;width:86px;height:86px;right:-32px;top:-32px;border-radius:50%;background:color-mix(in srgb,var(--metric-accent) 9%,transparent);pointer-events:none}
+.super-stats-premium .super-metric-icon{width:50px;height:50px;border-radius:15px;background:color-mix(in srgb,var(--metric-accent) 10%,#fff);border-color:color-mix(in srgb,var(--metric-accent) 22%,var(--line));color:var(--metric-accent)}
+.super-stats-premium .super-metric-icon svg{width:23px;height:23px;stroke-width:1.9}
+.super-stats-premium .metric-stores,.super-stats-premium .metric-products{--metric-accent:var(--brand)}
+.super-stats-premium .metric-subscriptions,.super-stats-premium .metric-orders{--metric-accent:var(--brand2)}
+.super-stats-premium .metric-customers,.super-stats-premium .metric-received{--metric-accent:color-mix(in srgb,var(--brand) 46%,#047857)}
+.super-stats-premium .metric-revenue,.super-stats-premium .metric-receivable{--metric-accent:color-mix(in srgb,var(--brand2) 48%,#b45309)}
+.super-stats-premium .metric-late{--metric-accent:#b54708}
+.super-stats-premium .metric-appointments,.super-stats-premium .metric-admins{--metric-accent:color-mix(in srgb,var(--brand) 55%,#0369a1)}

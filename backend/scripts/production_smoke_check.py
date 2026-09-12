@@ -112,7 +112,7 @@ def main() -> int:
             failures.append("CORS")
 
     if frontend:
-        for page in ("/", "/loja.html", "/admin.html", "/super-admin.html", "/service-worker.js"):
+        for page in ("/", "/loja.html", "/cliente.html", "/acompanhar.html", "/admin.html", "/super-admin.html", "/service-worker.js"):
             try:
                 status, _, body = fetch(frontend + page)
                 if status != 200 or not body.strip():

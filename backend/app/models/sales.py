@@ -50,6 +50,35 @@ class Customer(Base):
     quote_requests = relationship("QuoteRequest", back_populates="customer")
     reservations = relationship("Reservation", back_populates="customer")
     rental_reservations = relationship("RentalReservation", back_populates="customer")
+    account = relationship("CustomerAccount", back_populates="customer", uselist=False, cascade="all, delete-orphan")
+
+
+class CustomerAccount(Base):
+    __tablename__ = "customer_accounts"
+    __table_args__ = (
+        UniqueConstraint("store_id", "email", name="uq_customer_accounts_store_email"),
+        UniqueConstraint("store_id", "customer_id", name="uq_customer_accounts_store_customer"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    store_id: Mapped[int] = mapped_column(
+        ForeignKey("stores.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    customer_id: Mapped[int] = mapped_column(
+        ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    token_version: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
+
+    customer = relationship("Customer", back_populates="account")
+    store = relationship("Store", back_populates="customer_accounts")
 
 
 class Inventory(Base):
@@ -98,6 +127,7 @@ class Order(Base):
     customer_id: Mapped[int | None] = mapped_column(
         ForeignKey("customers.id", ondelete="SET NULL"), index=True
     )
+    public_token: Mapped[str] = mapped_column(String(80), nullable=False, unique=True, index=True)
     order_number: Mapped[str] = mapped_column(String(40), nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="PENDENTE", nullable=False, index=True)
     payment_method: Mapped[str] = mapped_column(String(32), nullable=False)

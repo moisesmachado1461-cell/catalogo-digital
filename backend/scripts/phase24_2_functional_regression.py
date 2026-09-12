@@ -292,6 +292,51 @@ def main() -> int:
             )
             ok("Catálogos públicos carregam dados da loja correta")
 
+            # Portal do cliente e acompanhamento público de pedido
+            guest_order = request_json(
+                base,
+                "/api/public/stores/mercado-bom-preco/orders",
+                method="POST",
+                expected=201,
+                body={
+                    "customer": {"name": "Cliente Portal Teste", "email": "cliente.portal.teste@example.com", "phone": "11999990000"},
+                    "items": [{"product_id": market_product["id"], "quantity": 1, "selected_option_item_ids": []}],
+                    "payment_method": "DINHEIRO",
+                    "fulfillment_method": "RETIRADA",
+                },
+            )
+            require(bool(guest_order.get("public_token")), "Pedido não retornou token público de acompanhamento")
+            tracked_order = request_json(
+                base,
+                f"/api/public/stores/mercado-bom-preco/orders/{guest_order['public_token']}",
+            )
+            require(tracked_order.get("order_number") == guest_order.get("order_number"), "Acompanhamento público retornou outro pedido")
+            require((tracked_order.get("customer") or {}).get("email") is None, "Acompanhamento público expôs e-mail do cliente")
+
+            customer_registration = request_json(
+                base,
+                "/api/customer/register",
+                method="POST",
+                expected=201,
+                body={
+                    "store_slug": "mercado-bom-preco",
+                    "name": "Cliente Portal Teste",
+                    "email": "cliente.portal.teste@example.com",
+                    "phone": "11999990000",
+                    "password": "Cliente2026",
+                    "tracking_type": "ORDER",
+                    "tracking_token": guest_order["public_token"],
+                },
+            )
+            customer_token = customer_registration.get("access_token")
+            require(bool(customer_token), "Cadastro do cliente não retornou sessão")
+            customer_me = request_json(base, "/api/customer/me", token=customer_token)
+            require(customer_me.get("store", {}).get("slug") == "mercado-bom-preco", "Conta do cliente ficou vinculada à loja errada")
+            customer_orders = request_json(base, "/api/customer/orders", token=customer_token)
+            require(any(row.get("id") == guest_order.get("id") for row in customer_orders), "Pedido acompanhado não apareceu na conta do cliente")
+            request_json(base, "/api/admin/products", token=customer_token, expected=401)
+            ok("Login do cliente e acompanhamento de pedido funcionam sem acesso ao Admin")
+
             barber_public = request_json(base, "/api/public/stores/barbearia-central-demo/services")
             require(len(barber_public.get("services", [])) >= 1, "Barbearia sem serviços")
             require(len(barber_public.get("professionals", [])) >= 1, "Barbearia sem profissionais")

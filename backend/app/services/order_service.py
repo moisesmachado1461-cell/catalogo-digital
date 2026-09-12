@@ -36,6 +36,15 @@ def _order_number(store_id: int) -> str:
     return f"CD{store_id}-{now:%Y%m%d}-{secrets.token_hex(3).upper()}"
 
 
+def _new_public_token(db: Session) -> str:
+    for _ in range(5):
+        token = secrets.token_urlsafe(18)
+        exists = db.query(Order.id).filter(Order.public_token == token).first()
+        if not exists:
+            return token
+    raise HTTPException(status_code=500, detail="Não foi possível gerar o link de acompanhamento do pedido")
+
+
 def _find_or_create_customer(db: Session, store_id: int, data) -> Customer:
     customer = None
     if data.email:
@@ -163,6 +172,7 @@ def create_order_for_store(db: Session, store: Store, data: CheckoutRequest) -> 
     order = Order(
         store_id=store.id,
         customer_id=customer.id,
+        public_token=_new_public_token(db),
         order_number=_order_number(store.id),
         status="PENDENTE",
         payment_method=data.payment_method,

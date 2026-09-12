@@ -50,6 +50,7 @@ class Store(Base):
     catalog_categories = relationship("Category", back_populates="store")
     products = relationship("Product", back_populates="store")
     customers = relationship("Customer", back_populates="store")
+    customer_accounts = relationship("CustomerAccount", back_populates="store")
     inventory_rows = relationship("Inventory", back_populates="store")
     orders = relationship("Order", back_populates="store")
     services = relationship("Service", back_populates="store")

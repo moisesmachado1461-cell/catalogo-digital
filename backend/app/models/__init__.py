@@ -2,7 +2,7 @@ from .business import BusinessCategory, BusinessModel
 from .store import Store
 from .user import User
 from .catalog import Category, Product, ProductOption, ProductOptionItem, ProductVariant
-from .sales import Customer, Inventory, Order, OrderItem
+from .sales import Customer, CustomerAccount, Inventory, Order, OrderItem
 from .services import Appointment, Professional, ProfessionalBlock, ProfessionalHours, ProfessionalService, Service
 from .quotes import QuoteAttachment, QuoteRequest
 from .marketing import Coupon, CouponProduct, CouponUsage, Promotion, PromotionItem
@@ -23,6 +23,7 @@ __all__ = [
     "ProductOption",
     "ProductOptionItem",
     "Customer",
+    "CustomerAccount",
     "Inventory",
     "Order",
     "OrderItem",

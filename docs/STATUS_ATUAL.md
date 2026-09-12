@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.5.1**.
+Versão consolidada até a **Fase 24.6.0**.
 
 ## Concluído
 
@@ -68,7 +68,7 @@ A conexão com Mercado Pago continua desacoplada e pode ser adicionada posterior
 
 ## Próximo passo
 
-Executar uma vez o release gate local da Fase 24.5, enviar ao GitHub e confirmar o deploy com o smoke de produção. Depois, executar uma vez o workflow manual de restore drill no GitHub Actions. Com esses gates aprovados, avançar para domínio, SEO/PWA final e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
+Validar e publicar a Fase 24.6.0 com o release gate já existente e o smoke de produção. Depois, avançar para a Fase 24.7: domínio, SEO/PWA final, restore drill operacional, credenciais de produção e preparação comercial. A integração real com Mercado Pago continua desacoplada e pode ser retomada quando a conta e as credenciais estiverem disponíveis.
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.
@@ -188,3 +188,22 @@ Ainda é necessário cadastrar os secrets no GitHub e executar pelo menos um res
 - nova identificação personalizável do painel (`panel_brand_name` e `panel_logo_url`), com upload via storage/Cloudinary;
 - área pública simplificada, removendo blocos genéricos de texto promocional;
 - migration `016_admin_branding`; backend `24.5.1`.
+
+
+## Fase 24.6 — Portal do Cliente, rastreamento e refinamentos finais
+
+- nova conta de cliente final separada por loja (`customer_accounts`);
+- login/cadastro do cliente sem compartilhar sessão com Admin/Super Admin;
+- histórico autenticado de pedidos e agendamentos;
+- token público seguro adicionado a pedidos para acompanhamento sem login;
+- página unificada `acompanhar.html` para pedido/agendamento;
+- criação de conta a partir do link de acompanhamento para vincular histórico com posse do token;
+- respostas públicas de agendamento deixam de expor e-mail/telefone do cliente;
+- cartões de métricas recebem ícones semânticos mais claros no Admin e Super Admin;
+- ações dos produtos ficam organizadas em grade e seguem a temática da loja;
+- sidebar do Admin pode ser recolhida no desktop/notebook e mantém o drawer no celular;
+- migration `017_customer_portal`; backend `24.6.0`.
+
+### Próxima fase
+
+Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, restore drill, credenciais/segredos e checklist comercial.

@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.5.1
+# Catálogo Digital — Fase 24.6.0
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.5.1 — refinamento visual pré-lançamento e identidade do painel**
+**24.6.0 — Portal do Cliente, acompanhamento e refinamentos finais de interface**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -207,3 +207,22 @@ O primeiro comando executa auditoria, revisão integrada e regressão funcional 
 - permite definir nome e logo próprios para a identificação principal do painel;
 - usa a logo real da loja no identificador lateral quando disponível e mantém iniciais como fallback;
 - remove textos promocionais genéricos da área pública para priorizar produtos, serviços e informações úteis.
+
+
+## Fase 24.6 — Portal do Cliente e acompanhamento
+
+A experiência do cliente final agora possui identidade própria, sem misturar o acesso do cliente com o Admin da loja:
+
+- conta de cliente separada por loja, com senha e sessão próprias;
+- histórico autenticado de pedidos e agendamentos;
+- link público seguro para acompanhar cada pedido por token não previsível;
+- agendamentos passam a usar a mesma experiência unificada de acompanhamento;
+- criação de conta pode ser feita a partir do link de um pedido/agendamento para vincular o histórico com segurança;
+- página `cliente.html` para login/cadastro e `acompanhar.html` para status sem login;
+- pedido mostra etapas de preparo, retirada ou entrega;
+- agendamento mostra solicitado, confirmado e concluído/cancelado;
+- migration `017_customer_portal` cria `customer_accounts` e adiciona `public_token` aos pedidos existentes e futuros;
+- PWA/cache inclui as novas páginas;
+- backend em `24.6.0`.
+
+Também foram concluídos os refinamentos visuais solicitados antes do lançamento: ícones mais claros nos cards, ações de produto organizadas e tematizadas e sidebar recolhível no desktop/notebook.

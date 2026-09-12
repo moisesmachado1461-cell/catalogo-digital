@@ -21,6 +21,7 @@ from .routes.billing import admin_router as billing_admin_router
 from .routes.billing import super_router as billing_super_router
 from .routes.catalog import admin_router as catalog_admin_router
 from .routes.catalog import public_router as catalog_public_router
+from .routes.customer import router as customer_router
 from .routes.marketing import admin_router as marketing_admin_router
 from .routes.marketing import public_router as marketing_public_router
 from .routes.orders import admin_router as orders_admin_router
@@ -71,6 +72,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(customer_router)
 app.include_router(privacy_public_router)
 app.include_router(privacy_admin_router)
 app.include_router(reports_admin_router)

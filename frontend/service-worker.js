@@ -1,8 +1,8 @@
-const CACHE_NAME = 'catalogo-digital-v24-1';
+const CACHE_NAME = 'catalogo-digital-v24-6';
 const APP_SHELL = [
   './', './index.html', './loja.html', './admin.html', './super-admin.html',
-  './agendamento.html', './privacidade.html', './termos.html',
-  './css/style.css', './css/design-system.css', './css/store-premium.css', './css/admin-premium.css', './css/super-admin-premium.css', './js/ui-system.js', './js/runtime-config.js', './js/api.js', './js/loja.js', './js/admin.js', './js/super-admin.js', './js/agendamento.js',
+  './agendamento.html', './cliente.html', './acompanhar.html', './privacidade.html', './termos.html',
+  './css/style.css', './css/design-system.css', './css/store-premium.css', './css/admin-premium.css', './css/super-admin-premium.css', './css/customer-portal.css', './js/ui-system.js', './js/runtime-config.js', './js/api.js', './js/loja.js', './js/admin.js', './js/super-admin.js', './js/agendamento.js', './js/cliente.js', './js/acompanhamento.js',
   './manifest.webmanifest', './icons/app-icon.svg'
 ];
 

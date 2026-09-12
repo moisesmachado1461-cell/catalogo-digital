@@ -28,6 +28,8 @@ function renderPremiumShell() {
   $('#headerStoreName').textContent = store.name;
   $('#headerStoreCategory').textContent = category;
   $('#footerStoreName').textContent = store.name;
+  const customerAccountLink = $('#customerAccountLink');
+  if (customerAccountLink) customerAccountLink.href = `cliente.html?slug=${encodeURIComponent(slug)}`;
 
   const primary = firstStoreSection();
   const primaryButton = $('#headerPrimaryAction');
@@ -518,7 +520,9 @@ $('#appointmentForm').onsubmit = async e => {
     $('#appointmentSuccessText').textContent = `${result.service.name} com ${result.professional.name}, ${start.toLocaleDateString('pt-BR')} às ${start.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}.`;
     $('#appointmentProtocol').innerHTML = `<small>Protocolo de acompanhamento</small><strong>${escapeHtml(result.public_token)}</strong>`;
     $('#appointmentPaymentBox').innerHTML = result.payment ? paymentResultHtml(result.payment) : '<div class="notice">Pagamento será combinado diretamente com a empresa.</div>';
-    $('#appointmentTrackLink').href = `agendamento.html?slug=${encodeURIComponent(slug)}&token=${encodeURIComponent(result.public_token)}`;
+    $('#appointmentTrackLink').href = `acompanhar.html?slug=${encodeURIComponent(slug)}&tipo=agendamento&token=${encodeURIComponent(result.public_token)}`;
+    const appointmentAccountLink = $('#appointmentAccountLink');
+    if (appointmentAccountLink) appointmentAccountLink.href = `cliente.html?slug=${encodeURIComponent(slug)}&modo=cadastro&tipo=agendamento&token=${encodeURIComponent(result.public_token)}`;
     formResetAppointment(f);
     openModal('appointmentSuccessModal');
   } catch (err) { showToast(err.message, 'error'); }
@@ -572,7 +576,13 @@ $('#checkoutForm').onsubmit = async e => {
     cart = []; saveCart(); selectedCouponCode = null; closeModal('checkoutModal'); f.reset(); $('#checkoutCouponHint')?.classList.add('hidden'); $('#deliveryFields').classList.add('hidden');
     const discountText = Number(result.discount_amount) > 0 ? ` Desconto: ${money(result.discount_amount)}.` : '';
     showToast(`Pedido ${result.order_number} criado. Total: ${money(result.total)}.${discountText}`);
-    if (result.payment) showPaymentModal(result.payment, `Pagamento do pedido ${result.order_number}`);
+    $('#orderSuccessTitle').textContent = `Pedido ${result.order_number} criado!`;
+    $('#orderSuccessText').textContent = `Total ${money(result.total)}. Agora você pode acompanhar o andamento em tempo real.`;
+    $('#orderSuccessProtocol').innerHTML = `<small>Protocolo de acompanhamento</small><strong>${escapeHtml(result.public_token)}</strong>`;
+    $('#orderPaymentBox').innerHTML = result.payment ? paymentResultHtml(result.payment) : '<div class="notice">Pagamento será combinado diretamente com a empresa.</div>';
+    $('#orderTrackLink').href = `acompanhar.html?slug=${encodeURIComponent(slug)}&tipo=pedido&token=${encodeURIComponent(result.public_token)}`;
+    $('#orderAccountLink').href = `cliente.html?slug=${encodeURIComponent(slug)}&modo=cadastro&tipo=pedido&token=${encodeURIComponent(result.public_token)}`;
+    openModal('orderSuccessModal');
   } catch (err) { showToast(err.message, 'error'); }
 };
 

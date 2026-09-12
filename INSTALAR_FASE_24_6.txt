@@ -1,0 +1,20 @@
+CATÁLOGO DIGITAL — FASE 24.6.0
+
+1) Extraia o ZIP incremental.
+2) Copie todo o conteúdo para a pasta principal do projeto e substitua os arquivos existentes.
+3) Com a .venv ativa, execute apenas:
+
+python backend\scripts\phase24_5_release_gate.py
+
+O release gate aplica migrations em banco temporário durante a regressão funcional e valida o Portal do Cliente.
+
+Se terminar com RELEASE GATE APROVADO:
+
+git add .
+git commit -m "Fase 24.6 - portal do cliente e acompanhamento"
+git push
+
+No Render, o start command já deve executar `alembic upgrade head`. Quando o deploy ficar Live, confirme 24.6.0 em /api/health.
+
+Depois, opcionalmente rode:
+python backend\scripts\production_smoke_check.py

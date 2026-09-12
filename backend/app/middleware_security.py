@@ -28,6 +28,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             request.headers.get("authorization") is not None
             or request.url.path.startswith((
                 "/api/auth",
+                "/api/customer",
                 "/api/admin",
                 "/api/super-admin",
                 "/api/billing",
@@ -116,7 +117,7 @@ class AuthRateLimitMiddleware(BaseHTTPMiddleware):
                 self.hits.pop(key, None)
 
     async def dispatch(self, request, call_next):
-        if request.method == "POST" and request.url.path in {"/api/auth/login", "/api/auth/token"}:
+        if request.method == "POST" and request.url.path in {"/api/auth/login", "/api/auth/token", "/api/customer/login", "/api/customer/register"}:
             forwarded = request.headers.get("x-forwarded-for", "")
             client_ip = forwarded.split(",")[0].strip() if forwarded else ""
             if not client_ip and request.client:

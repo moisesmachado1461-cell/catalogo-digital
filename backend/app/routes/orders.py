@@ -17,6 +17,7 @@ def _order_dict(order: Order, payment=None):
     return {
         "id": order.id,
         "order_number": order.order_number,
+        "public_token": order.public_token,
         "status": order.status,
         "payment_method": order.payment_method,
         "fulfillment_method": order.fulfillment_method,
@@ -54,6 +55,7 @@ def _order_dict(order: Order, payment=None):
             for item in order.items
         ],
         "created_at": order.created_at.isoformat(),
+        "updated_at": order.updated_at.isoformat(),
         "payment": payment_dict(payment),
     }
 
@@ -71,6 +73,34 @@ def checkout(slug: str, data: CheckoutRequest, db: Session = Depends(get_db)):
         .one()
     )
     return _order_dict(order, payment_for_reference(db, store.id, "ORDER", order.id))
+
+
+@public_router.get("/stores/{slug}/orders/{public_token}")
+def public_track_order(slug: str, public_token: str, db: Session = Depends(get_db)):
+    store = get_store_by_slug(db, slug)
+    if not store:
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
+    order = (
+        db.query(Order)
+        .options(selectinload(Order.items), selectinload(Order.customer))
+        .filter(Order.store_id == store.id, Order.public_token == public_token)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    data = _order_dict(order, payment_for_reference(db, store.id, "ORDER", order.id))
+    # O token público funciona como segredo do link. Evitamos expor e-mail/telefone.
+    if data.get("customer"):
+        data["customer"] = {"name": data["customer"].get("name")}
+    data["store"] = {
+        "name": store.name,
+        "slug": store.slug,
+        "logo_url": store.logo_url,
+        "primary_color": store.primary_color,
+        "secondary_color": store.secondary_color,
+        "whatsapp": store.whatsapp,
+    }
+    return data
 
 
 @admin_router.get("/orders")

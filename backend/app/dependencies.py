@@ -1,8 +1,9 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .database import get_db
 from .models.user import User
+from .models.sales import CustomerAccount
 from .models.store import Store
 from .security import decode_token, oauth2_scheme
 
@@ -85,3 +86,49 @@ def get_current_super_admin(
             detail="Acesso permitido apenas ao super administrador",
         )
     return current_user
+
+
+def _customer_account_from_token(token: str, db: Session) -> CustomerAccount:
+    try:
+        payload = decode_token(token)
+        subject = str(payload["sub"])
+        if not subject.startswith("customer:"):
+            raise ValueError
+        account_id = int(subject.split(":", 1)[1])
+        token_version = int(payload.get("ver", 0) or 0)
+    except (TypeError, ValueError, KeyError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão de cliente inválida")
+
+    account = (
+        db.query(CustomerAccount)
+        .filter(CustomerAccount.id == account_id, CustomerAccount.is_active.is_(True))
+        .first()
+    )
+    if not account or token_version != int(account.token_version or 0):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão de cliente expirada")
+    return account
+
+
+def get_current_customer_account(
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> CustomerAccount:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Entre na sua conta para continuar")
+    return _customer_account_from_token(authorization.split(" ", 1)[1].strip(), db)
+
+
+def get_optional_customer_account(
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> CustomerAccount | None:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        return None
+    token = authorization.split(" ", 1)[1].strip()
+    try:
+        payload = decode_token(token)
+        if not str(payload.get("sub", "")).startswith("customer:"):
+            return None
+    except HTTPException:
+        return None
+    return _customer_account_from_token(token, db)
