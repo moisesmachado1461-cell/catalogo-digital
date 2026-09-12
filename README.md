@@ -163,3 +163,8 @@ a fatura de troca. Backend em `23.4.0`; migration `015_advanced_coupons`.
 ## Fase 24.1 — auditoria e hardening
 
 A primeira etapa da revisão final adiciona hardening de autenticação/configuração, auditoria automatizada do projeto, smoke test público do deploy e verificação estrutural de backups. Não há migration. Backend em `24.1.0`.
+
+
+## Fase 24.2 — testes funcionais e isolamento multi-tenant
+
+A regressão funcional automatizada usa um banco temporário e valida login, papéis, isolamento entre duas lojas, acesso cruzado, fluxos públicos por segmento, edição de loja, cupons por produto, cupons de planos e áreas de assinatura/cobrança. Não há migration. Backend em `24.2.0`.

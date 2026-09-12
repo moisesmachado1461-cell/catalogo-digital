@@ -137,10 +137,10 @@ def check_cors_and_version() -> None:
         fail("Proteção contra CORS '*' em produção não encontrada")
     else:
         ok("CORS wildcard é bloqueado em produção")
-    if "APP_VERSION" not in main or 'APP_VERSION = "24.1.0"' not in version:
-        fail("Versão centralizada 24.1.0 não encontrada")
+    if "APP_VERSION" not in main or 'APP_VERSION = "24.2.0"' not in version:
+        fail("Versão centralizada 24.2.0 não encontrada")
     else:
-        ok("Versão do backend centralizada em APP_VERSION=24.1.0")
+        ok("Versão do backend centralizada em APP_VERSION=24.2.0")
 
 
 def check_route_guards() -> None:
@@ -204,7 +204,7 @@ def main() -> int:
     for check in checks:
         check()
 
-    print("CATÁLOGO DIGITAL — AUDITORIA FASE 24.1")
+    print("CATÁLOGO DIGITAL — AUDITORIA FASE 24.2")
     for message in passes:
         print(f"[OK] {message}")
     for message in warnings:

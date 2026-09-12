@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.1**.
+Versão consolidada até a **Fase 24.2**.
 
 ## Concluído
 
@@ -94,9 +94,27 @@ Fazer uma revisão integrada de **Cliente + Admin + Super Admin** para corrigir 
 - verificador estrutural dos backups lógicos;
 - sem migration; backend `24.1.0`.
 
+### Evolução da Fase 24
+
+Os testes autenticados de isolamento e a regressão funcional passam a ser cobertos pela Fase 24.2. Permanecem restore drill, automação/offsite de backup, rotações finais de credenciais e revisão manual multi-dispositivo.
+
+
+## Fase 24.2 — regressão funcional e multi-tenant
+
+- regressão automatizada em banco SQLite temporário;
+- login e papéis validados;
+- isolamento Mercado x Loja Tech validado por listagem e acesso direto;
+- guardas Admin x Super Admin validadas;
+- fluxos públicos de varejo, agendamento, reserva e locação validados;
+- edição de loja pelo Super Admin validada;
+- cupom por produto com bloqueio cross-tenant validado;
+- cupom de plano Super Admin → Admin validado;
+- assinatura e central de cobrança validadas em modo leitura;
+- sem migration; backend `24.2.0`.
+
 ### Ainda pendente dentro da Fase 24
 
-- teste autenticado de isolamento entre duas lojas;
-- revisão funcional de fluxos críticos Cliente/Admin/Super Admin;
 - restore drill real em banco separado;
-- automação/offsite de backup e rotações finais de credenciais.
+- automação/offsite de backup;
+- rotação final de credenciais sensíveis antes do lançamento;
+- revisão final manual em celular/tablet/desktop das telas principais.
