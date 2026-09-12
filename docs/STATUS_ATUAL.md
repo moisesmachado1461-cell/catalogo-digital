@@ -133,3 +133,6 @@ Os testes autenticados de isolamento e a regressão funcional passam a ser cober
 ### Para concluir operacionalmente a Fase 24.3
 
 Ainda é necessário cadastrar os secrets no GitHub e executar pelo menos um restore drill real em um PostgreSQL separado. Até esse teste real, a capacidade de restauração em PostgreSQL deve ser considerada preparada, mas não comprovada em produção.
+
+### Fase 24.3.1
+Restore drill ajustado para usar PostgreSQL temporário no GitHub Actions. Não é necessário segundo PostgreSQL no Render nem o secret RESTORE_TEST_DATABASE_URL.

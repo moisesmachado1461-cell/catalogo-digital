@@ -172,3 +172,6 @@ A regressão funcional automatizada usa um banco temporário e valida login, pap
 ## Fase 24.3 — backup automático e recuperação de desastre
 
 A proteção de dados recebeu backup lógico v2 verificável, criptografia para cópias automáticas, restore transacional em banco separado, workflow diário offsite e restore drill manual. Não há migration. Backend em `24.3.0`.
+
+### Fase 24.3.1
+O restore drill usa PostgreSQL temporário no GitHub Actions, evitando a necessidade de um segundo banco gratuito no Render.
