@@ -18,6 +18,7 @@ class MercadoPagoError(RuntimeError):
 @dataclass(frozen=True)
 class PixPaymentResult:
     payment_id: str
+    order_id: str | None
     status: str
     status_detail: str | None
     qr_code: str | None
@@ -60,10 +61,59 @@ class MercadoPagoGateway(BillingGateway):
                 detail = json.loads(exc.read().decode("utf-8"))
             except Exception:
                 detail = {"message": str(exc)}
-            message = detail.get("message") or detail.get("error") or "Falha ao comunicar com o Mercado Pago"
+            message = detail.get("message") or detail.get("error")
+            if not message:
+                cause = detail.get("cause") or detail.get("causes") or detail.get("details") or []
+                if isinstance(cause, list) and cause:
+                    first = cause[0] if isinstance(cause[0], dict) else {}
+                    message = first.get("description") or first.get("message") or first.get("code")
+            message = message or "Falha ao comunicar com o Mercado Pago"
             raise MercadoPagoError(str(message)) from exc
         except (URLError, TimeoutError) as exc:
             raise MercadoPagoError("Mercado Pago indisponível no momento. Tente novamente.") from exc
+
+    @staticmethod
+    def order_as_payment(order: dict[str, Any]) -> dict[str, Any]:
+        transactions = order.get("transactions") or {}
+        payments = transactions.get("payments") or []
+        tx = payments[0] if payments else {}
+        payment_method = tx.get("payment_method") or {}
+        order_status = str(order.get("status") or tx.get("status") or "created").lower()
+        order_detail = str(order.get("status_detail") or tx.get("status_detail") or "")
+
+        if order_status == "processed" and order_detail in {"accredited", "processed", ""}:
+            normalized_status = "approved"
+        elif order_status in {"failed"}:
+            normalized_status = "rejected"
+        elif order_status in {"canceled", "cancelled", "expired"}:
+            normalized_status = "cancelled"
+        elif order_status == "refunded":
+            normalized_status = "refunded"
+        elif order_status == "charged_back":
+            normalized_status = "charged_back"
+        elif order_status == "processing":
+            normalized_status = "in_process"
+        else:
+            normalized_status = "pending"
+
+        return {
+            "id": tx.get("id") or order.get("id"),
+            "status": normalized_status,
+            "status_detail": order_detail or tx.get("status_detail"),
+            "transaction_amount": order.get("total_amount") or tx.get("amount") or "0",
+            "currency_id": "BRL",
+            "payment_method_id": "pix",
+            "external_reference": order.get("external_reference"),
+            "point_of_interaction": {
+                "transaction_data": {
+                    "qr_code": payment_method.get("qr_code"),
+                    "qr_code_base64": payment_method.get("qr_code_base64"),
+                    "ticket_url": payment_method.get("ticket_url"),
+                }
+            },
+            "_order_id": order.get("id"),
+            "_order_status": order_status,
+        }
 
     def create_pix_payment(
         self,
@@ -77,32 +127,60 @@ class MercadoPagoGateway(BillingGateway):
         idempotency_key: str,
         notification_url: str | None,
     ) -> PixPaymentResult:
+        # Desde 2025/2026, o fluxo recomendado do Checkout Transparente para Pix
+        # usa Orders API. O endpoint legado /v1/payments pode retornar internal_error
+        # em testes com as credenciais atuais.
+        amount_text = f"{Decimal(amount).quantize(Decimal('0.01')):.2f}"
+        payer: dict[str, Any] = {"email": payer_email}
+        # Cenário de teste oficial do Mercado Pago para Pix via Orders. Para o
+        # pagador de teste usamos exatamente os campos do cenário documentado.
+        if payer_email.strip().lower() == "test_user_br@testuser.com":
+            payer["first_name"] = "APRO"
+        else:
+            payer["identification"] = {"type": document_type, "number": document_number}
+
         payload: dict[str, Any] = {
-            "transaction_amount": float(Decimal(amount).quantize(Decimal("0.01"))),
-            "description": description[:150],
-            "payment_method_id": "pix",
+            "type": "online",
+            "processing_mode": "automatic",
             "external_reference": external_reference[:64],
-            "payer": {
-                "email": payer_email,
-                "identification": {"type": document_type, "number": document_number},
+            "total_amount": amount_text,
+            "payer": payer,
+            "transactions": {
+                "payments": [
+                    {
+                        "amount": amount_text,
+                        "payment_method": {"id": "pix", "type": "bank_transfer"},
+                    }
+                ]
             },
         }
-        if notification_url:
-            payload["notification_url"] = notification_url
-        data = self._request("POST", "/v1/payments", payload=payload, idempotency_key=idempotency_key)
-        transaction = ((data.get("point_of_interaction") or {}).get("transaction_data") or {})
-        payment_id = data.get("id")
+        # A URL de webhook é configurada no painel da aplicação. Não enviamos
+        # notification_url no body da Orders API para evitar parâmetros legados.
+        data = self._request("POST", "/v1/orders", payload=payload, idempotency_key=idempotency_key)
+        normalized = self.order_as_payment(data)
+        transaction = ((normalized.get("point_of_interaction") or {}).get("transaction_data") or {})
+        order_id = data.get("id")
+        payment_id = normalized.get("id")
+        if order_id is None:
+            raise MercadoPagoError("Mercado Pago não retornou o identificador da order")
         if payment_id is None:
-            raise MercadoPagoError("Mercado Pago não retornou o identificador do pagamento")
+            payment_id = order_id
         return PixPaymentResult(
             payment_id=str(payment_id),
-            status=str(data.get("status") or "pending"),
-            status_detail=data.get("status_detail"),
+            order_id=str(order_id),
+            status=str(normalized.get("status") or "pending"),
+            status_detail=normalized.get("status_detail"),
             qr_code=transaction.get("qr_code"),
             qr_code_base64=transaction.get("qr_code_base64"),
             ticket_url=transaction.get("ticket_url"),
-            raw=data,
+            raw=normalized,
         )
+
+    def get_order(self, order_id: str) -> dict:
+        return self._request("GET", f"/v1/orders/{order_id}")
+
+    def getorder_as_payment(self, order_id: str) -> dict:
+        return self.order_as_payment(self.get_order(order_id))
 
     def get_payment(self, payment_id: str) -> dict:
         return self._request("GET", f"/v1/payments/{payment_id}")

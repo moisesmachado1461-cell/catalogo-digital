@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.7.0**.
+Versão consolidada até a **Fase 24.7.1**.
 
 ## Concluído
 
@@ -251,4 +251,13 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - plano ativado somente após pagamento aprovado;
 - desktop da loja pública ajustado para 3 produtos por linha;
 - tipografia reforçada em toda a plataforma;
-- migration `019_dynamic_plans_pix`; backend `24.7.0`; cache PWA `catalogo-digital-v24-7-0`.
+- migration `019_dynamic_plans_pix`; backend `24.7.1`; cache PWA `catalogo-digital-v24-7-0`.
+
+
+## Hotfix 24.7.1 — Pix Mercado Pago via Orders API
+- Pix SaaS migrado do endpoint legado `/v1/payments` para `/v1/orders`.
+- Compatível com o cenário oficial de teste Pix do Mercado Pago (`test_user_br@testuser.com` + `first_name=APRO`).
+- QR Code, Pix Copia e Cola e ticket passam a ser lidos de `transactions.payments[].payment_method`.
+- Consulta de status passa a usar `GET /v1/orders/{id}`.
+- Webhook aceita o tópico `order` e mantém compatibilidade com `payment` legado.
+- Erros da API exibem detalhes melhores quando disponíveis.

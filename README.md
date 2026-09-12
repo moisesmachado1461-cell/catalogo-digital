@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.7.0
+# Catálogo Digital — Fase 24.7.1
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.7.0 — Planos dinâmicos + Pix imediato via Mercado Pago**
+**24.7.1 — Planos dinâmicos + Pix imediato via Mercado Pago**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -253,6 +253,6 @@ A vitrine de produtos passa a ocupar toda a largura útil da loja. O carrinho de
 - idempotência, validação de webhook e reconciliação do pagamento antes de ativar o plano;
 - vitrine desktop com 3 produtos por linha;
 - tipografia mais robusta em Cliente, Admin e Super Admin;
-- migration `019_dynamic_plans_pix`; backend `24.7.0`.
+- migration `019_dynamic_plans_pix`; backend `24.7.1`.
 
 Veja `docs/FASE_24_7_PLANOS_PIX_MERCADO_PAGO.md`.

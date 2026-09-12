@@ -375,7 +375,7 @@ def admin_create_pix_checkout(
 
     invoice = get_invoice(db, invoice.id) or invoice
     invoice.external_payment_id = result.payment_id
-    invoice.external_invoice_id = result.payment_id
+    invoice.external_invoice_id = result.order_id or result.payment_id
     invoice.provider_status = result.status
     invoice.pix_qr_code = result.qr_code
     invoice.pix_qr_code_base64 = result.qr_code_base64
@@ -414,7 +414,10 @@ def admin_refresh_pix_invoice(
     if invoice.provider != "MERCADO_PAGO" or not invoice.external_payment_id:
         return {"invoice": _pix_invoice_payload(invoice)}
     try:
-        payment = gateway.get_payment(str(invoice.external_payment_id))
+        if invoice.external_invoice_id and str(invoice.external_invoice_id).startswith("ORD"):
+            payment = gateway.getorder_as_payment(str(invoice.external_invoice_id))
+        else:
+            payment = gateway.get_payment(str(invoice.external_payment_id))
         _sync_mp_payment(db, invoice, payment)
         db.commit()
     except MercadoPagoError as exc:
@@ -453,7 +456,7 @@ async def mercado_pago_webhook(request: Request, db: Session = Depends(get_db)):
     ):
         raise HTTPException(status_code=401, detail="Assinatura do webhook inválida")
 
-    external_event_id = str(body.get("id") or request.headers.get("x-request-id") or f"payment:{resource_id}")
+    external_event_id = str(body.get("id") or request.headers.get("x-request-id") or f"{body.get('type') or 'event'}:{resource_id}")
     existing = db.query(BillingWebhookEvent).filter(
         BillingWebhookEvent.provider == "MERCADO_PAGO",
         BillingWebhookEvent.external_event_id == external_event_id,
@@ -478,14 +481,21 @@ async def mercado_pago_webhook(request: Request, db: Session = Depends(get_db)):
         db.add(event)
     db.flush()
 
-    if str(body.get("type") or "payment") not in {"payment", ""}:
+    event_type = str(body.get("type") or "").lower()
+    if event_type not in {"order", "payment", ""}:
         event.status = "IGNORED"
         db.commit()
         return {"ok": True, "ignored": True}
 
     try:
-        payment = gateway.get_payment(resource_id)
-        external_reference = str(payment.get("external_reference") or "")
+        if event_type == "order" or resource_id.startswith("ORD"):
+            order = gateway.get_order(resource_id)
+            payment = gateway.order_as_payment(order)
+            external_reference = str(order.get("external_reference") or "")
+        else:
+            payment = gateway.get_payment(resource_id)
+            external_reference = str(payment.get("external_reference") or "")
+
         invoice = None
         if external_reference.startswith("saas_invoice_"):
             try:
@@ -494,6 +504,11 @@ async def mercado_pago_webhook(request: Request, db: Session = Depends(get_db)):
                 invoice_id = 0
             if invoice_id:
                 invoice = get_invoice(db, invoice_id)
+        if not invoice and (event_type == "order" or resource_id.startswith("ORD")):
+            invoice = db.query(SubscriptionInvoice).filter(
+                SubscriptionInvoice.provider == "MERCADO_PAGO",
+                SubscriptionInvoice.external_invoice_id == resource_id,
+            ).first()
         if not invoice:
             invoice = db.query(SubscriptionInvoice).filter(
                 SubscriptionInvoice.provider == "MERCADO_PAGO",
