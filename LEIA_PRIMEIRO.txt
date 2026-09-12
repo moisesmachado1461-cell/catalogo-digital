@@ -1,0 +1,15 @@
+CATÁLOGO DIGITAL — ATUALIZAÇÃO 24.6.1
+
+Este pacote é incremental e deve ser copiado por cima da sua pasta principal.
+Ele NÃO contém .env, .venv, banco, uploads, backups ou .git.
+
+Melhorias:
+- botão da sidebar mais visível e fora da área rolável;
+- sidebar recolhida sem menus/abas;
+- login/cadastro premium do cliente com cores e logo da loja;
+- botão Entrar/Minha conta disponível no cabeçalho da loja;
+- interação melhor em campos, senhas, abas e botões;
+- cache PWA atualizado para evitar CSS/JS antigo.
+
+Depois de copiar, rode apenas:
+python backend\scripts\phase24_5_release_gate.py

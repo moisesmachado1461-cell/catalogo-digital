@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/design-system.css">
   <link rel="stylesheet" href="css/customer-portal.css">
 </head>
-<body class="customer-page">
+<body class="customer-page customer-auth-active">
 <header class="topbar customer-topbar">
   <div class="container nav">
     <a id="customerBrand" class="store-header-brand customer-brand" href="index.html">
@@ -25,47 +25,90 @@
 </header>
 
 <main class="customer-main container">
-  <section id="customerStoreIntro" class="customer-store-intro panel">
-    <div>
-      <span class="eyebrow">MINHA CONTA</span>
-      <h1 id="customerStoreTitle">Carregando loja...</h1>
-      <p>Entre para acompanhar seus pedidos e agendamentos em um só lugar.</p>
+  <section id="customerAuthView" class="customer-auth-stage">
+    <div class="customer-login-shell">
+      <aside class="customer-login-showcase">
+        <div class="customer-login-orb customer-login-orb-a"></div>
+        <div class="customer-login-orb customer-login-orb-b"></div>
+        <div class="customer-login-grid-glow" aria-hidden="true"></div>
+
+        <div class="customer-showcase-brand">
+          <div id="customerStoreBadge" class="customer-store-badge">CD</div>
+          <div>
+            <span class="customer-showcase-kicker">ÁREA DO CLIENTE</span>
+            <strong id="customerStoreTitle">Carregando loja...</strong>
+          </div>
+        </div>
+
+        <div class="customer-showcase-copy">
+          <span class="customer-showcase-pill"><span class="customer-live-dot"></span> Sua experiência continua aqui</span>
+          <h1>Entre, acompanhe e resolva tudo em poucos toques.</h1>
+          <p>Pedidos, agendamentos e histórico organizados com a identidade da sua loja.</p>
+        </div>
+
+        <div class="customer-showcase-preview" aria-hidden="true">
+          <div class="customer-preview-head">
+            <div><small>ACOMPANHAMENTO</small><strong>Seu pedido</strong></div>
+            <span>Em andamento</span>
+          </div>
+          <div class="customer-preview-track">
+            <span class="done">✓</span><i></i><span class="done">✓</span><i></i><span class="current">●</span><i></i><span></span>
+          </div>
+          <div class="customer-preview-labels"><span>Recebido</span><span>Confirmado</span><span>Preparando</span><span>Pronto</span></div>
+        </div>
+
+        <div class="customer-showcase-benefits">
+          <div><span>01</span><b>Pedidos em tempo real</b><small>Veja cada etapa sem depender de mensagens.</small></div>
+          <div><span>02</span><b>Agendamentos organizados</b><small>Consulte horários e status rapidamente.</small></div>
+          <div><span>03</span><b>Histórico em um só lugar</b><small>Seu relacionamento com a loja sempre acessível.</small></div>
+        </div>
+
+        <a id="customerBackStoreAuth" class="customer-back-link" href="index.html"><span aria-hidden="true">←</span> Voltar para a loja</a>
+      </aside>
+
+      <article class="customer-login-panel">
+        <div class="customer-login-mobile-brand">
+          <div id="customerMobileBrandMark" class="customer-store-badge">CD</div>
+          <div><strong id="customerMobileBrandName">Sua loja</strong><small>Área do cliente</small></div>
+        </div>
+
+        <div class="customer-auth-heading">
+          <span class="customer-auth-kicker">BEM-VINDO</span>
+          <h2>Acesse sua conta</h2>
+          <p>Entre para acompanhar seus pedidos, agendamentos e histórico.</p>
+        </div>
+
+        <div class="customer-auth-tabs" role="tablist" aria-label="Acesso do cliente">
+          <button id="customerLoginTab" class="customer-auth-tab active" type="button" role="tab" aria-selected="true">Entrar</button>
+          <button id="customerRegisterTab" class="customer-auth-tab" type="button" role="tab" aria-selected="false">Criar conta</button>
+        </div>
+
+        <form id="customerLoginForm" class="stack-form customer-auth-form">
+          <div class="field customer-field">
+            <label>E-mail</label>
+            <div class="customer-input-wrap"><span class="customer-input-icon" aria-hidden="true">@</span><input class="input" name="email" type="email" autocomplete="username" required placeholder="voce@email.com"></div>
+          </div>
+          <div class="field customer-field">
+            <label>Senha</label>
+            <div class="customer-input-wrap"><span class="customer-input-icon" aria-hidden="true">⌁</span><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="Sua senha"><button class="customer-password-toggle" type="button" data-password-toggle aria-label="Mostrar senha">Ver</button></div>
+          </div>
+          <button class="btn primary full-btn customer-login-submit" type="submit"><span>Entrar na minha conta</span><span aria-hidden="true">→</span></button>
+        </form>
+
+        <form id="customerRegisterForm" class="stack-form customer-auth-form hidden">
+          <div class="field customer-field"><label>Nome</label><div class="customer-input-wrap"><span class="customer-input-icon" aria-hidden="true">☺</span><input class="input" name="name" autocomplete="name" required placeholder="Seu nome"></div></div>
+          <div class="field customer-field"><label>E-mail</label><div class="customer-input-wrap"><span class="customer-input-icon" aria-hidden="true">@</span><input class="input" name="email" type="email" autocomplete="email" required placeholder="voce@email.com"></div></div>
+          <div class="field customer-field"><label>WhatsApp / telefone</label><div class="customer-input-wrap"><span class="customer-input-icon" aria-hidden="true">✆</span><input class="input" name="phone" autocomplete="tel" placeholder="(00) 00000-0000"></div></div>
+          <div class="field customer-field"><label>Senha</label><div class="customer-input-wrap"><span class="customer-input-icon" aria-hidden="true">⌁</span><input class="input" name="password" type="password" minlength="8" autocomplete="new-password" required placeholder="Mínimo 8 caracteres"><button class="customer-password-toggle" type="button" data-password-toggle aria-label="Mostrar senha">Ver</button></div></div>
+          <div class="field customer-field"><label>Confirmar senha</label><div class="customer-input-wrap"><span class="customer-input-icon" aria-hidden="true">✓</span><input class="input" name="password_confirm" type="password" minlength="8" autocomplete="new-password" required placeholder="Repita sua senha"><button class="customer-password-toggle" type="button" data-password-toggle aria-label="Mostrar senha">Ver</button></div></div>
+          <div id="customerClaimNotice" class="notice customer-claim-notice hidden"></div>
+          <button class="btn primary full-btn customer-login-submit" type="submit"><span>Criar minha conta</span><span aria-hidden="true">→</span></button>
+        </form>
+
+        <div class="customer-trust-note"><span aria-hidden="true">◆</span><p><b>Acesso protegido.</b> Sua conta pertence somente a esta loja e seus dados ficam separados de outros estabelecimentos.</p></div>
+        <a id="customerBackStoreMobile" class="customer-back-link customer-back-mobile" href="index.html"><span aria-hidden="true">←</span> Voltar para a loja</a>
+      </article>
     </div>
-    <div id="customerStoreBadge" class="customer-store-badge">CD</div>
-  </section>
-
-  <section id="customerAuthView" class="customer-auth-grid">
-    <article class="panel customer-auth-card">
-      <div class="customer-auth-tabs" role="tablist">
-        <button id="customerLoginTab" class="customer-auth-tab active" type="button">Entrar</button>
-        <button id="customerRegisterTab" class="customer-auth-tab" type="button">Criar conta</button>
-      </div>
-
-      <form id="customerLoginForm" class="stack-form customer-auth-form">
-        <div class="field"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="username" required placeholder="voce@email.com"></div>
-        <div class="field"><label>Senha</label><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="Sua senha"></div>
-        <button class="btn primary full-btn" type="submit">Entrar na minha conta</button>
-      </form>
-
-      <form id="customerRegisterForm" class="stack-form customer-auth-form hidden">
-        <div class="field"><label>Nome</label><input class="input" name="name" autocomplete="name" required></div>
-        <div class="field"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="email" required></div>
-        <div class="field"><label>WhatsApp / telefone</label><input class="input" name="phone" autocomplete="tel"></div>
-        <div class="field"><label>Senha</label><input class="input" name="password" type="password" minlength="8" autocomplete="new-password" required placeholder="Mínimo 8 caracteres, com letras e números"></div>
-        <div class="field"><label>Confirmar senha</label><input class="input" name="password_confirm" type="password" minlength="8" autocomplete="new-password" required></div>
-        <div id="customerClaimNotice" class="notice customer-claim-notice hidden"></div>
-        <button class="btn primary full-btn" type="submit">Criar minha conta</button>
-      </form>
-      <p class="customer-auth-help">Sua conta pertence somente a esta loja. Cada estabelecimento mantém seus clientes separados.</p>
-    </article>
-
-    <aside class="panel customer-auth-benefits">
-      <span class="section-kicker">ACOMPANHAMENTO</span>
-      <h2>Tudo o que é seu, organizado.</h2>
-      <div class="customer-benefit"><span>✓</span><div><b>Pedidos</b><small>Veja o status do preparo, retirada ou entrega.</small></div></div>
-      <div class="customer-benefit"><span>✓</span><div><b>Agendamentos</b><small>Acompanhe horários confirmados, concluídos ou cancelados.</small></div></div>
-      <div class="customer-benefit"><span>✓</span><div><b>Histórico</b><small>Encontre seus atendimentos sem depender de mensagens antigas.</small></div></div>
-    </aside>
   </section>
 
   <section id="customerPortalView" class="hidden">

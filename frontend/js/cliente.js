@@ -54,10 +54,15 @@ function customerApplyTheme(store) {
   const logo = store?.logo_url ? `<img src="${escapeHtml(assetUrl(store.logo_url))}" alt="Logo de ${escapeHtml(store.name)}">` : escapeHtml(customerInitials(store?.name));
   cq('#customerBrandMark').innerHTML = logo;
   cq('#customerStoreBadge').innerHTML = logo;
+  cq('#customerMobileBrandMark').innerHTML = logo;
   cq('#customerBrandName').textContent = store?.name || 'Catálogo Digital';
   cq('#customerStoreTitle').textContent = store?.name || 'Sua loja';
-  cq('#customerBackStore').href = `loja.html?slug=${encodeURIComponent(customerSlug)}`;
-  cq('#customerBrand').href = `loja.html?slug=${encodeURIComponent(customerSlug)}`;
+  cq('#customerMobileBrandName').textContent = store?.name || 'Sua loja';
+  const storeHref = `loja.html?slug=${encodeURIComponent(customerSlug)}`;
+  cq('#customerBackStore').href = storeHref;
+  cq('#customerBackStoreAuth').href = storeHref;
+  cq('#customerBackStoreMobile').href = storeHref;
+  cq('#customerBrand').href = storeHref;
   document.title = `Minha conta — ${store?.name || 'Catálogo Digital'}`;
 }
 
@@ -74,6 +79,14 @@ function switchAuthMode(mode) {
   cq('#customerRegisterForm').classList.toggle('hidden', !register);
   cq('#customerLoginTab').classList.toggle('active', !register);
   cq('#customerRegisterTab').classList.toggle('active', register);
+  cq('#customerLoginTab').setAttribute('aria-selected', register ? 'false' : 'true');
+  cq('#customerRegisterTab').setAttribute('aria-selected', register ? 'true' : 'false');
+  const heading = cq('.customer-auth-heading h2');
+  const copy = cq('.customer-auth-heading p');
+  if (heading) heading.textContent = register ? 'Crie sua conta' : 'Acesse sua conta';
+  if (copy) copy.textContent = register
+    ? 'Cadastre-se para reunir pedidos e agendamentos em um só lugar.'
+    : 'Entre para acompanhar seus pedidos, agendamentos e histórico.';
 }
 
 cq('#customerLoginTab').onclick = () => switchAuthMode('login');
@@ -101,8 +114,8 @@ function trackingHref(type, token) {
 function renderCustomerPortal() {
   const name = customerAccount?.name || 'Cliente';
   cq('#customerAuthView').classList.add('hidden');
-  cq('#customerStoreIntro').classList.add('hidden');
   cq('#customerPortalView').classList.remove('hidden');
+  document.body.classList.remove('customer-auth-active');
   cq('#customerGreeting').textContent = `Olá, ${name.split(' ')[0]}!`;
   cq('#customerPortalSubtitle').textContent = `Acompanhe sua atividade em ${customerAccount?.store?.name || customerStore?.name || 'sua loja'}.`;
   const pendingOrders = customerOrders.filter(row => !['ENTREGUE','CANCELADO'].includes(row.status)).length;
@@ -186,9 +199,20 @@ cq('#customerLogoutBtn').onclick = () => {
   customerAccount = null;
   cq('#customerPortalView').classList.add('hidden');
   cq('#customerAuthView').classList.remove('hidden');
-  cq('#customerStoreIntro').classList.remove('hidden');
+  document.body.classList.add('customer-auth-active');
   switchAuthMode('login');
 };
+
+for (const toggle of document.querySelectorAll('[data-password-toggle]')) {
+  toggle.addEventListener('click', () => {
+    const input = toggle.closest('.customer-input-wrap')?.querySelector('input');
+    if (!input) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    toggle.textContent = show ? 'Ocultar' : 'Ver';
+    toggle.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+  });
+}
 
 for (const button of document.querySelectorAll('[data-customer-tab]')) {
   button.onclick = () => {

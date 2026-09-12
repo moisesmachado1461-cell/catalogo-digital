@@ -226,3 +226,8 @@ A experiência do cliente final agora possui identidade própria, sem misturar o
 - backend em `24.6.0`.
 
 Também foram concluídos os refinamentos visuais solicitados antes do lançamento: ícones mais claros nos cards, ações de produto organizadas e tematizadas e sidebar recolhível no desktop/notebook.
+
+
+## Fase 24.6.1 — experiência do cliente e sidebar
+
+Refinamento visual sem migration: a sidebar recolhida do Admin agora ocupa o mínimo possível e não exibe as opções do menu; o controle de expandir/recolher fica mais visível e fora da área rolável. A área do cliente ganhou uma tela de login/cadastro própria, premium, interativa e fortemente tematizada com as cores e logo da loja. O acesso `Entrar / Minha conta` permanece disponível diretamente no cabeçalho da loja, sem depender do checkout. Backend em `24.6.1`.

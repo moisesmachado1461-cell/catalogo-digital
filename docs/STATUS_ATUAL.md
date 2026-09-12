@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.6.0**.
+Versão consolidada até a **Fase 24.6.1**.
 
 ## Concluído
 
@@ -207,3 +207,13 @@ Ainda é necessário cadastrar os secrets no GitHub e executar pelo menos um res
 ### Próxima fase
 
 Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, restore drill, credenciais/segredos e checklist comercial.
+
+
+## Fase 24.6.1 — acabamento de navegação e login do cliente
+
+- botão de recolher/expandir a sidebar do Admin reposicionado para fora da área rolável e com maior destaque visual;
+- sidebar recolhida vira uma faixa mínima: oculta menus, loja e rodapé, preservando apenas a identificação principal e o botão de expansão;
+- login/cadastro do cliente redesenhado como experiência premium dedicada, com identidade e cores da loja predominantes;
+- login do cliente passa a ter hero temático, acompanhamento ilustrativo, campos refinados, mostrar/ocultar senha e botões mais interativos;
+- acesso à conta fica disponível permanentemente no cabeçalho da loja, exibindo `Entrar` ou `Minha conta` conforme a sessão;
+- backend em `24.6.1`; sem migration nova.

@@ -29,7 +29,13 @@ function renderPremiumShell() {
   $('#headerStoreCategory').textContent = category;
   $('#footerStoreName').textContent = store.name;
   const customerAccountLink = $('#customerAccountLink');
-  if (customerAccountLink) customerAccountLink.href = `cliente.html?slug=${encodeURIComponent(slug)}`;
+  if (customerAccountLink) {
+    customerAccountLink.href = `cliente.html?slug=${encodeURIComponent(slug)}`;
+    const accountLabel = $('#customerAccountLabel');
+    const hasCustomerSession = Boolean(sessionStorage.getItem(`catalogo_customer_token_${slug}`));
+    if (accountLabel) accountLabel.textContent = hasCustomerSession ? 'Minha conta' : 'Entrar';
+    customerAccountLink.title = hasCustomerSession ? 'Abrir minha conta' : 'Entrar ou criar conta';
+  }
 
   const primary = firstStoreSection();
   const primaryButton = $('#headerPrimaryAction');

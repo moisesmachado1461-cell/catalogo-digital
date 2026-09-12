@@ -302,7 +302,8 @@ function setAdminSidebarCollapsed(collapsed, persist = true) {
   const button = $('#adminSidebarCollapse');
   if (!shell || !button) return;
   shell.classList.toggle('sidebar-collapsed', collapsed);
-  button.textContent = collapsed ? '›' : '‹';
+  const glyph = button.querySelector('.sidebar-collapse-glyph');
+  if (glyph) glyph.textContent = collapsed ? '›' : '‹';
   button.title = collapsed ? 'Expandir menu' : 'Recolher menu';
   button.setAttribute('aria-label', button.title);
   button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
