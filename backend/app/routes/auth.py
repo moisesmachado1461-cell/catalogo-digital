@@ -82,7 +82,7 @@ def _authenticate_user(db: Session, email: str, password: str, request: Request)
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, request: Request, db: Session = Depends(get_db)):
     user = _authenticate_user(db, data.email, data.password, request)
-    return TokenResponse(access_token=create_access_token(str(user.id)))
+    return TokenResponse(access_token=create_access_token(str(user.id), user.token_version))
 
 
 @router.post("/token", response_model=TokenResponse)
@@ -92,7 +92,7 @@ def oauth2_token(
     db: Session = Depends(get_db),
 ):
     user = _authenticate_user(db, form_data.username, form_data.password, request)
-    return TokenResponse(access_token=create_access_token(str(user.id)))
+    return TokenResponse(access_token=create_access_token(str(user.id), user.token_version))
 
 
 @router.get("/me")

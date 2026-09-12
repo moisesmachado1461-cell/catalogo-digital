@@ -126,4 +126,19 @@ O painel central da plataforma foi reformulado para o mesmo padrão visual premi
 - responsividade aprimorada;
 - cache PWA atualizado.
 
-Não há migration nesta fase. Backend em `23.0.0`.
+Não há migration nesta fase. Backend em `23.1.0`.
+
+
+## Fase 23.1 — Perfil e Segurança do Super Admin
+
+O Super Admin agora pode gerenciar a própria conta em uma área dedicada:
+
+- alterar nome;
+- alterar e-mail com confirmação da senha atual;
+- alterar senha;
+- encerrar outras sessões;
+- manter a sessão atual com novo token;
+- registrar as operações sensíveis em auditoria.
+
+A migration `013_super_admin_account_security` adiciona versionamento de tokens à tabela `users`.
+Backend em `23.1.0`.

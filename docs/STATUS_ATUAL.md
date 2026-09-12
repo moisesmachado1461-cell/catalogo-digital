@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 23**.
+Versão consolidada até a **Fase 23.1**.
 
 ## Concluído
 
@@ -21,7 +21,8 @@ Versão consolidada até a **Fase 23**.
 - Design System oficial;
 - área do cliente premium;
 - Admin Premium;
-- Super Admin Premium.
+- Super Admin Premium;
+- perfil e segurança do Super Admin, com troca de e-mail/senha e revogação de outras sessões.
 
 ## Gateway real
 
@@ -38,6 +39,18 @@ A conexão com Mercado Pago continua desacoplada e pode ser adicionada posterior
 - Melhor uso em notebook, tablet e celular.
 - Sem migration.
 - Backend em `23.0.0`.
+
+
+## Fase 23.1 — Perfil e Segurança do Super Admin
+
+- alteração de nome e e-mail pelo próprio painel;
+- confirmação da senha atual para troca de e-mail;
+- troca de senha com política mínima de força;
+- revogação das outras sessões por versão de token;
+- renovação segura do JWT da sessão atual;
+- auditoria das operações sensíveis;
+- migration `013_super_admin_account_security`;
+- backend em `23.1.0`.
 
 ## Próximo passo
 

@@ -1,6 +1,7 @@
+from datetime import datetime, timezone
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
@@ -18,10 +19,17 @@ from ..models import (
     Plan,
     Subscription,
 )
-from ..schemas.super_admin import StoreStatusUpdate, SuperAdminStoreCreate
-from ..security import hash_password
+from ..schemas.super_admin import (
+    StoreStatusUpdate,
+    SuperAdminPasswordUpdate,
+    SuperAdminProfileUpdate,
+    SuperAdminSessionRevoke,
+    SuperAdminStoreCreate,
+)
+from ..security import create_access_token, hash_password, verify_password
 from ..utils.text import slugify
 from ..services.subscription_service import plan_context
+from ..services.audit_service import write_audit
 
 router = APIRouter(prefix="/api/super-admin", tags=["super-admin"])
 
@@ -77,6 +85,141 @@ def _store_summary(db: Session, store: Store) -> dict:
             "quotes": db.query(func.count(QuoteRequest.id)).filter(QuoteRequest.store_id == store.id).scalar() or 0,
         },
         "created_at": store.created_at,
+    }
+
+
+def _super_admin_profile_payload(user: User) -> dict:
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "email_verified": user.email_verified,
+        "last_login_at": user.last_login_at,
+        "password_changed_at": user.password_changed_at,
+        "created_at": user.created_at,
+    }
+
+
+def _request_context(request: Request) -> tuple[str | None, str | None]:
+    return (
+        request.client.host if request.client else None,
+        request.headers.get("user-agent"),
+    )
+
+
+@router.get("/profile")
+def get_super_admin_profile(
+    current_user: User = Depends(get_current_super_admin),
+):
+    return _super_admin_profile_payload(current_user)
+
+
+@router.patch("/profile")
+def update_super_admin_profile(
+    data: SuperAdminProfileUpdate,
+    request: Request,
+    current_user: User = Depends(get_current_super_admin),
+    db: Session = Depends(get_db),
+):
+    normalized_email = str(data.email).lower().strip()
+    email_changed = normalized_email != current_user.email
+    if email_changed:
+        if not data.current_password or not verify_password(data.current_password, current_user.password_hash):
+            raise HTTPException(status_code=400, detail="Confirme sua senha atual para alterar o e-mail")
+        conflict = (
+            db.query(User.id)
+            .filter(User.email == normalized_email, User.id != current_user.id)
+            .first()
+        )
+        if conflict:
+            raise HTTPException(status_code=409, detail="Este e-mail já está em uso")
+
+    changed_fields = []
+    if current_user.name != data.name:
+        current_user.name = data.name
+        changed_fields.append("name")
+    if email_changed:
+        current_user.email = normalized_email
+        changed_fields.append("email")
+
+    ip_address, user_agent = _request_context(request)
+    write_audit(
+        db,
+        action="SUPER_ADMIN_PROFILE_UPDATED",
+        user_id=current_user.id,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        metadata={"changed_fields": changed_fields},
+    )
+    db.commit()
+    db.refresh(current_user)
+    return _super_admin_profile_payload(current_user)
+
+
+@router.post("/profile/password")
+def change_super_admin_password(
+    data: SuperAdminPasswordUpdate,
+    request: Request,
+    current_user: User = Depends(get_current_super_admin),
+    db: Session = Depends(get_db),
+):
+    if not verify_password(data.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Senha atual incorreta")
+    if verify_password(data.new_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="A nova senha deve ser diferente da senha atual")
+
+    now = datetime.now(timezone.utc)
+    current_user.password_hash = hash_password(data.new_password)
+    current_user.password_changed_at = now
+    current_user.token_version = int(current_user.token_version or 0) + 1
+
+    ip_address, user_agent = _request_context(request)
+    write_audit(
+        db,
+        action="SUPER_ADMIN_PASSWORD_CHANGED",
+        user_id=current_user.id,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        metadata={"other_sessions_revoked": True},
+    )
+    db.commit()
+    db.refresh(current_user)
+
+    return {
+        "message": "Senha alterada com sucesso. As outras sessões foram encerradas.",
+        "access_token": create_access_token(str(current_user.id), current_user.token_version),
+        "token_type": "bearer",
+        "profile": _super_admin_profile_payload(current_user),
+    }
+
+
+@router.post("/profile/sessions/revoke-others")
+def revoke_other_super_admin_sessions(
+    data: SuperAdminSessionRevoke,
+    request: Request,
+    current_user: User = Depends(get_current_super_admin),
+    db: Session = Depends(get_db),
+):
+    if not verify_password(data.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Senha atual incorreta")
+
+    current_user.token_version = int(current_user.token_version or 0) + 1
+    ip_address, user_agent = _request_context(request)
+    write_audit(
+        db,
+        action="SUPER_ADMIN_OTHER_SESSIONS_REVOKED",
+        user_id=current_user.id,
+        ip_address=ip_address,
+        user_agent=user_agent,
+    )
+    db.commit()
+    db.refresh(current_user)
+
+    return {
+        "message": "Outras sessões encerradas com sucesso.",
+        "access_token": create_access_token(str(current_user.id), current_user.token_version),
+        "token_type": "bearer",
     }
 
 

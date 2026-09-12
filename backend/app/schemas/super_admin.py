@@ -37,3 +37,41 @@ class SuperAdminStoreCreate(BaseModel):
 
 class StoreStatusUpdate(BaseModel):
     is_active: bool
+
+
+class SuperAdminProfileUpdate(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    email: EmailStr
+    current_password: str | None = Field(default=None, min_length=1, max_length=128)
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str):
+        value = " ".join(value.strip().split())
+        if len(value) < 2:
+            raise ValueError("Informe um nome válido")
+        return value
+
+
+class SuperAdminPasswordUpdate(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=10, max_length=72)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str):
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("A senha deve ter no máximo 72 bytes")
+        checks = [
+            any(ch.islower() for ch in value),
+            any(ch.isupper() for ch in value),
+            any(ch.isdigit() for ch in value),
+            any(not ch.isalnum() for ch in value),
+        ]
+        if not all(checks):
+            raise ValueError("Use maiúscula, minúscula, número e símbolo na nova senha")
+        return value
+
+
+class SuperAdminSessionRevoke(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)

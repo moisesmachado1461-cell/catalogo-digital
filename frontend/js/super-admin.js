@@ -32,7 +32,7 @@ function renderSuperIdentity() {
 }
 
 function updateSuperBreadcrumb(id) {
-  const titles = {dashboard:'Dashboard', stores:'Lojas', plans:'Planos', billing:'Cobrança'};
+  const titles = {dashboard:'Dashboard', stores:'Lojas', plans:'Planos', billing:'Cobrança', profile:'Perfil e segurança'};
   const text = titles[id] || id;
   const title = $s('#superTitle');
   const crumb = $s('#superBreadcrumbCurrent');
@@ -58,6 +58,7 @@ window.refreshCurrentSuperSection = async function() {
     if (currentSuperSection === 'stores') await loadSuperStores();
     else if (currentSuperSection === 'plans') await loadPlans();
     else if (currentSuperSection === 'billing') await loadBillingCenter();
+    else if (currentSuperSection === 'profile') await loadSuperProfile();
     else await Promise.all([loadSuperDashboard(), loadSuperStores(), loadBillingCenter()]);
     renderPlatformInsights();
     showToast('Painel atualizado.');
@@ -84,7 +85,7 @@ async function startSuperAdmin() {
     $s('#superView').classList.remove('hidden');
     renderSuperIdentity();
     await Promise.all([loadBusinessCategories(), loadPlans()]);
-    await Promise.all([loadSuperDashboard(), loadSuperStores(), loadBillingCenter()]);
+    await Promise.all([loadSuperDashboard(), loadSuperStores(), loadBillingCenter(), loadSuperProfile()]);
     renderPlatformInsights();
   } catch (err) {
     clearAuthToken();
@@ -288,6 +289,124 @@ $s('#superStoreForm').onsubmit = async event => {
     switchSuperSection('stores');
   } catch (err) { showToast(err.message, 'error'); }
 };
+
+
+function superAccountDate(value, fallback = 'Ainda não registrado') {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+window.loadSuperProfile = async function() {
+  const profile = await api('/api/super-admin/profile');
+  superMe = {...(superMe || {}), ...profile};
+  renderSuperIdentity();
+
+  const nameInput = $s('#superAccountName');
+  const emailInput = $s('#superAccountEmail');
+  if (nameInput) nameInput.value = profile.name || '';
+  if (emailInput) emailInput.value = profile.email || '';
+
+  const lastLogin = $s('#superLastLogin');
+  const passwordChanged = $s('#superPasswordChanged');
+  const securityEmail = $s('#superSecurityEmail');
+  if (lastLogin) lastLogin.textContent = superAccountDate(profile.last_login_at, 'Sem registro');
+  if (passwordChanged) passwordChanged.textContent = superAccountDate(profile.password_changed_at, 'Nunca alterada pelo painel');
+  if (securityEmail) securityEmail.textContent = profile.email || '—';
+
+  return profile;
+};
+
+const superProfileForm = $s('#superProfileForm');
+if (superProfileForm) {
+  superProfileForm.onsubmit = async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const currentEmail = String(superMe?.email || '').trim().toLowerCase();
+    const nextEmail = String(form.email.value || '').trim().toLowerCase();
+    const emailChanged = currentEmail !== nextEmail;
+
+    if (emailChanged && !form.current_password.value) {
+      showToast('Confirme sua senha atual para alterar o e-mail.', 'error');
+      form.current_password.focus();
+      return;
+    }
+
+    try {
+      const profile = await api('/api/super-admin/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: form.name.value.trim(),
+          email: nextEmail,
+          current_password: form.current_password.value || null,
+        }),
+      });
+      superMe = {...(superMe || {}), ...profile};
+      form.current_password.value = '';
+      renderSuperIdentity();
+      await loadSuperProfile();
+      showToast('Dados da conta atualizados.');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+}
+
+const superPasswordForm = $s('#superPasswordForm');
+if (superPasswordForm) {
+  superPasswordForm.onsubmit = async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (form.new_password.value !== form.confirm_password.value) {
+      showToast('A confirmação da nova senha não confere.', 'error');
+      form.confirm_password.focus();
+      return;
+    }
+    try {
+      const result = await api('/api/super-admin/profile/password', {
+        method: 'POST',
+        body: JSON.stringify({
+          current_password: form.current_password.value,
+          new_password: form.new_password.value,
+        }),
+      });
+      if (result.access_token) sessionStorage.setItem('catalogo_token', result.access_token);
+      form.reset();
+      if (result.profile) superMe = {...(superMe || {}), ...result.profile};
+      await loadSuperProfile();
+      showToast(result.message || 'Senha alterada com sucesso.');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+}
+
+const superRevokeSessionsForm = $s('#superRevokeSessionsForm');
+if (superRevokeSessionsForm) {
+  superRevokeSessionsForm.onsubmit = async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (!confirm('Encerrar todas as outras sessões desta conta?')) return;
+    try {
+      const result = await api('/api/super-admin/profile/sessions/revoke-others', {
+        method: 'POST',
+        body: JSON.stringify({current_password: form.current_password.value}),
+      });
+      if (result.access_token) sessionStorage.setItem('catalogo_token', result.access_token);
+      form.reset();
+      showToast(result.message || 'Outras sessões encerradas.');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+}
 
 function billingDate(value, fallback = '—') {
   if (!value) return fallback;

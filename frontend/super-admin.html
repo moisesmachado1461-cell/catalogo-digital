@@ -77,6 +77,12 @@
           <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v10H4V7Zm0 3h16M8 14h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Cobrança</span>
         </button>
       </div>
+      <div class="super-menu-group">
+        <span class="super-menu-label">Conta</span>
+        <button class="side-btn" data-super-section="profile">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>Perfil e segurança</span>
+        </button>
+      </div>
     </nav>
 
     <div class="super-sidebar-footer">
@@ -91,6 +97,7 @@
       <button class="tab-btn" data-super-section="stores">Lojas</button>
       <button class="tab-btn" data-super-section="plans">Planos</button>
       <button class="tab-btn" data-super-section="billing">Cobrança</button>
+      <button class="tab-btn" data-super-section="profile">Conta</button>
     </div>
 
     <header class="admin-header super-header">
@@ -177,6 +184,55 @@
       <div class="panel super-section-panel">
         <div class="panel-head responsive-head"><div><h2>Faturas</h2><small>Histórico financeiro da mensalidade SaaS.</small></div><select id="invoiceStatusFilter" class="select billing-status-select" onchange="renderBillingInvoices()"><option value="">Todos os status</option><option value="PENDING">Pendente</option><option value="PAID">Pago</option><option value="FAILED">Falhou</option><option value="CANCELED">Cancelado</option></select></div>
         <div id="billingInvoicesTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="super-profile" class="admin-section">
+      <div class="super-section-hero super-profile-hero">
+        <div>
+          <span class="eyebrow">CONTA DO SUPER ADMIN</span>
+          <h2>Perfil e segurança</h2>
+          <p>Atualize seus dados de acesso e controle as sessões abertas da conta principal da plataforma.</p>
+        </div>
+        <div class="super-security-badge"><span class="super-security-shield">✓</span><div><b>Conta protegida</b><small>Alterações sensíveis exigem sua senha atual</small></div></div>
+      </div>
+
+      <div class="super-profile-grid">
+        <div class="panel super-section-panel super-account-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">IDENTIDADE</span><h2>Dados da conta</h2><small>Nome e e-mail usados para entrar no Super Admin.</small></div></div>
+          <form id="superProfileForm" class="super-account-form">
+            <div class="field"><label>Nome</label><input id="superAccountName" class="input" name="name" minlength="2" maxlength="120" required autocomplete="name"></div>
+            <div class="field"><label>E-mail</label><input id="superAccountEmail" class="input" name="email" type="email" required autocomplete="email"></div>
+            <div class="field full"><label>Senha atual <small>(obrigatória apenas ao trocar o e-mail)</small></label><input class="input" name="current_password" type="password" autocomplete="current-password" placeholder="Confirme sua senha se alterar o e-mail"></div>
+            <div class="super-account-actions"><button class="btn primary" type="submit">Salvar dados</button></div>
+          </form>
+        </div>
+
+        <div class="panel super-section-panel super-account-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">SENHA</span><h2>Alterar senha</h2><small>Ao trocar a senha, as outras sessões serão encerradas automaticamente.</small></div></div>
+          <form id="superPasswordForm" class="super-account-form">
+            <div class="field full"><label>Senha atual</label><input class="input" name="current_password" type="password" required autocomplete="current-password"></div>
+            <div class="field"><label>Nova senha</label><input class="input" name="new_password" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
+            <div class="field"><label>Confirmar nova senha</label><input class="input" name="confirm_password" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
+            <div class="super-password-rules full"><span>Use pelo menos 10 caracteres</span><span>Maiúscula e minúscula</span><span>Número</span><span>Símbolo</span></div>
+            <div class="super-account-actions"><button class="btn primary" type="submit">Alterar senha</button></div>
+          </form>
+        </div>
+
+        <div class="panel super-section-panel super-account-panel super-session-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">SESSÕES</span><h2>Segurança da conta</h2><small>Revogue tokens antigos se você entrou em outro computador ou suspeitar de acesso indevido.</small></div></div>
+          <div class="super-security-facts">
+            <div><span>Último acesso</span><b id="superLastLogin">—</b></div>
+            <div><span>Senha alterada</span><b id="superPasswordChanged">—</b></div>
+            <div><span>E-mail da conta</span><b id="superSecurityEmail">—</b></div>
+            <div><span>Perfil</span><b>Super Administrador</b></div>
+          </div>
+          <form id="superRevokeSessionsForm" class="super-revoke-form">
+            <div class="field"><label>Confirme sua senha atual</label><input class="input" name="current_password" type="password" required autocomplete="current-password" placeholder="Senha atual"></div>
+            <button class="btn danger" type="submit">Encerrar outras sessões</button>
+          </form>
+          <div class="notice super-session-note">Sua sessão atual continuará ativa com um novo token. As sessões antigas deixam de ter acesso à API.</div>
+        </div>
       </div>
     </section>
   </main>

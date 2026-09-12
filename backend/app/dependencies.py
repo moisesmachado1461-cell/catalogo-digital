@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from .models.user import User
 from .models.store import Store
-from .security import decode_subject, oauth2_scheme
+from .security import decode_token, oauth2_scheme
 
 STORE_ADMIN_ROLE = "ADMINISTRADOR_DA_LOJA"
 SUPER_ADMIN_ROLE = "SUPER_ADMINISTRADOR"
@@ -15,8 +15,10 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     try:
-        user_id = int(decode_subject(token))
-    except (TypeError, ValueError):
+        payload = decode_token(token)
+        user_id = int(payload["sub"])
+        token_version = int(payload.get("ver", 0) or 0)
+    except (TypeError, ValueError, KeyError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido",
@@ -31,6 +33,11 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuário não encontrado",
+        )
+    if token_version != int(user.token_version or 0):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Esta sessão foi encerrada. Entre novamente.",
         )
     return user
 
