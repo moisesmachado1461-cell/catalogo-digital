@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.8.3**.
+Versão consolidada até a **Fase 24.9.0**.
 
 ## Concluído
 
@@ -28,6 +28,18 @@ Versão consolidada até a **Fase 24.8.3**.
 - cupons por produto no Admin e cálculo restrito aos itens elegíveis;
 - cupons de planos SaaS gerenciados pelo Super Admin e aplicáveis na escolha de plano do Admin.
 
+
+## Fase 24.9.0 — pagamentos online dos clientes das lojas
+
+- conexão de cada loja à própria conta Mercado Pago via OAuth com PKCE;
+- credenciais dos vendedores protegidas com Fernet e nunca enviadas ao frontend;
+- Pix online com QR Code, Copia e Cola e confirmação automática;
+- pedidos, agendamentos, reservas e locações usam o mesmo núcleo de pagamentos;
+- recebimento é direto na conta da loja, sem passar pela conta do Catálogo Digital;
+- webhook e consulta pública sincronizam o status do pagamento;
+- opção online respeita o recurso `online_payments` do plano contratado;
+- migration `020_store_marketplace_payments`;
+- backend `24.9.0`.
 
 ## Fase 24.8.3 — IA objetiva e segura para o usuário final
 
@@ -125,7 +137,7 @@ Mercado Pago passa a ser o primeiro gateway real da cobrança SaaS, inicialmente
 
 ## Próximo passo
 
-Configurar o provedor de IA no Render e validar a base automática 24.8.2. Depois integrar o mesmo núcleo ao WhatsApp Business.
+Configurar a aplicação Mercado Pago no modelo Marketplace, cadastrar Redirect URL/Webhook e validar a conexão de uma loja demo. WhatsApp Business permanece adiado por decisão do projeto.
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.

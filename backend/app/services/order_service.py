@@ -220,6 +220,8 @@ def create_order_for_store(db: Session, store: Store, data: CheckoutRequest) -> 
         reference_id=order.id,
         amount=order.total,
         method=data.payment_method,
+        payer_email=data.customer.email,
+        payer_document=data.payment_document,
     )
 
     db.commit(); db.refresh(order)

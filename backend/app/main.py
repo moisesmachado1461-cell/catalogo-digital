@@ -30,6 +30,8 @@ from .routes.orders import admin_router as orders_admin_router
 from .routes.orders import public_router as orders_public_router
 from .routes.payments import admin_router as payments_admin_router
 from .routes.payments import public_router as payments_public_router
+from .routes.payment_gateways import admin_router as payment_gateways_admin_router
+from .routes.payment_gateways import public_router as payment_gateways_public_router
 from .routes.privacy import admin_router as privacy_admin_router
 from .routes.privacy import public_router as privacy_public_router
 from .routes.quotes import admin_router as quotes_admin_router
@@ -99,6 +101,8 @@ app.include_router(reservations_public_router)
 app.include_router(reservations_admin_router)
 app.include_router(payments_public_router)
 app.include_router(payments_admin_router)
+app.include_router(payment_gateways_public_router)
+app.include_router(payment_gateways_admin_router)
 app.include_router(marketing_admin_router)
 app.include_router(services_public_router)
 app.include_router(services_admin_router)

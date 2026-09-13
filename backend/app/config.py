@@ -52,6 +52,15 @@ class Settings(BaseSettings):
     mercado_pago_webhook_url: str | None = None
     mercado_pago_test_mode: bool = False
 
+    # Pagamentos dos clientes das lojas via Marketplace/OAuth
+    mercado_pago_marketplace_client_id: str | None = None
+    mercado_pago_marketplace_client_secret: str | None = None
+    mercado_pago_marketplace_redirect_uri: str | None = None
+    mercado_pago_marketplace_webhook_secret: str | None = None
+    store_payment_credentials_key: str | None = None
+    store_payments_test_mode: bool = False
+    frontend_public_url: str | None = None
+
     # Assistente IA — compatível com APIs no formato Chat Completions
     assistant_ai_enabled: bool = False
     assistant_ai_api_url: str | None = None
@@ -110,6 +119,24 @@ class Settings(BaseSettings):
         )
 
     @property
+    def store_payment_marketplace_configuration_complete(self) -> bool:
+        return all(
+            [
+                self.mercado_pago_marketplace_client_id,
+                self.mercado_pago_marketplace_client_secret,
+                self.mercado_pago_marketplace_redirect_uri,
+                self.mercado_pago_marketplace_webhook_secret,
+                self.store_payment_credentials_key,
+            ]
+        )
+
+    @property
+    def public_frontend_base_url(self) -> str | None:
+        if self.frontend_public_url:
+            return self.frontend_public_url.rstrip("/")
+        return self.allowed_origins[0] if self.allowed_origins else None
+
+    @property
     def assistant_ai_configuration_complete(self) -> bool:
         return bool(
             self.assistant_ai_enabled
@@ -142,6 +169,31 @@ class Settings(BaseSettings):
             raise RuntimeError("BILLING_GRACE_DAYS deve ficar entre 0 e 60.")
         if bool(self.mercado_pago_access_token) != bool(self.mercado_pago_webhook_secret):
             raise RuntimeError("Configure MERCADO_PAGO_ACCESS_TOKEN e MERCADO_PAGO_WEBHOOK_SECRET juntos.")
+        marketplace_values = [
+            self.mercado_pago_marketplace_client_id,
+            self.mercado_pago_marketplace_client_secret,
+            self.mercado_pago_marketplace_redirect_uri,
+            self.mercado_pago_marketplace_webhook_secret,
+            self.store_payment_credentials_key,
+        ]
+        if any(marketplace_values) and not all(marketplace_values):
+            raise RuntimeError(
+                "Marketplace Mercado Pago exige CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, WEBHOOK_SECRET e STORE_PAYMENT_CREDENTIALS_KEY."
+            )
+        if self.mercado_pago_marketplace_redirect_uri:
+            parsed_marketplace_redirect = urlsplit(self.mercado_pago_marketplace_redirect_uri)
+            if parsed_marketplace_redirect.scheme not in {"http", "https"} or not parsed_marketplace_redirect.netloc:
+                raise RuntimeError("MERCADO_PAGO_MARKETPLACE_REDIRECT_URI deve ser uma URL HTTP/HTTPS válida.")
+        if self.frontend_public_url:
+            parsed_frontend = urlsplit(self.frontend_public_url)
+            if parsed_frontend.scheme not in {"http", "https"} or not parsed_frontend.netloc:
+                raise RuntimeError("FRONTEND_PUBLIC_URL deve ser uma URL HTTP/HTTPS válida.")
+        if self.store_payment_credentials_key:
+            try:
+                from cryptography.fernet import Fernet
+                Fernet(self.store_payment_credentials_key.encode("utf-8"))
+            except Exception as exc:
+                raise RuntimeError("STORE_PAYMENT_CREDENTIALS_KEY deve ser uma chave Fernet válida.") from exc
         if self.mercado_pago_webhook_url:
             parsed_webhook = urlsplit(self.mercado_pago_webhook_url)
             if parsed_webhook.scheme not in {"http", "https"} or not parsed_webhook.netloc:
@@ -182,6 +234,10 @@ class Settings(BaseSettings):
                 raise RuntimeError("Em produção, use PostgreSQL em DATABASE_URL; SQLite fica somente no desenvolvimento.")
             if self.mercado_pago_webhook_url and not self.mercado_pago_webhook_url.startswith("https://"):
                 raise RuntimeError("Em produção, MERCADO_PAGO_WEBHOOK_URL deve usar HTTPS.")
+            if self.mercado_pago_marketplace_redirect_uri and not self.mercado_pago_marketplace_redirect_uri.startswith("https://"):
+                raise RuntimeError("Em produção, MERCADO_PAGO_MARKETPLACE_REDIRECT_URI deve usar HTTPS.")
+            if self.frontend_public_url and not self.frontend_public_url.startswith("https://"):
+                raise RuntimeError("Em produção, FRONTEND_PUBLIC_URL deve usar HTTPS.")
             if self.assistant_ai_enabled and not self.assistant_ai_api_url.startswith("https://"):
                 raise RuntimeError("Em produção, ASSISTANT_AI_API_URL deve usar HTTPS.")
             if not self.allowed_origins:

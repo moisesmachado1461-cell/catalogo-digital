@@ -96,7 +96,10 @@ function progressHtml(steps, current, canceled = false) {
 function paymentTrackHtml(payment) {
   if (!payment) return '';
   const method = payment.method_label || payment.method || '—';
-  return `<div class="tracking-data"><small>Pagamento</small><strong>${escapeHtml(method)} · ${escapeHtml(payment.status || '')}</strong></div>`;
+  const base = `<div class="tracking-data"><small>Pagamento</small><strong>${escapeHtml(method)} · ${escapeHtml(payment.status || '')}</strong></div>`;
+  if (payment.method !== 'PIX_ONLINE' || payment.status !== 'PENDENTE') return base;
+  const qrImage = payment.pix_qr_code_base64 ? (String(payment.pix_qr_code_base64).startsWith('data:') ? payment.pix_qr_code_base64 : `data:image/png;base64,${payment.pix_qr_code_base64}`) : '';
+  return `${base}<div class="tracking-online-pix">${qrImage ? `<img src="${escapeHtml(qrImage)}" alt="QR Code Pix">` : ''}<div><small>Pagamento pendente</small><b>Conclua pelo Pix</b><code>${escapeHtml(payment.pix_qr_code || '')}</code><button class="btn primary small" type="button" data-copy-tracking-pix="${escapeHtml(payment.pix_qr_code || '')}">Copiar Pix</button></div></div>`;
 }
 
 function orderItemsHtml(items = []) {
@@ -200,4 +203,12 @@ async function startTracking() {
   }
 }
 
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-copy-tracking-pix]');
+  if (!button) return;
+  try { await navigator.clipboard.writeText(button.dataset.copyTrackingPix || ''); showToast('Código Pix copiado.'); }
+  catch (_error) { showToast('Não foi possível copiar automaticamente.', 'error'); }
+});
+
 startTracking();
+

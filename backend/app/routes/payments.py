@@ -12,6 +12,7 @@ from ..services.payment_service import (
     get_settings_row,
     payment_dict,
     payment_settings_dict,
+    sync_online_payment,
     update_payment_status,
 )
 
@@ -42,6 +43,12 @@ def public_payment(slug: str, token: str, db: Session = Depends(get_db)):
     row = db.query(Payment).filter(Payment.store_id == store.id, Payment.public_token == token).first()
     if not row:
         raise HTTPException(status_code=404, detail="Pagamento não encontrado")
+    if row.provider == "MERCADO_PAGO" and row.status == "PENDENTE":
+        try:
+            row = sync_online_payment(db, row)
+        except Exception:
+            # Webhook continua sendo a fonte principal; falha de consulta não derruba a página pública.
+            pass
     return payment_dict(row)
 
 
@@ -69,7 +76,7 @@ def update_admin_payment_settings(
         if isinstance(value, str):
             value = value.strip() or None
         setattr(row, key, value)
-    row.online_gateway = "NONE"
+    # O gateway online é controlado pelo fluxo OAuth e não pelo formulário manual.
     row.is_active = True
     db.commit()
     db.refresh(row)

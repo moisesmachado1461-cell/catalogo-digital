@@ -220,6 +220,8 @@ def create_appointment(db: Session, store: Store, data: AppointmentCreate) -> Ap
         reference_id=appointment.id,
         amount=service.price,
         method=data.payment_method,
+        payer_email=data.customer.email,
+        payer_document=data.payment_document,
     )
     db.commit()
     db.refresh(appointment)

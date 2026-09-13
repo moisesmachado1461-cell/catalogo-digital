@@ -7,7 +7,7 @@ from .services import Appointment, Professional, ProfessionalBlock, Professional
 from .quotes import QuoteAttachment, QuoteRequest
 from .marketing import Coupon, CouponProduct, CouponUsage, Promotion, PromotionItem
 from .reservations import Resource, Reservation, RentalItem, RentalReservation
-from .payments import Payment, PaymentSettings
+from .payments import Payment, PaymentSettings, StorePaymentGatewayAccount, StorePaymentOAuthState
 from .subscriptions import Plan, Subscription
 from .billing import BillingCoupon, BillingCouponPlan, BillingCouponUsage, BillingGatewayPrice, SubscriptionInvoice, BillingWebhookEvent
 from .security_privacy import AuditLog, PrivacyRequest
@@ -46,6 +46,8 @@ __all__ = [
     "RentalReservation",
     "Payment",
     "PaymentSettings",
+    "StorePaymentGatewayAccount",
+    "StorePaymentOAuthState",
     "Plan",
     "Subscription",
     "BillingCoupon",

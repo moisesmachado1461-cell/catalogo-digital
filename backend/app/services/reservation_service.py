@@ -97,7 +97,7 @@ def create_reservation(db: Session, store: Store, data: ReservationCreate) -> Re
     total = (Decimal(resource.price_per_day) * Decimal(days)).quantize(Decimal("0.01"))
     row = Reservation(public_token=_token(db, Reservation), store_id=store.id, customer_id=customer.id, resource_id=resource.id, starts_at=start, ends_at=end, guests=data.guests, status="PENDENTE", daily_rate_snapshot=resource.price_per_day, total=total, notes=data.notes)
     db.add(row); db.flush()
-    create_payment(db, store, reference_type="RESERVATION", reference_id=row.id, amount=total, method=data.payment_method)
+    create_payment(db, store, reference_type="RESERVATION", reference_id=row.id, amount=total, method=data.payment_method, payer_email=data.customer.email, payer_document=data.payment_document)
     db.commit(); db.refresh(row); return row
 
 
@@ -140,7 +140,7 @@ def create_rental(db: Session, store: Store, data: RentalCreate) -> RentalReserv
     total = (subtotal + deposit).quantize(Decimal("0.01"))
     row = RentalReservation(public_token=_token(db, RentalReservation), store_id=store.id, customer_id=customer.id, rental_item_id=item.id, starts_at=start, ends_at=end, quantity=data.quantity, rental_days=days, daily_rate_snapshot=item.daily_rate, deposit_amount=deposit, total=total, status="PENDENTE", notes=data.notes)
     db.add(row); db.flush()
-    create_payment(db, store, reference_type="RENTAL", reference_id=row.id, amount=total, method=data.payment_method)
+    create_payment(db, store, reference_type="RENTAL", reference_id=row.id, amount=total, method=data.payment_method, payer_email=data.customer.email, payer_document=data.payment_document)
     db.commit(); db.refresh(row); return row
 
 

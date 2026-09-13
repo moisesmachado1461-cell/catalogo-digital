@@ -1,16 +1,32 @@
-# Catálogo Digital — Fase 24.8.3
+# Catálogo Digital — Fase 24.9.0
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.8.3 — IA objetiva em português e raciocínio oculto**
+**24.9.0 — Pagamentos online dos clientes das lojas**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
 - `payments`: pagamentos dos clientes finais para cada loja;
 - `billing`: mensalidade que a loja paga para usar o Catálogo Digital.
 
+
+## Fase 24.9.0 — Pagamentos online dos clientes das lojas
+
+- cada loja conecta a própria conta Mercado Pago por OAuth/PKCE;
+- Access Token e refresh token do vendedor ficam criptografados no banco;
+- o dinheiro do cliente final vai direto para a conta Mercado Pago da própria loja;
+- Pix online é exibido apenas para planos com `online_payments` e lojas conectadas;
+- checkout de pedidos, agendamentos, reservas e locações aceita Pix online;
+- QR Code e Pix Copia e Cola aparecem no site e podem ser retomados no acompanhamento;
+- webhook atualiza o pagamento automaticamente;
+- pagamentos online não podem ser marcados manualmente como pagos pelo Admin;
+- Pix manual, dinheiro, cartão na entrega e WhatsApp continuam disponíveis;
+- migration `020_store_marketplace_payments`;
+- backend `24.9.0`.
+
+A cobrança da assinatura SaaS continua totalmente separada dos pagamentos dos clientes das lojas.
 
 ## Fase 24.8.3 — IA objetiva em português e raciocínio oculto
 

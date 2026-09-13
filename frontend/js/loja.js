@@ -2,6 +2,7 @@ const params = new URLSearchParams(location.search);
 const slug = params.get('slug') || 'mercado-bom-preco';
 let store = null, catalog = null, serviceData = null, promotions = [], publicCoupons = [], resourcesData = null, rentalItemsData = null, paymentOptions = [];
 let selectedCouponCode = null;
+let storePaymentPollTimer = null;
 let cart = JSON.parse(localStorage.getItem(`cart_${slug}`) || '[]');
 const { query: $, queryAll: $$, initials } = window.CatalogoUtils;
 
@@ -187,17 +188,34 @@ async function loadPaymentOptions() {
   renderPaymentSelects();
 }
 
+function updatePaymentDocumentField(select) {
+  const form = select.closest('form');
+  const field = form?.querySelector('.online-pix-document-field');
+  const input = field?.querySelector('[name="payment_document"]');
+  const online = select.value === 'PIX_ONLINE';
+  field?.classList.toggle('hidden', !online);
+  if (input) {
+    input.required = online;
+    if (!online) input.value = '';
+  }
+  const email = form?.querySelector('[name="email"]');
+  if (email) email.required = online;
+}
+
 function renderPaymentSelects() {
   $$('.payment-method-select').forEach((select) => {
     const current = select.value;
     if (!paymentOptions.length) {
       select.innerHTML = '<option value="">Pagamento a combinar</option>';
       select.required = false;
+      updatePaymentDocumentField(select);
       return;
     }
     select.required = true;
     select.innerHTML = '<option value="">Selecione</option>' + paymentOptions.map(item => `<option value="${escapeHtml(item.code)}">${escapeHtml(item.label)}</option>`).join('');
     if (current && paymentOptions.some(item => item.code === current)) select.value = current;
+    select.onchange = () => updatePaymentDocumentField(select);
+    updatePaymentDocumentField(select);
   });
 }
 
@@ -206,10 +224,46 @@ function paymentResultHtml(payment) {
   const status = escapeHtml(payment.status || 'PENDENTE');
   const method = escapeHtml(payment.method_label || payment.method || 'Pagamento');
   const base = `<div class="payment-card"><div class="payment-card-head"><div><small>Forma de pagamento</small><strong>${method}</strong></div><span class="status ${status}">${status}</span></div><div class="payment-amount">${money(payment.amount)}</div><p>${escapeHtml(payment.instructions || '')}</p>`;
+  if (payment.method === 'PIX_ONLINE') {
+    const qrImage = payment.pix_qr_code_base64 ? (String(payment.pix_qr_code_base64).startsWith('data:') ? payment.pix_qr_code_base64 : `data:image/png;base64,${payment.pix_qr_code_base64}`) : '';
+    const qr = payment.pix_qr_code || '';
+    if (payment.status === 'PAGO') return `${base}<div class="online-pix-paid"><strong>✓ Pagamento confirmado</strong><small>A loja já recebeu a confirmação automática.</small></div></div>`;
+    return `${base}<div class="online-pix-box">${qrImage ? `<img class="online-pix-qr" src="${escapeHtml(qrImage)}" alt="QR Code Pix">` : ''}<div class="online-pix-copy"><small>Pix Copia e Cola</small><code>${escapeHtml(qr)}</code><button class="btn primary small" type="button" onclick="copyOnlinePix('${String(qr).replace(/'/g, "\\'")}')">Copiar Pix</button></div><small class="online-pix-wait">Aguardando pagamento. Esta tela atualiza automaticamente.</small></div></div>`;
+  }
   if (payment.method === 'PIX') {
     return `${base}<div class="pix-box"><small>Chave PIX ${payment.pix_key_type ? `· ${escapeHtml(payment.pix_key_type)}` : ''}</small><div class="pix-key-row"><code>${escapeHtml(payment.pix_key || '')}</code><button class="btn ghost small" type="button" onclick="copyPixKey('${String(payment.pix_key || '').replace(/'/g, "\\'")}')">Copiar chave</button></div>${payment.pix_receiver_name ? `<small>Recebedor: ${escapeHtml(payment.pix_receiver_name)}${payment.pix_receiver_city ? ` · ${escapeHtml(payment.pix_receiver_city)}` : ''}</small>` : ''}</div></div>`;
   }
   return `${base}</div>`;
+}
+
+window.copyOnlinePix = async function copyOnlinePix(value) {
+  try {
+    await navigator.clipboard.writeText(value);
+    showToast('Código Pix copiado.');
+  } catch (_error) {
+    showToast('Não foi possível copiar automaticamente.', 'error');
+  }
+};
+
+function watchOnlinePayment(payment, targetSelector) {
+  if (!payment || payment.method !== 'PIX_ONLINE' || payment.status !== 'PENDENTE' || !payment.public_token) return;
+  if (storePaymentPollTimer) clearInterval(storePaymentPollTimer);
+  let attempts = 0;
+  storePaymentPollTimer = setInterval(async () => {
+    attempts += 1;
+    try {
+      const fresh = await api(`/api/public/stores/${encodeURIComponent(slug)}/payments/${encodeURIComponent(payment.public_token)}`);
+      const target = $(targetSelector);
+      if (target) target.innerHTML = paymentResultHtml(fresh);
+      if (fresh.status !== 'PENDENTE' || attempts >= 60) {
+        clearInterval(storePaymentPollTimer);
+        storePaymentPollTimer = null;
+        if (fresh.status === 'PAGO') showToast('Pagamento Pix confirmado!');
+      }
+    } catch (_error) {
+      if (attempts >= 60) { clearInterval(storePaymentPollTimer); storePaymentPollTimer = null; }
+    }
+  }, 5000);
 }
 
 window.copyPixKey = async function copyPixKey(value) {
@@ -226,6 +280,7 @@ function showPaymentModal(payment, title = 'Instruções de pagamento') {
   $('#paymentModalTitle').textContent = title;
   $('#paymentModalContent').innerHTML = paymentResultHtml(payment);
   openModal('paymentModal');
+  watchOnlinePayment(payment, '#paymentModalContent');
 }
 
 async function init() {
@@ -546,12 +601,13 @@ $('#appointmentForm').onsubmit = async e => {
   e.preventDefault(); const f = e.currentTarget;
   if (!f.starts_at.value) return showToast('Escolha um horário.', 'error');
   try {
-    const result = await api(`/api/public/stores/${encodeURIComponent(slug)}/appointments`, { method: 'POST', body: JSON.stringify({ customer: { name: f.name.value, email: f.email.value || null, phone: f.phone.value || null }, service_id: Number(f.service_id.value), professional_id: Number(f.professional_id.value), starts_at: f.starts_at.value, payment_method: f.payment_method?.value || null, notes: f.notes.value || null }) });
+    const result = await api(`/api/public/stores/${encodeURIComponent(slug)}/appointments`, { method: 'POST', body: JSON.stringify({ customer: { name: f.name.value, email: f.email.value || null, phone: f.phone.value || null }, service_id: Number(f.service_id.value), professional_id: Number(f.professional_id.value), starts_at: f.starts_at.value, payment_method: f.payment_method?.value || null, payment_document: f.payment_document?.value || null, notes: f.notes.value || null }) });
     closeModal('appointmentModal');
     const start = new Date(result.starts_at);
     $('#appointmentSuccessText').textContent = `${result.service.name} com ${result.professional.name}, ${start.toLocaleDateString('pt-BR')} às ${start.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}.`;
     $('#appointmentProtocol').innerHTML = `<small>Protocolo de acompanhamento</small><strong>${escapeHtml(result.public_token)}</strong>`;
     $('#appointmentPaymentBox').innerHTML = result.payment ? paymentResultHtml(result.payment) : '<div class="notice">Pagamento será combinado diretamente com a empresa.</div>';
+    watchOnlinePayment(result.payment, '#appointmentPaymentBox');
     $('#appointmentTrackLink').href = `acompanhar.html?slug=${encodeURIComponent(slug)}&tipo=agendamento&token=${encodeURIComponent(result.public_token)}`;
     const appointmentAccountLink = $('#appointmentAccountLink');
     if (appointmentAccountLink) appointmentAccountLink.href = `cliente.html?slug=${encodeURIComponent(slug)}&modo=cadastro&tipo=agendamento&token=${encodeURIComponent(result.public_token)}`;
@@ -603,7 +659,7 @@ $('#checkoutForm').onsubmit = async e => {
     const result = await api(`/api/public/stores/${encodeURIComponent(slug)}/orders`, { method: 'POST', body: JSON.stringify({
       customer: { name: f.name.value, email: f.email.value || null, phone: f.phone.value || null },
       items: cart.map(({ product_id, variant_id, selected_option_item_ids, quantity }) => ({ product_id, variant_id, selected_option_item_ids: selected_option_item_ids || [], quantity })),
-      payment_method: f.payment_method.value, fulfillment_method: f.fulfillment_method.value, coupon_code: f.coupon_code.value || null,
+      payment_method: f.payment_method.value, payment_document: f.payment_document?.value || null, fulfillment_method: f.fulfillment_method.value, coupon_code: f.coupon_code.value || null,
       notes: f.notes.value || null, delivery_address: f.delivery_address.value || null, delivery_city: f.delivery_city.value || null, delivery_state: f.delivery_state.value || null, delivery_zip_code: f.delivery_zip_code.value || null,
     }) });
     cart = []; saveCart(); selectedCouponCode = null; closeModal('checkoutModal'); f.reset(); $('#checkoutCouponHint')?.classList.add('hidden'); $('#deliveryFields').classList.add('hidden');
@@ -613,6 +669,7 @@ $('#checkoutForm').onsubmit = async e => {
     $('#orderSuccessText').textContent = `Total ${money(result.total)}. Agora você pode acompanhar o andamento em tempo real.`;
     $('#orderSuccessProtocol').innerHTML = `<small>Protocolo de acompanhamento</small><strong>${escapeHtml(result.public_token)}</strong>`;
     $('#orderPaymentBox').innerHTML = result.payment ? paymentResultHtml(result.payment) : '<div class="notice">Pagamento será combinado diretamente com a empresa.</div>';
+    watchOnlinePayment(result.payment, '#orderPaymentBox');
     $('#orderTrackLink').href = `acompanhar.html?slug=${encodeURIComponent(slug)}&tipo=pedido&token=${encodeURIComponent(result.public_token)}`;
     $('#orderAccountLink').href = `cliente.html?slug=${encodeURIComponent(slug)}&modo=cadastro&tipo=pedido&token=${encodeURIComponent(result.public_token)}`;
     openModal('orderSuccessModal');
@@ -642,7 +699,7 @@ $('#reservationForm').onsubmit = async (event) => {
   try {
     const out = await api(`/api/public/stores/${encodeURIComponent(slug)}/reservations`, { method: 'POST', body: JSON.stringify({
       customer: { name: f.name.value, email: f.email.value || null, phone: f.phone.value || null },
-      resource_id: Number(f.resource_id.value), starts_at: new Date(f.starts_at.value).toISOString(), ends_at: new Date(f.ends_at.value).toISOString(), guests: Number(f.guests.value), payment_method: f.payment_method?.value || null, notes: f.notes.value || null,
+      resource_id: Number(f.resource_id.value), starts_at: new Date(f.starts_at.value).toISOString(), ends_at: new Date(f.ends_at.value).toISOString(), guests: Number(f.guests.value), payment_method: f.payment_method?.value || null, payment_document: f.payment_document?.value || null, notes: f.notes.value || null,
     })});
     closeModal('reservationModal'); f.reset();
     showToast(`Reserva criada. Protocolo: ${out.public_token}. Total estimado: ${money(out.total)}`);
@@ -686,7 +743,7 @@ $('#rentalForm').onsubmit = async (event) => {
   try {
     const out = await api(`/api/public/stores/${encodeURIComponent(slug)}/rentals`, { method: 'POST', body: JSON.stringify({
       customer: { name: f.name.value, email: f.email.value || null, phone: f.phone.value || null },
-      rental_item_id: Number(f.rental_item_id.value), starts_at: new Date(f.starts_at.value).toISOString(), ends_at: new Date(f.ends_at.value).toISOString(), quantity: Number(f.quantity.value), payment_method: f.payment_method?.value || null, notes: f.notes.value || null,
+      rental_item_id: Number(f.rental_item_id.value), starts_at: new Date(f.starts_at.value).toISOString(), ends_at: new Date(f.ends_at.value).toISOString(), quantity: Number(f.quantity.value), payment_method: f.payment_method?.value || null, payment_document: f.payment_document?.value || null, notes: f.notes.value || null,
     })});
     closeModal('rentalModal'); f.reset();
     showToast(`Locação criada. Protocolo: ${out.public_token}. Total estimado: ${money(out.total)}`);

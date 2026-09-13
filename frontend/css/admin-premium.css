@@ -207,3 +207,10 @@ body:has(#adminView:not(.hidden)){
 .billing-pending-pix-actions{display:flex;justify-content:flex-end}.billing-pending-pix-button{white-space:nowrap}
 .billing-table td:last-child,.billing-table th:last-child{text-align:right}
 @media(max-width:720px){.billing-pending-pix-card{grid-template-columns:auto 1fr}.billing-pending-pix-actions{grid-column:1/-1}.billing-pending-pix-actions .btn{width:100%}}
+
+/* Fase 24.9 — conexão de pagamentos da loja */
+.payment-gateway-card{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px;border:1px solid color-mix(in srgb,var(--brand) 22%,#dbe2ea);border-radius:20px;background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 8%,#fff),#fff);box-shadow:0 12px 30px rgba(15,23,42,.06)}
+.payment-gateway-card.is-connected{border-color:color-mix(in srgb,#16a34a 35%,#dbe2ea);background:linear-gradient(135deg,rgba(22,163,74,.08),#fff)}
+.payment-gateway-card h3{margin:4px 0 6px;font-weight:850;letter-spacing:-.02em}.payment-gateway-card p{margin:0;max-width:680px;color:var(--muted)}
+.payment-gateway-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:760px){.payment-gateway-card{align-items:flex-start;flex-direction:column}.payment-gateway-actions{justify-content:flex-start;width:100%}.payment-gateway-actions .btn{width:100%}}

@@ -18,6 +18,7 @@ let rentalItems = [];
 let rentals = [];
 let payments = [];
 let paymentSettings = null;
+let paymentGatewayStatus = null;
 let subscriptionInfo = null;
 let billingOverview = null;
 let availableBillingPlans = [];
@@ -310,6 +311,13 @@ async function startAdmin() {
     await loadAll();
     renderAdminIdentity();
     renderSettings();
+    const gatewayResult = new URLSearchParams(location.search).get('payment_gateway');
+    if (gatewayResult) {
+      switchSection('payments');
+      if (gatewayResult === 'connected') showToast('Mercado Pago conectado com sucesso.');
+      else showToast('Não foi possível conectar o Mercado Pago. Tente novamente.', 'error');
+      history.replaceState({}, '', location.pathname);
+    }
   } catch (error) {
     clearAuthToken();
     $('#loginView').classList.remove('hidden');
@@ -1664,7 +1672,10 @@ window.changeRentalStatus = async function(id,status){try{await api(`/api/admin/
 
 
 window.loadPaymentSettings = async function loadPaymentSettings() {
-  paymentSettings = await api('/api/admin/payment-settings');
+  [paymentSettings, paymentGatewayStatus] = await Promise.all([
+    api('/api/admin/payment-settings'),
+    api('/api/admin/payment-gateways/mercado-pago/status').catch(() => ({ configured:false, connected:false, status:'UNAVAILABLE' })),
+  ]);
   renderPaymentSettings();
 };
 
@@ -1678,7 +1689,7 @@ window.loadPayments = async function loadPayments() {
     <td>${escapeHtml(item.method_label || item.method)}<br><small>${escapeHtml(item.provider || 'MANUAL')}</small></td>
     <td>${money(item.amount)}</td>
     <td><span class="status ${item.status}">${escapeHtml(item.status)}</span></td>
-    <td><select class="select compact-select" onchange="changePaymentStatus(${item.id},this.value)">${['PENDENTE','PAGO','RECUSADO','CANCELADO'].map(status => `<option ${status === item.status ? 'selected' : ''}>${status}</option>`).join('')}</select></td>
+    <td>${item.provider === 'MANUAL' ? `<select class="select compact-select" onchange="changePaymentStatus(${item.id},this.value)">${['PENDENTE','PAGO','RECUSADO','CANCELADO'].map(status => `<option ${status === item.status ? 'selected' : ''}>${status}</option>`).join('')}</select>` : '<span class="muted-note">Automático</span>'}</td>
   </tr>`).join('')}</tbody></table>` : '<div class="empty">Nenhum pagamento registrado ainda.</div>';
   renderStats();
 };
@@ -1697,8 +1708,21 @@ window.changePaymentStatus = async function changePaymentStatus(id, status) {
 function renderPaymentSettings() {
   const form = $('#paymentSettingsForm');
   if (!form || !paymentSettings) return;
+  const gatewayConnected = Boolean(paymentGatewayStatus?.connected);
+  const gatewayConfigured = Boolean(paymentGatewayStatus?.configured);
   form.innerHTML = `
-    <div class="field full settings-group-title"><b>PIX manual</b><small>A chave informada ficará visível para o cliente quando ele escolher PIX.</small></div>
+    <div class="field full settings-group-title"><b>Pix online</b><small>Receba direto na sua conta Mercado Pago com confirmação automática.</small></div>
+    <div class="field full payment-gateway-card ${gatewayConnected ? 'is-connected' : ''}">
+      <div>
+        <span class="eyebrow">MERCADO PAGO</span>
+        <h3>${gatewayConnected ? 'Conta conectada' : 'Conecte sua conta para receber online'}</h3>
+        <p>${gatewayConnected ? 'O cliente pode pagar por Pix e o status é atualizado automaticamente.' : gatewayConfigured ? 'Você será levado ao Mercado Pago para autorizar o Catálogo Digital. Sua senha nunca passa pelo nosso sistema.' : 'A integração Marketplace ainda precisa ser configurada pelo responsável da plataforma.'}</p>
+      </div>
+      <div class="payment-gateway-actions">
+        ${gatewayConnected ? '<span class="status PAGO">Conectado</span><button class="btn ghost" type="button" id="disconnectMercadoPago">Desconectar</button>' : `<button class="btn primary" type="button" id="connectMercadoPago" ${gatewayConfigured ? '' : 'disabled'}>Conectar Mercado Pago</button>`}
+      </div>
+    </div>
+    <div class="field full settings-group-title"><b>Pix manual</b><small>A chave informada ficará visível para o cliente quando ele escolher Pix manual.</small></div>
     <div class="field checkbox-field"><label><input type="checkbox" name="pix_enabled" ${checked(paymentSettings.pix_enabled)}> Aceitar PIX</label></div>
     <div class="field"><label>Tipo da chave</label><select class="select" name="pix_key_type"><option value="">Selecione</option>${['CPF','CNPJ','EMAIL','TELEFONE','ALEATORIA'].map(value => `<option ${optionSelected(paymentSettings.pix_key_type, value)}>${value}</option>`).join('')}</select></div>
     <div class="field full"><label>Chave PIX</label><input class="input" name="pix_key" value="${escapeHtml(paymentSettings.pix_key || '')}" placeholder="Informe a chave que será exibida aos clientes"></div>
@@ -1709,8 +1733,23 @@ function renderPaymentSettings() {
     <div class="field checkbox-field"><label><input type="checkbox" name="cash_enabled" ${checked(paymentSettings.cash_enabled)}> Dinheiro</label></div>
     <div class="field checkbox-field"><label><input type="checkbox" name="card_on_delivery_enabled" ${checked(paymentSettings.card_on_delivery_enabled)}> Cartão no atendimento/entrega</label></div>
     <div class="field checkbox-field"><label><input type="checkbox" name="whatsapp_enabled" ${checked(paymentSettings.whatsapp_enabled)}> Combinar pelo WhatsApp</label></div>
-    <div class="field full notice">Gateway online: <b>não configurado nesta fase</b>. A estrutura já registra provedor e referência externa para futura integração com Mercado Pago.</div>
     <div class="field full form-actions"><button class="btn primary" type="submit">Salvar pagamentos</button></div>`;
+
+  $('#connectMercadoPago')?.addEventListener('click', async () => {
+    try {
+      const data = await api('/api/admin/payment-gateways/mercado-pago/connect', { method:'POST' });
+      if (!data.authorization_url) throw new Error('Mercado Pago não retornou o endereço de autorização.');
+      location.href = data.authorization_url;
+    } catch (error) { showToast(error.message, 'error'); }
+  });
+  $('#disconnectMercadoPago')?.addEventListener('click', async () => {
+    if (!confirm('Desconectar o Mercado Pago desta loja? Novos clientes não verão o Pix online.')) return;
+    try {
+      await api('/api/admin/payment-gateways/mercado-pago', { method:'DELETE' });
+      showToast('Mercado Pago desconectado.');
+      await loadPaymentSettings();
+    } catch (error) { showToast(error.message, 'error'); }
+  });
 
   form.onsubmit = async (event) => {
     event.preventDefault();

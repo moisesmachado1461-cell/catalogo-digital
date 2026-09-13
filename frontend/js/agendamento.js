@@ -16,12 +16,16 @@ function statusClass(status) {
 
 function paymentHtml(payment) {
   if (!payment) return '';
-  const pix = payment.method === 'PIX' ? `<div class="pix-box"><small>Chave PIX ${payment.pix_key_type ? `· ${escapeHtml(payment.pix_key_type)}` : ''}</small><div class="pix-key-row"><code>${escapeHtml(payment.pix_key || '')}</code><button id="copyAppointmentPix" class="btn ghost small" type="button">Copiar chave</button></div>${payment.pix_receiver_name ? `<small>Recebedor: ${escapeHtml(payment.pix_receiver_name)}${payment.pix_receiver_city ? ` · ${escapeHtml(payment.pix_receiver_city)}` : ''}</small>` : ''}</div>` : '';
-  return `<div class="payment-track-box"><div class="payment-card"><div class="payment-card-head"><div><small>Pagamento</small><strong>${escapeHtml(payment.method_label || payment.method)}</strong></div><span class="status ${escapeHtml(payment.status)}">${escapeHtml(payment.status)}</span></div><div class="payment-amount">${money(payment.amount)}</div><p>${escapeHtml(payment.instructions || '')}</p>${pix}</div></div>`;
+  const manualPix = payment.method === 'PIX' ? `<div class="pix-box"><small>Chave PIX ${payment.pix_key_type ? `· ${escapeHtml(payment.pix_key_type)}` : ''}</small><div class="pix-key-row"><code>${escapeHtml(payment.pix_key || '')}</code><button id="copyAppointmentPix" class="btn ghost small" type="button">Copiar chave</button></div>${payment.pix_receiver_name ? `<small>Recebedor: ${escapeHtml(payment.pix_receiver_name)}${payment.pix_receiver_city ? ` · ${escapeHtml(payment.pix_receiver_city)}` : ''}</small>` : ''}</div>` : '';
+  const onlineQr = payment.method === 'PIX_ONLINE' && payment.status === 'PENDENTE' ? (() => {
+    const qrImage = payment.pix_qr_code_base64 ? (String(payment.pix_qr_code_base64).startsWith('data:') ? payment.pix_qr_code_base64 : `data:image/png;base64,${payment.pix_qr_code_base64}`) : '';
+    return `<div class="online-pix-box">${qrImage ? `<img class="online-pix-qr" src="${escapeHtml(qrImage)}" alt="QR Code Pix">` : ''}<div class="online-pix-copy"><small>Pix Copia e Cola</small><code>${escapeHtml(payment.pix_qr_code || '')}</code><button id="copyAppointmentOnlinePix" class="btn primary small" type="button">Copiar Pix</button></div><small class="online-pix-wait">Aguardando pagamento. A confirmação é automática.</small></div>`;
+  })() : payment.method === 'PIX_ONLINE' && payment.status === 'PAGO' ? '<div class="online-pix-paid"><strong>✓ Pagamento confirmado</strong><small>A loja já recebeu a confirmação automática.</small></div>' : '';
+  return `<div class="payment-track-box"><div class="payment-card"><div class="payment-card-head"><div><small>Pagamento</small><strong>${escapeHtml(payment.method_label || payment.method)}</strong></div><span class="status ${escapeHtml(payment.status)}">${escapeHtml(payment.status)}</span></div><div class="payment-amount">${money(payment.amount)}</div><p>${escapeHtml(payment.instructions || '')}</p>${manualPix}${onlineQr}</div></div>`;
 }
 
 async function copyPaymentPix(value) {
-  try { await navigator.clipboard.writeText(value); showToast('Chave PIX copiada.'); }
+  try { await navigator.clipboard.writeText(value); showToast('Pix copiado.'); }
   catch (_error) { showToast('Copie a chave manualmente.', 'error'); }
 }
 
@@ -52,6 +56,7 @@ async function loadAppointment() {
       </div>`;
     document.querySelector('#cancelAppointmentBtn')?.addEventListener('click', cancelAppointment);
     document.querySelector('#copyAppointmentPix')?.addEventListener('click', () => copyPaymentPix(data.payment?.pix_key || ''));
+    document.querySelector('#copyAppointmentOnlinePix')?.addEventListener('click', () => copyPaymentPix(data.payment?.pix_qr_code || ''));
   } catch (error) {
     card.innerHTML = `<div class="empty"><h2>Não encontramos este agendamento</h2><p>${escapeHtml(error.message)}</p></div>`;
   }

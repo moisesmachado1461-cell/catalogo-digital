@@ -4,7 +4,7 @@
   // Arquivo gerado a partir de backend/app/assistant_knowledge.json.
   // Edite a fonte JSON e execute backend/scripts/sync_assistant_knowledge.py.
   window.CatalogoAssistantKnowledge = {
-  "version": "24.8.2",
+  "version": "24.9.0",
   "areaLabels": {
     "public": "Catálogo Digital",
     "store": "Loja e atendimento",
@@ -811,6 +811,37 @@
         "qr code"
       ],
       "answer": "Em produção, o Pix permanece pendente até o cliente pagar pelo banco. Depois da confirmação do Mercado Pago via webhook, a cobrança é aprovada e o plano é ativado automaticamente."
+    },
+    {
+      "id": "store-online-payments",
+      "areas": [
+        "admin",
+        "store",
+        "customer"
+      ],
+      "sections": [
+        "payments",
+        "orders",
+        "appointments",
+        "reservations",
+        "rentals"
+      ],
+      "title": "Pix online dos clientes da loja",
+      "keywords": [
+        "pix online",
+        "mercado pago",
+        "receber pagamento",
+        "conectar mercado pago",
+        "qr code",
+        "pagamento cliente"
+      ],
+      "answer": "Cada loja pode conectar a própria conta Mercado Pago. Quando o cliente escolhe Pix online, o valor vai direto para a conta da loja e a confirmação do pagamento é automática.",
+      "steps": [
+        "No Admin, abra Pagamentos.",
+        "Conecte a conta Mercado Pago da loja.",
+        "No checkout, o cliente escolhe Pix online e informa e-mail e CPF/CNPJ.",
+        "O QR Code é gerado e o status muda automaticamente após o pagamento."
+      ]
     }
   ]
 };

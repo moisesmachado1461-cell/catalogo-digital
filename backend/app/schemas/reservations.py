@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
 class CustomerInput(BaseModel):
@@ -36,8 +36,20 @@ class ReservationCreate(BaseModel):
     starts_at: datetime
     ends_at: datetime
     guests: int = Field(default=1, ge=1, le=100000)
-    payment_method: str | None = Field(default=None, pattern="^(PIX|DINHEIRO|CARTAO_ENTREGA|WHATSAPP)$")
+    payment_method: str | None = Field(default=None, pattern="^(PIX|PIX_ONLINE|DINHEIRO|CARTAO_ENTREGA|WHATSAPP)$")
+    payment_document: str | None = Field(default=None, max_length=20)
     notes: str | None = Field(default=None, max_length=1000)
+
+    @model_validator(mode="after")
+    def validate_online_pix(self):
+        if self.payment_method == "PIX_ONLINE":
+            if not self.customer.email:
+                raise ValueError("Pix online exige e-mail do cliente")
+            digits = "".join(ch for ch in (self.payment_document or "") if ch.isdigit())
+            if len(digits) not in {11, 14}:
+                raise ValueError("Pix online exige CPF ou CNPJ válido")
+            self.payment_document = digits
+        return self
 
     @field_validator("starts_at", "ends_at")
     @classmethod
@@ -88,8 +100,20 @@ class RentalCreate(BaseModel):
     starts_at: datetime
     ends_at: datetime
     quantity: int = Field(default=1, ge=1, le=100000)
-    payment_method: str | None = Field(default=None, pattern="^(PIX|DINHEIRO|CARTAO_ENTREGA|WHATSAPP)$")
+    payment_method: str | None = Field(default=None, pattern="^(PIX|PIX_ONLINE|DINHEIRO|CARTAO_ENTREGA|WHATSAPP)$")
+    payment_document: str | None = Field(default=None, max_length=20)
     notes: str | None = Field(default=None, max_length=1000)
+
+    @model_validator(mode="after")
+    def validate_online_pix(self):
+        if self.payment_method == "PIX_ONLINE":
+            if not self.customer.email:
+                raise ValueError("Pix online exige e-mail do cliente")
+            digits = "".join(ch for ch in (self.payment_document or "") if ch.isdigit())
+            if len(digits) not in {11, 14}:
+                raise ValueError("Pix online exige CPF ou CNPJ válido")
+            self.payment_document = digits
+        return self
 
     @field_validator("starts_at", "ends_at")
     @classmethod

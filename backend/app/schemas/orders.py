@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
 class CheckoutCustomer(BaseModel):
@@ -19,7 +19,8 @@ class CheckoutItem(BaseModel):
 class CheckoutRequest(BaseModel):
     customer: CheckoutCustomer
     items: list[CheckoutItem] = Field(min_length=1)
-    payment_method: str = Field(pattern="^(PIX|DINHEIRO|CARTAO_ENTREGA|WHATSAPP)$")
+    payment_method: str = Field(pattern="^(PIX|PIX_ONLINE|DINHEIRO|CARTAO_ENTREGA|WHATSAPP)$")
+    payment_document: str | None = Field(default=None, max_length=20)
     fulfillment_method: str = Field(default="RETIRADA", pattern="^(RETIRADA|ENTREGA)$")
     notes: str | None = Field(default=None, max_length=1000)
     delivery_address: str | None = Field(default=None, max_length=255)
@@ -27,6 +28,17 @@ class CheckoutRequest(BaseModel):
     delivery_state: str | None = Field(default=None, min_length=2, max_length=2)
     delivery_zip_code: str | None = Field(default=None, max_length=20)
     coupon_code: str | None = Field(default=None, max_length=40)
+
+    @model_validator(mode="after")
+    def validate_online_pix(self):
+        if self.payment_method == "PIX_ONLINE":
+            if not self.customer.email:
+                raise ValueError("Pix online exige e-mail do cliente")
+            digits = "".join(ch for ch in (self.payment_document or "") if ch.isdigit())
+            if len(digits) not in {11, 14}:
+                raise ValueError("Pix online exige CPF ou CNPJ válido")
+            self.payment_document = digits
+        return self
 
 
 class OrderStatusUpdate(BaseModel):
