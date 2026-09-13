@@ -1,0 +1,12 @@
+CATÁLOGO DIGITAL — FASE 24.9.1
+
+Correção rápida do OAuth/PKCE do Mercado Pago Marketplace.
+
+1. Copie/substitua os arquivos deste pacote na raiz do projeto.
+2. Rode: python backend\scripts\phase24_5_release_gate.py
+3. Se aprovado: git add .
+4. git commit -m "Fase 24.9.1 - corrige OAuth PKCE Marketplace"
+5. git push
+6. Aguarde o Render ficar Live e teste Admin > Pagamentos > Conectar Mercado Pago.
+
+Sem migration nova.

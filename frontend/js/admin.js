@@ -311,11 +311,22 @@ async function startAdmin() {
     await loadAll();
     renderAdminIdentity();
     renderSettings();
-    const gatewayResult = new URLSearchParams(location.search).get('payment_gateway');
+    const gatewayParams = new URLSearchParams(location.search);
+    const gatewayResult = gatewayParams.get('payment_gateway');
     if (gatewayResult) {
       switchSection('payments');
-      if (gatewayResult === 'connected') showToast('Mercado Pago conectado com sucesso.');
-      else showToast('Não foi possível conectar o Mercado Pago. Tente novamente.', 'error');
+      if (gatewayResult === 'connected') {
+        showToast('Mercado Pago conectado com sucesso.');
+      } else {
+        const reason = gatewayParams.get('reason');
+        const oauthMessages = {
+          authorization: 'A autorização do Mercado Pago não foi concluída.',
+          state: 'A tentativa de conexão expirou ou ficou inválida. Tente conectar novamente.',
+          expired: 'A autorização demorou demais e expirou. Tente conectar novamente.',
+          token: 'O Mercado Pago autorizou a conta, mas não foi possível concluir a conexão. Tente novamente.',
+        };
+        showToast(oauthMessages[reason] || 'Não foi possível conectar o Mercado Pago. Tente novamente.', 'error');
+      }
       history.replaceState({}, '', location.pathname);
     }
   } catch (error) {

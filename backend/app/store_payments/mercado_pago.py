@@ -104,7 +104,7 @@ class StoreMercadoPagoClient:
             "state": state,
             "redirect_uri": settings.mercado_pago_marketplace_redirect_uri,
             "code_challenge": code_challenge,
-            "code_challenge_method": "S256",
+            "code_method": "S256",
         }
         return f"{StoreMercadoPagoClient.auth_base}?{urlencode(params)}"
 

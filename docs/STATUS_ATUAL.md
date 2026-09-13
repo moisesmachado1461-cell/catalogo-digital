@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.9.0**.
+Versão consolidada até a **Fase 24.9.1**.
 
 ## Concluído
 
@@ -29,6 +29,13 @@ Versão consolidada até a **Fase 24.9.0**.
 - cupons de planos SaaS gerenciados pelo Super Admin e aplicáveis na escolha de plano do Admin.
 
 
+
+## Fase 24.9.1 — correção OAuth/PKCE do Marketplace
+
+- parâmetro PKCE alinhado à documentação atual do Mercado Pago (`code_method=S256`);
+- mensagens de erro OAuth mais específicas no Admin;
+- sem migration nova.
+
 ## Fase 24.9.0 — pagamentos online dos clientes das lojas
 
 - conexão de cada loja à própria conta Mercado Pago via OAuth com PKCE;
@@ -39,7 +46,7 @@ Versão consolidada até a **Fase 24.9.0**.
 - webhook e consulta pública sincronizam o status do pagamento;
 - opção online respeita o recurso `online_payments` do plano contratado;
 - migration `020_store_marketplace_payments`;
-- backend `24.9.0`.
+- backend `24.9.1`.
 
 ## Fase 24.8.3 — IA objetiva e segura para o usuário final
 
