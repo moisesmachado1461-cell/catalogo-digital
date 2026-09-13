@@ -1,15 +1,23 @@
-# Catálogo Digital — Fase 24.7.5
+# Catálogo Digital — Fase 24.7.6
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.7.5 — Hotfix de publicação do frontend sobre a base 24.7.4**
+**24.7.6 — Diagnóstico seguro de erros da cobrança Pix em produção**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
 - `payments`: pagamentos dos clientes finais para cada loja;
 - `billing`: mensalidade que a loja paga para usar o Catálogo Digital.
+
+## Fase 24.7.6 — diagnóstico Pix em produção
+
+- mantém a lógica de cobrança inalterada;
+- melhora a leitura dos erros HTTP 400 devolvidos pela Orders API;
+- mostra código, mensagem e campo inválido quando o Mercado Pago os informa;
+- não exibe Access Token, segredo de webhook nem valores sensíveis do payload.
+
 
 ## O que já está em produção
 

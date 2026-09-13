@@ -15,6 +15,61 @@ class MercadoPagoError(RuntimeError):
     pass
 
 
+def _clean_error_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, (dict, list)):
+        return None
+    text = str(value).strip().replace("\n", " ").replace("\r", " ")
+    if not text:
+        return None
+    # Nunca propaga possíveis credenciais caso um provedor as ecoe por engano.
+    for marker in ("APP_USR-", "TEST-", "TESTE-"):
+        if marker in text:
+            text = text.split(marker, 1)[0] + "[credencial ocultada]"
+    return text[:300]
+
+
+def _extract_api_error(detail: Any) -> str:
+    """Resume respostas de erro do Mercado Pago sem expor payload ou credenciais."""
+    if not isinstance(detail, dict):
+        return "Falha ao comunicar com o Mercado Pago"
+
+    parts: list[str] = []
+
+    def add(value: Any) -> None:
+        text = _clean_error_text(value)
+        if text and text not in parts:
+            parts.append(text)
+
+    # Campos de topo mais comuns na Orders API.
+    add(detail.get("code"))
+    add(detail.get("error"))
+    add(detail.get("message"))
+    add(detail.get("description"))
+
+    # A Orders API pode devolver listas em errors/details/cause/causes.
+    for key in ("errors", "details", "cause", "causes"):
+        value = detail.get(key)
+        items = value if isinstance(value, list) else [value] if isinstance(value, dict) else []
+        for item in items[:3]:
+            if not isinstance(item, dict):
+                add(item)
+                continue
+            add(item.get("code"))
+            add(item.get("error"))
+            add(item.get("message"))
+            add(item.get("description"))
+            # Exibe somente o nome/caminho do campo inválido, nunca o valor enviado.
+            add(item.get("property"))
+            add(item.get("field"))
+            add(item.get("path"))
+
+    if not parts:
+        return "Falha ao comunicar com o Mercado Pago"
+    return " · ".join(parts[:5])
+
+
 @dataclass(frozen=True)
 class PixPaymentResult:
     payment_id: str
@@ -62,13 +117,7 @@ class MercadoPagoGateway(BillingGateway):
                 detail = json.loads(exc.read().decode("utf-8"))
             except Exception:
                 detail = {"message": str(exc)}
-            message = detail.get("message") or detail.get("error") or detail.get("code")
-            if not message:
-                cause = detail.get("cause") or detail.get("causes") or detail.get("details") or []
-                if isinstance(cause, list) and cause:
-                    first = cause[0] if isinstance(cause[0], dict) else {}
-                    message = first.get("description") or first.get("message") or first.get("code")
-            message = message or "Falha ao comunicar com o Mercado Pago"
+            message = _extract_api_error(detail)
             raise MercadoPagoError(f"{message} (HTTP {exc.code})") from exc
         except (URLError, TimeoutError) as exc:
             raise MercadoPagoError("Mercado Pago indisponível no momento. Tente novamente.") from exc

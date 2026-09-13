@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.7.5**.
+Versão consolidada até a **Fase 24.7.6**.
 
 ## Concluído
 
@@ -27,6 +27,13 @@ Versão consolidada até a **Fase 24.7.5**.
 - gestão e exposição pública controlada de cupons.
 - cupons por produto no Admin e cálculo restrito aos itens elegíveis;
 - cupons de planos SaaS gerenciados pelo Super Admin e aplicáveis na escolha de plano do Admin.
+
+## Fase 24.7.6 — diagnóstico seguro do Pix
+
+- tratamento dos erros da Orders API ampliado para respostas `errors`, `details`, `cause` e `causes`;
+- a interface passa a mostrar o motivo técnico do HTTP 400 sem expor credenciais nem o payload completo;
+- nenhuma regra de cobrança foi alterada nesta fase.
+
 
 ## Gateway real
 
