@@ -154,7 +154,7 @@
           <svg viewBox="0 0 24 24" fill="none"><path d="m4 4 16 8-16 8 3-8-3-8Zm3 8h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </form>
-      <footer class="cd-assistant-footer">IA contextual + base oficial · respostas objetivas · sem acesso a senhas ou segredos</footer>
+      <footer class="cd-assistant-footer">IA contextual + base oficial central · respostas objetivas · sem acesso a senhas ou segredos</footer>
     </section>`;
   document.body.appendChild(root);
 
@@ -267,7 +267,6 @@
         question: cleaned,
         area: ctx.area,
         section: ctx.section,
-        knowledge: knowledgeForAi(cleaned, ctx),
         history: priorHistory,
       };
       const response = await api('/api/assistant/chat', {

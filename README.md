@@ -1,16 +1,32 @@
-# Catálogo Digital — Fase 24.8.1
+# Catálogo Digital — Fase 24.8.2
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.8.1 — IA contextual do Catálogo Digital**
+**24.8.2 — base de conhecimento automática da IA**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
 - `payments`: pagamentos dos clientes finais para cada loja;
 - `billing`: mensalidade que a loja paga para usar o Catálogo Digital.
 
+
+## Fase 24.8.2 — base de conhecimento automática da IA
+
+A Fase 24.8.2 centraliza o conhecimento do assistente no backend e elimina a necessidade de treinar o modelo novamente a cada evolução do produto.
+
+- fonte oficial única em `backend/app/assistant_knowledge.json`;
+- o backend recarrega automaticamente a base quando o arquivo muda;
+- recuperação contextual por área, seção, palavras-chave e conteúdo;
+- a IA recebe apenas os tópicos oficiais mais relevantes para cada pergunta;
+- o frontend não é mais fonte confiável de conhecimento para a IA;
+- `assistant-knowledge.js` passa a ser apenas um fallback gerado para a interface;
+- script `backend/scripts/sync_assistant_knowledge.py` mantém o fallback do frontend sincronizado com a fonte oficial;
+- endpoint `GET /api/assistant/knowledge/status` informa versão e quantidade de tópicos carregados;
+- nenhuma migration e nenhuma biblioteca nova.
+
+Nas próximas fases, novas funcionalidades devem atualizar a fonte oficial de conhecimento junto da documentação da feature. A IA passa a conhecer a mudança no próximo deploy, sem treinamento adicional.
 
 ## Fase 24.8.1 — IA contextual e objetiva
 

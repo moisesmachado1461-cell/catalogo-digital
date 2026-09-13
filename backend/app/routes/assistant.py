@@ -10,6 +10,7 @@ from urllib.request import Request as UrlRequest, urlopen
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from ..assistant_knowledge import knowledge_metadata, relevant_knowledge
 from ..config import settings
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
@@ -59,9 +60,26 @@ def _enforce_rate_limit(request: Request) -> None:
         queue.append(now)
 
 
-def _fallback_answer(payload: AssistantChatRequest) -> str:
-    if payload.knowledge:
-        first = payload.knowledge[0]
+def _server_knowledge(payload: AssistantChatRequest) -> list[KnowledgeSnippet]:
+    items = relevant_knowledge(payload.question, payload.area, payload.section, limit=6)
+    snippets: list[KnowledgeSnippet] = []
+    for item in items:
+        try:
+            snippets.append(
+                KnowledgeSnippet(
+                    title=str(item.get("title") or "Ajuda"),
+                    answer=str(item.get("answer") or ""),
+                    steps=[str(step) for step in (item.get("steps") or [])[:6]],
+                )
+            )
+        except ValueError:
+            continue
+    return snippets
+
+
+def _fallback_answer(knowledge: list[KnowledgeSnippet]) -> str:
+    if knowledge:
+        first = knowledge[0]
         if first.steps:
             numbered = "\n".join(f"{index}. {step}" for index, step in enumerate(first.steps[:4], start=1))
             return f"{first.answer}\n{numbered}"
@@ -87,11 +105,11 @@ def _system_prompt(payload: AssistantChatRequest) -> str:
     )
 
 
-def _knowledge_prompt(payload: AssistantChatRequest) -> str:
-    if not payload.knowledge:
+def _knowledge_prompt(knowledge: list[KnowledgeSnippet]) -> str:
+    if not knowledge:
         return "Nenhum trecho específico foi localizado na base oficial para esta pergunta."
     blocks: list[str] = []
-    for item in payload.knowledge[:6]:
+    for item in knowledge[:6]:
         steps = " | ".join(item.steps[:4]) if item.steps else ""
         block = f"Tópico: {item.title}\nConteúdo: {item.answer}"
         if steps:
@@ -100,9 +118,9 @@ def _knowledge_prompt(payload: AssistantChatRequest) -> str:
     return "\n\n".join(blocks)
 
 
-def _call_ai(payload: AssistantChatRequest) -> str:
+def _call_ai(payload: AssistantChatRequest, knowledge: list[KnowledgeSnippet]) -> str:
     messages = [{"role": "system", "content": _system_prompt(payload)}]
-    messages.append({"role": "system", "content": "Base oficial relevante:\n" + _knowledge_prompt(payload)})
+    messages.append({"role": "system", "content": "Base oficial relevante:\n" + _knowledge_prompt(knowledge)})
     for item in payload.history[-6:]:
         messages.append({"role": item.role, "content": item.content})
     messages.append({"role": "user", "content": payload.question})
@@ -121,7 +139,7 @@ def _call_ai(payload: AssistantChatRequest) -> str:
             "Authorization": f"Bearer {settings.assistant_ai_api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "CatalogoDigital-Assistant/24.8.1",
+            "User-Agent": "CatalogoDigital-Assistant/24.8.2",
         },
     )
     try:
@@ -145,26 +163,46 @@ def assistant_chat(payload: AssistantChatRequest, request: Request):
     if payload.area not in _ALLOWED_AREAS:
         payload.area = "public"
 
+    # A base oficial é carregada exclusivamente no backend. O campo `knowledge`
+    # continua aceito apenas por compatibilidade com frontends antigos, mas não
+    # é confiado como contexto da IA.
+    knowledge = _server_knowledge(payload)
+    metadata = knowledge_metadata()
+
     if not settings.assistant_ai_configuration_complete:
         return {
-            "answer": _fallback_answer(payload),
+            "answer": _fallback_answer(knowledge),
             "mode": "fallback",
             "ai_available": False,
+            "knowledge_version": metadata["version"],
         }
 
     _enforce_rate_limit(request)
 
     try:
-        answer = _call_ai(payload)
+        answer = _call_ai(payload, knowledge)
     except RuntimeError:
         return {
-            "answer": _fallback_answer(payload),
+            "answer": _fallback_answer(knowledge),
             "mode": "fallback",
             "ai_available": True,
+            "knowledge_version": metadata["version"],
         }
 
     return {
         "answer": answer,
         "mode": "ai",
         "ai_available": True,
+        "knowledge_version": metadata["version"],
+    }
+
+
+@router.get("/knowledge/status")
+def assistant_knowledge_status():
+    metadata = knowledge_metadata()
+    return {
+        "status": "ok",
+        "version": metadata["version"],
+        "entries": metadata["entries"],
+        "source": "backend",
     }
