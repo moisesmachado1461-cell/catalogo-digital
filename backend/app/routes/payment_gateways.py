@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from urllib.parse import quote
 from sqlalchemy.orm import Session
 
 from ..config import settings
@@ -131,10 +132,14 @@ def mercado_pago_callback(
     try:
         verifier = decrypt_secret(row.code_verifier_encrypted)
         token_data = StoreMercadoPagoClient.exchange_authorization_code(code=code, code_verifier=verifier or "")
-    except StoreMercadoPagoError:
+    except StoreMercadoPagoError as exc:
+        # O detalhe já é sanitizado no client: nunca contém Client Secret, Access Token ou payload bruto.
+        safe_detail = quote(str(exc)[:220], safe="")
         row.consumed_at = now
         db.commit()
-        return RedirectResponse(f"{target}?payment_gateway=error&reason=token")
+        return RedirectResponse(
+            f"{target}?payment_gateway=error&reason=token&detail={safe_detail}"
+        )
 
     access_token = str(token_data.get("access_token") or "")
     if not access_token:

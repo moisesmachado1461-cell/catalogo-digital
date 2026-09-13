@@ -1,0 +1,10 @@
+CATÁLOGO DIGITAL — FASE 24.9.3
+
+1. Copie o conteúdo deste pacote para a raiz do projeto e substitua os arquivos.
+2. Rode: python backend\scripts\phase24_5_release_gate.py
+3. Se aprovado: git add .
+4. git commit -m "Fase 24.9.3 - corrige troca OAuth Marketplace"
+5. git push
+6. Aguarde o Render ficar Live.
+
+Sem migration nova.

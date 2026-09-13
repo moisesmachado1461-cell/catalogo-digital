@@ -319,13 +319,29 @@ async function startAdmin() {
         showToast('Mercado Pago conectado com sucesso.');
       } else {
         const reason = gatewayParams.get('reason');
+        const oauthDetail = gatewayParams.get('detail') || '';
         const oauthMessages = {
           authorization: 'A autorização do Mercado Pago não foi concluída.',
           state: 'A tentativa de conexão expirou ou ficou inválida. Tente conectar novamente.',
           expired: 'A autorização demorou demais e expirou. Tente conectar novamente.',
-          token: 'O Mercado Pago autorizou a conta, mas não foi possível concluir a conexão. Tente novamente.',
+          token: 'O Mercado Pago autorizou a conta, mas recusou a troca do código por credenciais.',
         };
-        showToast(oauthMessages[reason] || 'Não foi possível conectar o Mercado Pago. Tente novamente.', 'error');
+        let message = oauthMessages[reason] || 'Não foi possível conectar o Mercado Pago. Tente novamente.';
+        const detailLower = oauthDetail.toLowerCase();
+        if (reason === 'token' && oauthDetail) {
+          if (detailLower.includes('invalid_client')) {
+            message = 'Mercado Pago recusou o Client ID ou Client Secret da aplicação Marketplace.';
+          } else if (detailLower.includes('invalid_grant')) {
+            message = 'Mercado Pago recusou o código OAuth. Confira Redirect URL e PKCE da aplicação Marketplace.';
+          } else if (detailLower.includes('unauthorized_client')) {
+            message = 'A aplicação Marketplace ainda não está autorizada para concluir esse vínculo.';
+          } else if (detailLower.includes('invalid_request')) {
+            message = 'Mercado Pago recusou os parâmetros da troca OAuth. Tente conectar novamente.';
+          } else {
+            message = `${message} ${oauthDetail}`;
+          }
+        }
+        showToast(message, 'error');
       }
       history.replaceState({}, '', location.pathname);
     }
