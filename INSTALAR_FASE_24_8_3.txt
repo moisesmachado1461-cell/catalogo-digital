@@ -1,0 +1,17 @@
+CATÁLOGO DIGITAL — FASE 24.8.3
+
+Correção do assistente de IA:
+- respostas sempre em português do Brasil;
+- raciocínio interno oculto;
+- proteção contra tags <think>;
+- respostas mais curtas e objetivas.
+
+Sem migration. Sem biblioteca nova.
+
+Após copiar os arquivos:
+python backend\scripts\phase24_5_release_gate.py
+
+Se aprovado:
+git add .
+git commit -m "Fase 24.8.3 - IA objetiva em portugues"
+git push

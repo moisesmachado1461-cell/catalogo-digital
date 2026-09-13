@@ -1,16 +1,24 @@
-# Catálogo Digital — Fase 24.8.2
+# Catálogo Digital — Fase 24.8.3
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.8.2 — base de conhecimento automática da IA**
+**24.8.3 — IA objetiva em português e raciocínio oculto**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
 - `payments`: pagamentos dos clientes finais para cada loja;
 - `billing`: mensalidade que a loja paga para usar o Catálogo Digital.
 
+
+## Fase 24.8.3 — IA objetiva em português e raciocínio oculto
+
+- respostas sempre orientadas a português do Brasil;
+- Qwen/Groq usa `reasoning_effort=none` e `reasoning_format=hidden`;
+- blocos `<think>` são removidos no backend como defesa adicional;
+- respostas limitadas e mais objetivas para atendimento;
+- nenhuma migration e nenhuma biblioteca nova.
 
 ## Fase 24.8.2 — base de conhecimento automática da IA
 

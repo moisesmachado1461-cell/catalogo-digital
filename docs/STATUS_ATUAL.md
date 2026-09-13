@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.8.2**.
+Versão consolidada até a **Fase 24.8.3**.
 
 ## Concluído
 
@@ -28,6 +28,14 @@ Versão consolidada até a **Fase 24.8.2**.
 - cupons por produto no Admin e cálculo restrito aos itens elegíveis;
 - cupons de planos SaaS gerenciados pelo Super Admin e aplicáveis na escolha de plano do Admin.
 
+
+## Fase 24.8.3 — IA objetiva e segura para o usuário final
+
+- força respostas em português do Brasil;
+- desativa reasoning visível no Qwen/Groq;
+- remove preventivamente qualquer bloco `<think>` devolvido pelo provedor;
+- reduz respostas longas para manter o assistente direto;
+- sem migration e sem nova biblioteca.
 
 ## Fase 24.8.2 — conhecimento automático da IA
 
