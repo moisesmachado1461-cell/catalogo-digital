@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.7.4
+# Catálogo Digital — Fase 24.7.5
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.7.4 — Acabamento visual premium sobre a base 24.7.3**
+**24.7.5 — Hotfix de publicação do frontend sobre a base 24.7.4**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -289,3 +289,11 @@ Sem mudança de regra de negócio ou funcionalidade:
 - área do cliente e acompanhamento com maior contraste e presença visual;
 - nenhum endpoint, regra de negócio, modelo ou migration alterado;
 - backend `24.7.4`; cache PWA `catalogo-digital-v24-7-4`.
+
+
+## Hotfix 24.7.5 — publicação completa do frontend
+
+- corrige o build do Render para publicar também subpastas de `frontend/js`, incluindo `frontend/js/shared/dom-utils.js`;
+- restaura o carregamento correto dos scripts compartilhados usados por Cliente, Admin e Super Admin;
+- atualiza o cache da PWA para evitar que o navegador mantenha assets antigos;
+- sem migration; backend `24.7.5`.

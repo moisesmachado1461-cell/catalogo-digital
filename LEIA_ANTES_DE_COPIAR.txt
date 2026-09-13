@@ -1,6 +1,1 @@
-Esta atualização parte da versão 24.7.2 e preserva o comportamento atual.
-
-O pacote NÃO contém .env, .venv, banco, uploads, backups ou .git.
-Não adiciona bibliotecas, funcionalidades novas ou migrations.
-
-Objetivo: organização, legibilidade e manutenção do código sem alterar regras de negócio.
+Hotfix pequeno e seguro. Não contém .env, banco, uploads, backups ou .git.

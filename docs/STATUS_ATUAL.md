@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.7.4**.
+Versão consolidada até a **Fase 24.7.5**.
 
 ## Concluído
 
@@ -289,3 +289,12 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - Cliente, Admin e Super Admin mantêm a mesma identidade visual e maior consistência;
 - responsividade preservada e reforçada;
 - sem migration; backend `24.7.4`; cache PWA `catalogo-digital-v24-7-4`.
+
+
+## Hotfix 24.7.5 — build do frontend no Render
+
+- `frontend/render-build.sh` passa a copiar recursivamente a árvore de JavaScript;
+- `frontend/js/shared/dom-utils.js` passa a ser publicado corretamente no Render;
+- corrige falhas de carregamento que impediam login e funcionamento das lojas após a refatoração 24.7.3;
+- cache PWA atualizado para forçar o carregamento dos assets corrigidos;
+- sem migration; backend `24.7.5`.
