@@ -1,4 +1,4 @@
-# Catálogo Digital — Fase 24.7.7
+# Catálogo Digital — Fase 24.8.0
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
@@ -10,6 +10,22 @@ A plataforma mantém separadas as duas áreas financeiras:
 
 - `payments`: pagamentos dos clientes finais para cada loja;
 - `billing`: mensalidade que a loja paga para usar o Catálogo Digital.
+
+
+## Fase 24.8.0 — Assistente contextual do Catálogo Digital
+
+A Fase 24.8.0 adiciona um assistente de ajuda embutido no site, sem dependência de IA paga ou biblioteca externa.
+
+- botão flutuante premium nas áreas principais;
+- respostas sobre funcionalidades do Cliente, Admin e Super Admin;
+- contexto automático da tela atual;
+- sugestões rápidas conforme a área aberta;
+- base de conhecimento local e versionada;
+- nenhuma leitura de senha, token ou dado sensível;
+- WhatsApp detectado na loja quando houver canal oficial publicado;
+- estrutura pronta para a futura integração oficial do mesmo conhecimento com WhatsApp Business.
+
+Não há migration nesta fase.
 
 ## Fase 24.7.7 — pagamento Pix pendente acessível
 

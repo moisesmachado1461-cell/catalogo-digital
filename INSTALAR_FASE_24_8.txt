@@ -1,0 +1,14 @@
+CATÁLOGO DIGITAL — FASE 24.8.0
+ASSISTENTE CONTEXTUAL
+
+1. Copie o conteúdo do pacote para a raiz do projeto e substitua os arquivos.
+2. Rode: python backend\scripts\phase24_5_release_gate.py
+3. Se o release gate for aprovado:
+   git add .
+   git commit -m "Fase 24.8 - assistente contextual"
+   git push
+4. Aguarde o Render ficar Live.
+5. Confirme /api/health = 24.8.0.
+6. Teste o botão “Precisa de ajuda?” no Admin, Super Admin e loja pública.
+
+Não há migration nesta fase.

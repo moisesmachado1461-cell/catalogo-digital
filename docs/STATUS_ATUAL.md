@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.7.7**.
+Versão consolidada até a **Fase 24.8.0**.
 
 ## Concluído
 
@@ -27,6 +27,17 @@ Versão consolidada até a **Fase 24.7.7**.
 - gestão e exposição pública controlada de cupons.
 - cupons por produto no Admin e cálculo restrito aos itens elegíveis;
 - cupons de planos SaaS gerenciados pelo Super Admin e aplicáveis na escolha de plano do Admin.
+
+
+## Fase 24.8.0 — assistente contextual
+
+- assistente flutuante disponível nas áreas principais do sistema;
+- base de conhecimento própria sobre funcionalidades;
+- respostas contextualizadas pela tela ativa;
+- sugestões rápidas para Cliente, Admin e Super Admin;
+- sem dependência de API de IA nesta primeira etapa;
+- estrutura visual e técnica pronta para continuidade com WhatsApp Business;
+- sem migration.
 
 ## Fase 24.7.7 — acesso ao Pix pendente
 
