@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.9.1
+# Catálogo Digital — Fase 24.9.2
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.9.1 — Correção OAuth/PKCE do Marketplace**
+**24.9.2 — Correção OAuth/PKCE do Marketplace**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -13,7 +13,7 @@ A plataforma mantém separadas as duas áreas financeiras:
 
 
 
-## Fase 24.9.1 — correção OAuth/PKCE do Marketplace
+## Fase 24.9.2 — correção OAuth/PKCE do Marketplace
 
 - corrige o parâmetro PKCE enviado ao Mercado Pago de `code_challenge_method` para `code_method`, conforme a documentação atual do OAuth;
 - mantém `S256`, `state` e Redirect URI existentes;
@@ -32,7 +32,7 @@ A plataforma mantém separadas as duas áreas financeiras:
 - pagamentos online não podem ser marcados manualmente como pagos pelo Admin;
 - Pix manual, dinheiro, cartão na entrega e WhatsApp continuam disponíveis;
 - migration `020_store_marketplace_payments`;
-- backend `24.9.1`.
+- backend `24.9.2`.
 
 A cobrança da assinatura SaaS continua totalmente separada dos pagamentos dos clientes das lojas.
 
