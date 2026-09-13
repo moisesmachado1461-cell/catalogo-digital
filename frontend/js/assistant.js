@@ -66,10 +66,10 @@
     return normalize([item.title, item.answer, ...(item.keywords || [])].join(' '));
   }
 
-  function searchKnowledge(query, ctx) {
+  function rankKnowledge(query, ctx) {
     const normalizedQuery = normalize(query);
     const queryTokens = tokens(query);
-    const candidates = knowledge.entries.map((item) => {
+    return knowledge.entries.map((item) => {
       let score = 0;
       const text = entryText(item);
       if (item.areas.includes(ctx.area)) score += 5;
@@ -84,16 +84,41 @@
       });
       if (normalize(item.title) === normalizedQuery) score += 10;
       return { item, score };
-    }).filter(({ item }) => item.areas.includes(ctx.area) || item.areas.includes('public'));
+    })
+      .sort((a, b) => b.score - a.score);
+  }
 
-    candidates.sort((a, b) => b.score - a.score);
-    return candidates[0]?.score >= 5 ? candidates[0].item : null;
+  function searchKnowledge(query, ctx) {
+    const best = rankKnowledge(query, ctx)[0];
+    return best?.score >= 5 ? best.item : null;
   }
 
   function contextualEntries(ctx, limit = 4) {
     const exact = knowledge.entries.filter((item) => item.areas.includes(ctx.area) && item.sections.includes(ctx.section));
     const areaEntries = knowledge.entries.filter((item) => item.areas.includes(ctx.area) && !exact.includes(item));
     return [...exact, ...areaEntries].slice(0, limit);
+  }
+
+  function knowledgeForAi(query, ctx, limit = 5) {
+    const selected = [];
+    const seen = new Set();
+    const add = (item) => {
+      if (!item || seen.has(item.id)) return;
+      seen.add(item.id);
+      selected.push(item);
+    };
+
+    rankKnowledge(query, ctx)
+      .filter(({ score }) => score >= 3)
+      .slice(0, limit)
+      .forEach(({ item }) => add(item));
+    contextualEntries(ctx, limit).forEach(add);
+
+    return selected.slice(0, limit).map((item) => ({
+      title: item.title,
+      answer: item.answer,
+      steps: (item.steps || []).slice(0, 4),
+    }));
   }
 
   function resolveWhatsAppLink() {
@@ -114,7 +139,7 @@
     <section class="cd-assistant-panel" aria-hidden="true" aria-label="Assistente do Catálogo Digital">
       <header class="cd-assistant-header">
         <div class="cd-assistant-brandmark">CD</div>
-        <div class="cd-assistant-heading"><strong>Assistente do Catálogo</strong><span><i></i><span data-assistant-context>Ajuda contextual</span></span></div>
+        <div class="cd-assistant-heading"><strong>Assistente do Catálogo <em class="cd-assistant-ai-badge">IA</em></strong><span><i></i><span data-assistant-context>Ajuda contextual</span></span></div>
         <button class="cd-assistant-close" type="button" aria-label="Fechar assistente">×</button>
       </header>
       <div class="cd-assistant-messages" role="log" aria-live="polite"></div>
@@ -124,12 +149,12 @@
       </div>
       <form class="cd-assistant-form">
         <label class="sr-only" for="cdAssistantInput">Digite sua dúvida</label>
-        <input id="cdAssistantInput" class="cd-assistant-input" autocomplete="off" maxlength="220" placeholder="Ex.: Como cadastro um produto?">
+        <input id="cdAssistantInput" class="cd-assistant-input" autocomplete="off" maxlength="500" placeholder="Ex.: Como cadastro um produto?">
         <button class="cd-assistant-send" type="submit" aria-label="Enviar pergunta">
           <svg viewBox="0 0 24 24" fill="none"><path d="m4 4 16 8-16 8 3-8-3-8Zm3 8h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </form>
-      <footer class="cd-assistant-footer">Respostas rápidas sobre o uso do sistema · sem acesso a senhas ou dados sensíveis</footer>
+      <footer class="cd-assistant-footer">IA contextual + base oficial · respostas objetivas · sem acesso a senhas ou segredos</footer>
     </section>`;
   document.body.appendChild(root);
 
@@ -140,10 +165,13 @@
   const suggestions = root.querySelector('.cd-assistant-suggestions');
   const form = root.querySelector('.cd-assistant-form');
   const input = root.querySelector('.cd-assistant-input');
+  const sendButton = root.querySelector('.cd-assistant-send');
   const contextLabel = root.querySelector('[data-assistant-context]');
   const whatsappWrap = root.querySelector('.cd-assistant-whatsapp-wrap');
   const whatsappLink = root.querySelector('.cd-assistant-whatsapp');
+  const conversationHistory = [];
   let greeted = false;
+  let busy = false;
 
   function addMessage(kind, content, steps = []) {
     const item = document.createElement('div');
@@ -154,6 +182,28 @@
     item.innerHTML = `<div class="cd-assistant-bubble">${escapeHtml(content)}${stepsHtml}</div>`;
     messages.appendChild(item);
     messages.scrollTop = messages.scrollHeight;
+    return item;
+  }
+
+  function addTypingMessage() {
+    const item = document.createElement('div');
+    item.className = 'cd-assistant-message assistant cd-assistant-typing-message';
+    item.innerHTML = '<div class="cd-assistant-bubble cd-assistant-typing" aria-label="Assistente digitando"><span></span><span></span><span></span></div>';
+    messages.appendChild(item);
+    messages.scrollTop = messages.scrollHeight;
+    return item;
+  }
+
+  function setBusy(value) {
+    busy = value;
+    input.disabled = value;
+    sendButton.disabled = value;
+    form.classList.toggle('is-busy', value);
+  }
+
+  function remember(role, content) {
+    conversationHistory.push({ role, content: String(content).slice(0, 500) });
+    if (conversationHistory.length > 8) conversationHistory.splice(0, conversationHistory.length - 8);
   }
 
   function renderSuggestions(ctx) {
@@ -182,26 +232,64 @@
     return ctx;
   }
 
-  function answerQuestion(question) {
-    const cleaned = question.trim();
-    if (!cleaned) return;
-    addMessage('user', cleaned);
-    const ctx = refreshContext();
-    const generic = normalize(cleaned);
+  function localFallback(question, ctx) {
+    const generic = normalize(question);
     if (/o que posso fazer|me ajuda|ajuda nesta tela|como usar esta tela/.test(generic)) {
       const entries = contextualEntries(ctx, 3);
-      const summary = entries.length
-        ? `Nesta área eu posso te orientar principalmente sobre ${entries.map((item) => item.title.toLowerCase()).join(', ')}.`
-        : `Posso explicar as principais funções de ${ctx.areaLabel}.`;
-      addMessage('assistant', summary);
-      return;
+      return {
+        answer: entries.length
+          ? `Nesta área eu posso te orientar principalmente sobre ${entries.map((item) => item.title.toLowerCase()).join(', ')}.`
+          : `Posso explicar as principais funções de ${ctx.areaLabel}.`,
+        steps: [],
+      };
     }
-    const match = searchKnowledge(cleaned, ctx);
-    if (match) {
-      addMessage('assistant', match.answer, match.steps || []);
-      return;
+    const match = searchKnowledge(question, ctx);
+    if (match) return { answer: match.answer, steps: match.steps || [] };
+    return {
+      answer: 'Ainda não encontrei uma resposta específica para essa pergunta. Tente citar o nome da função, como produto, pedido, estoque, cupom, agendamento, plano ou configuração.',
+      steps: [],
+    };
+  }
+
+
+  async function answerQuestion(question) {
+    const cleaned = question.trim();
+    if (!cleaned || busy) return;
+
+    const priorHistory = conversationHistory.slice(-6);
+    addMessage('user', cleaned);
+    const ctx = refreshContext();
+    setBusy(true);
+    const typing = addTypingMessage();
+
+    try {
+      const payload = {
+        question: cleaned,
+        area: ctx.area,
+        section: ctx.section,
+        knowledge: knowledgeForAi(cleaned, ctx),
+        history: priorHistory,
+      };
+      const response = await api('/api/assistant/chat', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      typing.remove();
+      const answer = response?.answer?.trim();
+      if (!answer) throw new Error('Resposta vazia');
+      addMessage('assistant', answer);
+      remember('user', cleaned);
+      remember('assistant', answer);
+    } catch (error) {
+      typing.remove();
+      const fallback = localFallback(cleaned, ctx);
+      addMessage('assistant', fallback.answer, fallback.steps);
+      remember('user', cleaned);
+      remember('assistant', fallback.answer);
+    } finally {
+      setBusy(false);
+      input.focus();
     }
-    addMessage('assistant', `Ainda não encontrei uma resposta específica para essa pergunta. Tente perguntar pelo nome da função, por exemplo: produto, pedido, estoque, cupom, agendamento, plano ou configuração.`);
   }
 
   function openAssistant() {
@@ -210,7 +298,7 @@
     launcher.setAttribute('aria-expanded', 'true');
     const ctx = refreshContext();
     if (!greeted) {
-      addMessage('assistant', `Olá! Eu sou o assistente do Catálogo Digital. Estou vendo que você está em “${ctx.sectionLabel}”. Posso explicar como esta área funciona ou ajudar em outra funcionalidade.`);
+      addMessage('assistant', `Olá! Sou a IA de ajuda do Catálogo Digital. Estou vendo que você está em “${ctx.sectionLabel}”. Pergunte o que quiser sobre o uso do sistema.`);
       greeted = true;
     }
     window.setTimeout(() => input.focus(), 80);

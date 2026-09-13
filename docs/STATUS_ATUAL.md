@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.8.0**.
+Versão consolidada até a **Fase 24.8.1**.
 
 ## Concluído
 
@@ -28,6 +28,17 @@ Versão consolidada até a **Fase 24.8.0**.
 - cupons por produto no Admin e cálculo restrito aos itens elegíveis;
 - cupons de planos SaaS gerenciados pelo Super Admin e aplicáveis na escolha de plano do Admin.
 
+
+## Fase 24.8.1 — IA do Catálogo Digital
+
+- assistente híbrido: IA contextual + base oficial local;
+- endpoint backend dedicado, sem exposição da chave no navegador;
+- respostas objetivas e limitadas ao uso da plataforma;
+- RAG leve no frontend: somente os tópicos relevantes são enviados como contexto;
+- histórico curto para perguntas de continuação;
+- rate limit para controlar abuso e custo;
+- fallback automático mantém a ajuda funcionando se o provedor de IA falhar;
+- configuração por variáveis de ambiente, sem nova biblioteca e sem migration.
 
 ## Fase 24.8.0 — assistente contextual
 
@@ -95,7 +106,7 @@ Mercado Pago passa a ser o primeiro gateway real da cobrança SaaS, inicialmente
 
 ## Próximo passo
 
-Após publicar e validar a Fase 24.7, configurar as credenciais do Mercado Pago no Render e executar um pagamento Pix real controlado. Depois seguir para chatbot/WhatsApp, pagamentos dos clientes das lojas e preparação final de lançamento.
+Configurar um provedor de IA no Render para ativar a Fase 24.8.1 e validar respostas em Admin, Super Admin e loja pública. Depois integrar o mesmo núcleo ao WhatsApp Business.
 
 
 - Fase 23.2: edição completa de lojas restaurada no Super Admin.

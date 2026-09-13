@@ -1,16 +1,34 @@
-# Catálogo Digital — Fase 24.8.0
+# Catálogo Digital — Fase 24.8.1
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.7.7 — Acesso persistente ao Pix pendente**
+**24.8.1 — IA contextual do Catálogo Digital**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
 - `payments`: pagamentos dos clientes finais para cada loja;
 - `billing`: mensalidade que a loja paga para usar o Catálogo Digital.
 
+
+## Fase 24.8.1 — IA contextual e objetiva
+
+A Fase 24.8.1 evolui o assistente local para uma arquitetura híbrida: IA quando configurada e base local como fallback.
+
+- endpoint seguro `POST /api/assistant/chat` no backend;
+- integração compatível com provedores que usam o formato Chat Completions;
+- chave da IA permanece somente no Render/backend;
+- contexto automático de Cliente, Admin, Super Admin e loja pública;
+- busca local seleciona apenas trechos relevantes da base oficial antes de consultar a IA;
+- respostas curtas e focadas no uso do Catálogo Digital;
+- histórico curto da conversa para perguntas de continuação;
+- limite de requisições por minuto para reduzir abuso/custo;
+- fallback automático para o assistente local quando a IA estiver indisponível;
+- nenhum dado sensível, senha, token ou segredo é enviado pelo frontend;
+- nenhuma migration nesta fase.
+
+A IA fica desativada por padrão até que `ASSISTANT_AI_ENABLED=true` e as credenciais do provedor sejam configuradas no backend.
 
 ## Fase 24.8.0 — Assistente contextual do Catálogo Digital
 

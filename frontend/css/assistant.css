@@ -43,3 +43,13 @@
 }
 @media(prefers-reduced-motion:reduce){.cd-assistant-launcher,.cd-assistant-panel,.cd-assistant-chip,.cd-assistant-send{transition:none!important}}
 .cd-assistant-panel .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+/* Fase 24.8.1 — IA contextual */
+.cd-assistant-ai-badge{display:inline-flex;align-items:center;margin-left:5px;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font-size:9px;font-style:normal;font-weight:900;letter-spacing:.04em;vertical-align:1px}
+.cd-assistant-bubble{white-space:pre-line}
+.cd-assistant-typing{display:flex;align-items:center;gap:5px;min-width:54px;width:max-content}
+.cd-assistant-typing span{width:7px;height:7px;border-radius:50%;background:color-mix(in srgb,var(--brand) 62%,#667085);animation:cdAssistantTyping 1s ease-in-out infinite}
+.cd-assistant-typing span:nth-child(2){animation-delay:.14s}.cd-assistant-typing span:nth-child(3){animation-delay:.28s}
+.cd-assistant-form.is-busy{opacity:.78}.cd-assistant-input:disabled,.cd-assistant-send:disabled{cursor:wait}.cd-assistant-send:disabled{filter:saturate(.6);transform:none}
+@keyframes cdAssistantTyping{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-4px);opacity:1}}
+@media(prefers-reduced-motion:reduce){.cd-assistant-typing span{animation:none!important;opacity:.75}}

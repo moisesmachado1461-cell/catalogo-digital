@@ -16,6 +16,7 @@ from .middleware_security import (
 )
 from .observability import configure_observability
 from .routes.auth import router as auth_router
+from .routes.assistant import router as assistant_router
 from .routes.business import router as business_router
 from .routes.billing import admin_router as billing_admin_router
 from .routes.billing import public_router as billing_public_router
@@ -73,6 +74,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(assistant_router)
 app.include_router(customer_router)
 app.include_router(privacy_public_router)
 app.include_router(privacy_admin_router)

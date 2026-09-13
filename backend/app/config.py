@@ -52,6 +52,16 @@ class Settings(BaseSettings):
     mercado_pago_webhook_url: str | None = None
     mercado_pago_test_mode: bool = False
 
+    # Assistente IA — compatível com APIs no formato Chat Completions
+    assistant_ai_enabled: bool = False
+    assistant_ai_api_url: str | None = None
+    assistant_ai_api_key: str | None = None
+    assistant_ai_model: str | None = None
+    assistant_ai_timeout_seconds: int = 20
+    assistant_ai_max_tokens: int = 320
+    assistant_ai_temperature: float = 0.2
+    assistant_ai_requests_per_minute: int = 12
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
@@ -99,6 +109,15 @@ class Settings(BaseSettings):
             ]
         )
 
+    @property
+    def assistant_ai_configuration_complete(self) -> bool:
+        return bool(
+            self.assistant_ai_enabled
+            and self.assistant_ai_api_url
+            and self.assistant_ai_api_key
+            and self.assistant_ai_model
+        )
+
     def validate_for_runtime(self) -> None:
         if self.storage_provider_normalized not in {"local", "s3", "cloudinary"}:
             raise RuntimeError("STORAGE_PROVIDER deve ser 'local', 's3' ou 'cloudinary'.")
@@ -127,6 +146,22 @@ class Settings(BaseSettings):
             parsed_webhook = urlsplit(self.mercado_pago_webhook_url)
             if parsed_webhook.scheme not in {"http", "https"} or not parsed_webhook.netloc:
                 raise RuntimeError("MERCADO_PAGO_WEBHOOK_URL deve ser uma URL HTTP/HTTPS válida.")
+        if self.assistant_ai_enabled:
+            if not self.assistant_ai_api_url or not self.assistant_ai_api_key or not self.assistant_ai_model:
+                raise RuntimeError(
+                    "ASSISTANT_AI_ENABLED=true exige ASSISTANT_AI_API_URL, ASSISTANT_AI_API_KEY e ASSISTANT_AI_MODEL."
+                )
+            parsed_ai_url = urlsplit(self.assistant_ai_api_url)
+            if parsed_ai_url.scheme not in {"http", "https"} or not parsed_ai_url.netloc:
+                raise RuntimeError("ASSISTANT_AI_API_URL deve ser uma URL HTTP/HTTPS válida.")
+        if not 5 <= self.assistant_ai_timeout_seconds <= 60:
+            raise RuntimeError("ASSISTANT_AI_TIMEOUT_SECONDS deve ficar entre 5 e 60.")
+        if not 100 <= self.assistant_ai_max_tokens <= 800:
+            raise RuntimeError("ASSISTANT_AI_MAX_TOKENS deve ficar entre 100 e 800.")
+        if not 0 <= self.assistant_ai_temperature <= 1:
+            raise RuntimeError("ASSISTANT_AI_TEMPERATURE deve ficar entre 0 e 1.")
+        if not 1 <= self.assistant_ai_requests_per_minute <= 60:
+            raise RuntimeError("ASSISTANT_AI_REQUESTS_PER_MINUTE deve ficar entre 1 e 60.")
         if self.jwt_algorithm not in {"HS256", "HS384", "HS512"}:
             raise RuntimeError("JWT_ALGORITHM deve usar HS256, HS384 ou HS512.")
         if not 5 <= self.access_token_expire_minutes <= 1440:
@@ -147,6 +182,8 @@ class Settings(BaseSettings):
                 raise RuntimeError("Em produção, use PostgreSQL em DATABASE_URL; SQLite fica somente no desenvolvimento.")
             if self.mercado_pago_webhook_url and not self.mercado_pago_webhook_url.startswith("https://"):
                 raise RuntimeError("Em produção, MERCADO_PAGO_WEBHOOK_URL deve usar HTTPS.")
+            if self.assistant_ai_enabled and not self.assistant_ai_api_url.startswith("https://"):
+                raise RuntimeError("Em produção, ASSISTANT_AI_API_URL deve usar HTTPS.")
             if not self.allowed_origins:
                 raise RuntimeError("Em produção, informe pelo menos uma origem HTTPS em CORS_ORIGINS.")
             invalid_origins = [origin for origin in self.allowed_origins if not origin.startswith("https://")]
