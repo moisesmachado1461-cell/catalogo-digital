@@ -1,15 +1,24 @@
-# Catálogo Digital — Fase 24.7.6
+# Catálogo Digital — Fase 24.7.7
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.7.6 — Diagnóstico seguro de erros da cobrança Pix em produção**
+**24.7.7 — Acesso persistente ao Pix pendente**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
 - `payments`: pagamentos dos clientes finais para cada loja;
 - `billing`: mensalidade que a loja paga para usar o Catálogo Digital.
+
+## Fase 24.7.7 — pagamento Pix pendente acessível
+
+- `Meu plano` destaca cobranças Pix pendentes válidas.
+- O lojista pode reabrir o mesmo QR Code pelo botão **Ver QR Code**, sem gerar nova cobrança.
+- O histórico financeiro também oferece acesso à cobrança pendente.
+- Ao reabrir, o sistema consulta o status atual no backend e retoma a verificação automática.
+- Nenhuma migration nova e nenhuma mudança na regra de negócio do Mercado Pago.
+
 
 ## Fase 24.7.6 — diagnóstico Pix em produção
 

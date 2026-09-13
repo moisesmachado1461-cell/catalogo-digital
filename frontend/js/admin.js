@@ -712,6 +712,27 @@ function subscriptionPlansHtml(plan, sub, cycle, invoices, pixReady) {
   </div>`;
 }
 
+function pendingPixActionHtml(invoice, compact = false) {
+  const pending = String(invoice?.status || '').toUpperCase() === 'PENDING';
+  const mercadoPago = String(invoice?.provider || '').toUpperCase() === 'MERCADO_PAGO';
+  if (!pending || !mercadoPago || !invoice?.pix_available) return compact ? '—' : '';
+  return `<button class="btn primary small billing-pending-pix-button" type="button" onclick="openPendingPix(${Number(invoice.id)})">Ver QR Code</button>`;
+}
+
+function subscriptionPendingPixHtml(invoice) {
+  if (!invoice) return '';
+  return `<div class="billing-pending-pix-card">
+    <div class="billing-pending-pix-icon">PIX</div>
+    <div class="billing-pending-pix-copy">
+      <span class="eyebrow">PAGAMENTO PENDENTE</span>
+      <h3>Seu Pix continua disponível</h3>
+      <p>${escapeHtml(invoice.plan_name || 'Plano Catálogo Digital')} · <strong>${money(invoice.amount)}</strong>. Abra novamente o QR Code sem gerar outra cobrança.</p>
+      <small>${invoice.due_at ? `Vencimento: ${formatBillingDate(invoice.due_at)}` : 'A cobrança permanece aguardando o pagamento.'}</small>
+    </div>
+    <div class="billing-pending-pix-actions">${pendingPixActionHtml(invoice)}</div>
+  </div>`;
+}
+
 function subscriptionHistoryHtml(invoices, plan) {
   const rows = invoices.map(invoice => `<tr>
       <td><b>#${invoice.id}</b><br><small>${escapeHtml(invoice.invoice_type === 'PLAN_CHANGE' ? 'Troca de plano' : 'Renovação')}</small></td>
@@ -720,11 +741,12 @@ function subscriptionHistoryHtml(invoices, plan) {
       <td><b>${money(invoice.amount)}</b>${Number(invoice.discount_amount || 0) > 0 ? `<br><small>desconto ${money(invoice.discount_amount)}${invoice.coupon_code ? ` · ${escapeHtml(invoice.coupon_code)}` : ''}</small>` : ''}</td>
       <td>${escapeHtml(invoice.payment_method || billingProviderLabel(invoice.provider))}</td>
       <td><span class="status ${billingStatusClass(invoice.status)}">${escapeHtml(billingStatusLabel(invoice.status))}</span></td>
+      <td>${pendingPixActionHtml(invoice, true)}</td>
     </tr>`).join('');
 
   return `<div class="panel-soft billing-history-panel">
     <div class="billing-card-title"><div><span class="eyebrow">HISTÓRICO</span><h3>Cobranças da assinatura</h3></div><small>Últimas ${Math.min(invoices.length,20)} faturas</small></div>
-    <div class="table-wrap">${invoices.length ? `<table class="table billing-table"><thead><tr><th>Fatura</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Pagamento</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty small-empty">Ainda não há cobranças registradas para esta assinatura.</div>'}</div>
+    <div class="table-wrap">${invoices.length ? `<table class="table billing-table"><thead><tr><th>Fatura</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Ação</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty small-empty">Ainda não há cobranças registradas para esta assinatura.</div>'}</div>
   </div>`;
 }
 
@@ -749,9 +771,15 @@ function renderSubscription() {
   const paymentMethod = latestInvoice?.payment_method || (automaticProvider ? automaticProvider.display_name : 'Ainda não configurada');
   const pixProvider = (billingOverview?.providers || []).find(item => item.code === 'MERCADO_PAGO');
   const pixReady = Boolean(pixProvider?.available_for_checkout);
+  const pendingPixInvoice = invoices.find(invoice =>
+    String(invoice.status || '').toUpperCase() === 'PENDING' &&
+    String(invoice.provider || '').toUpperCase() === 'MERCADO_PAGO' &&
+    invoice.pix_available
+  );
 
   root.innerHTML = [
     subscriptionHeroHtml({ plan, sub, cycle, price, paymentMethod }),
+    subscriptionPendingPixHtml(pendingPixInvoice),
     `<div class="billing-two-columns">${subscriptionFeaturesHtml(features, pixReady)}${subscriptionSummaryHtml(sub, invoices, policy)}</div>`,
     subscriptionPlansHtml(plan, sub, cycle, invoices, pixReady),
     subscriptionHistoryHtml(invoices, plan),
@@ -793,6 +821,19 @@ function renderPixCheckout(invoice) {
     catch (_) { const field=$('#pixCopyCode'); field?.select(); document.execCommand('copy'); showToast('Código Pix copiado.'); }
   };
 }
+
+window.openPendingPix = async function openPendingPix(invoiceId) {
+  try {
+    const result = await api(`/api/admin/billing/pix/invoices/${invoiceId}`);
+    const invoice = result?.invoice;
+    if (!invoice) return showToast('Cobrança pendente não encontrada.', 'error');
+    renderPixCheckout(invoice);
+    if (String(invoice.status || '').toUpperCase() === 'PENDING') startPixPolling(invoice.id);
+    else await loadSubscription();
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
+};
 
 function startPixPolling(invoiceId) {
   if (pixPollTimer) clearInterval(pixPollTimer);

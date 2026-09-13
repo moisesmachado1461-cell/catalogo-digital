@@ -199,3 +199,11 @@ body:has(#adminView:not(.hidden)){
 .billing-pix-shell.is-paid .billing-pix-status{border-color:#abefc6;background:#ecfdf3}.billing-pix-shell.is-paid .billing-pix-status-icon{background:#079455}
 .billing-pix-shell.is-failed .billing-pix-status{border-color:#fecdca;background:#fef3f2}.billing-pix-shell.is-failed .billing-pix-status-icon{background:#d92d20}
 @media(max-width:680px){.billing-pix-content{grid-template-columns:1fr}.billing-pix-qr{width:min(240px,100%);justify-self:center}.billing-pix-copy .btn{width:100%}}
+
+/* Fase 24.7.7 — acesso persistente ao Pix pendente */
+.billing-pending-pix-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;margin:16px 0;padding:18px;border:1px solid color-mix(in srgb,var(--brand) 28%,var(--line));border-radius:20px;background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 9%,#fff),#fff 62%);box-shadow:0 14px 34px color-mix(in srgb,var(--brand) 8%,transparent)}
+.billing-pending-pix-icon{width:56px;height:56px;display:grid;place-items:center;border-radius:17px;background:var(--brand);color:#fff;font-size:.82rem;font-weight:950;letter-spacing:.04em;box-shadow:0 12px 28px color-mix(in srgb,var(--brand) 24%,transparent)}
+.billing-pending-pix-copy{display:grid;gap:4px}.billing-pending-pix-copy h3,.billing-pending-pix-copy p{margin:0}.billing-pending-pix-copy h3{font-size:1.05rem}.billing-pending-pix-copy p{color:var(--text);font-size:.8rem;line-height:1.5}.billing-pending-pix-copy small{color:var(--muted);font-weight:650}
+.billing-pending-pix-actions{display:flex;justify-content:flex-end}.billing-pending-pix-button{white-space:nowrap}
+.billing-table td:last-child,.billing-table th:last-child{text-align:right}
+@media(max-width:720px){.billing-pending-pix-card{grid-template-columns:auto 1fr}.billing-pending-pix-actions{grid-column:1/-1}.billing-pending-pix-actions .btn{width:100%}}

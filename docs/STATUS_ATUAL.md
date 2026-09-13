@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.7.6**.
+Versão consolidada até a **Fase 24.7.7**.
 
 ## Concluído
 
@@ -27,6 +27,15 @@ Versão consolidada até a **Fase 24.7.6**.
 - gestão e exposição pública controlada de cupons.
 - cupons por produto no Admin e cálculo restrito aos itens elegíveis;
 - cupons de planos SaaS gerenciados pelo Super Admin e aplicáveis na escolha de plano do Admin.
+
+## Fase 24.7.7 — acesso ao Pix pendente
+
+- `Meu plano` exibe um cartão de pagamento pendente quando já existe um Pix válido.
+- Botão **Ver QR Code** reabre a mesma cobrança e evita duplicidade.
+- Histórico da assinatura também permite reabrir cobranças Pix pendentes.
+- Polling de status é retomado ao reabrir o QR Code.
+- Sem migration nova.
+
 
 ## Fase 24.7.6 — diagnóstico seguro do Pix
 
