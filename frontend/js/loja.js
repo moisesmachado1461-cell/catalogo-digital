@@ -3,11 +3,7 @@ const slug = params.get('slug') || 'mercado-bom-preco';
 let store = null, catalog = null, serviceData = null, promotions = [], publicCoupons = [], resourcesData = null, rentalItemsData = null, paymentOptions = [];
 let selectedCouponCode = null;
 let cart = JSON.parse(localStorage.getItem(`cart_${slug}`) || '[]');
-const $ = sel => document.querySelector(sel);
-
-function initials(name = '') {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'CD';
-}
+const { query: $, queryAll: $$, initials } = window.CatalogoUtils;
 
 function firstStoreSection() {
   const caps = store?.capabilities || {};
@@ -55,7 +51,7 @@ function setTheme() {
   const secondary = store.secondary_color || '#4F46E5';
   document.documentElement.style.setProperty('--brand', primary);
   document.documentElement.style.setProperty('--brand2', secondary);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', primary);
+  $('meta[name="theme-color"]')?.setAttribute('content', primary);
   document.title = `${store.name} — Catálogo Digital`;
   $('#storeMetaDescription').setAttribute('content', store.description || `Conheça ${store.name} no Catálogo Digital.`);
   $('#storeName').textContent = store.name;
@@ -106,8 +102,8 @@ function addTab(id, label) {
 }
 
 function showSection(id, btn) {
-  document.querySelectorAll('.store-section').forEach(x => x.classList.add('hidden'));
-  document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+  $$('.store-section').forEach(x => x.classList.add('hidden'));
+  $$('.tab-btn').forEach(x => x.classList.remove('active'));
   const section = $(`#${id}`);
   if (!section) return;
   section.classList.remove('hidden');
@@ -115,9 +111,9 @@ function showSection(id, btn) {
 }
 
 window.openStoreSection = function openStoreSection(id) {
-  const btn = document.querySelector(`[data-target="${id}"]`);
+  const btn = $(`[data-target="${id}"]`);
   showSection(id, btn);
-  document.querySelector('.store-nav')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('.store-nav')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 
@@ -192,7 +188,7 @@ async function loadPaymentOptions() {
 }
 
 function renderPaymentSelects() {
-  document.querySelectorAll('.payment-method-select').forEach((select) => {
+  $$('.payment-method-select').forEach((select) => {
     const current = select.value;
     if (!paymentOptions.length) {
       select.innerHTML = '<option value="">Pagamento a combinar</option>';
@@ -472,8 +468,8 @@ async function loadServices() {
 }
 
 function bookingStep(step) {
-  document.querySelectorAll('[data-booking-step]').forEach(el => el.classList.toggle('hidden', Number(el.dataset.bookingStep) !== step));
-  const markers = [...document.querySelectorAll('.booking-progress span')];
+  $$('[data-booking-step]').forEach(el => el.classList.toggle('hidden', Number(el.dataset.bookingStep) !== step));
+  const markers = $$('.booking-progress span');
   markers.forEach((marker, index) => marker.classList.toggle('active', index < step));
 }
 
@@ -709,6 +705,6 @@ function renderContact() {
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeModal(b.dataset.close));
-document.querySelectorAll('.modal-backdrop').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
+$$('[data-close]').forEach(b => b.onclick = () => closeModal(b.dataset.close));
+$$('.modal-backdrop').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
 init();

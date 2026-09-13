@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.7.2
+# Catálogo Digital — Fase 24.7.3
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.7.2 — Planos dinâmicos + Pix imediato via Mercado Pago**
+**24.7.3 — Refatoração segura e limpeza de código sobre a base 24.7**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -263,3 +263,17 @@ Veja `docs/FASE_24_7_PLANOS_PIX_MERCADO_PAGO.md`.
 - cenário `test_user_br@testuser.com` usa os R$ 50,00 predefinidos pelo sandbox oficial;
 - valor comercial da fatura permanece inalterado;
 - mensagens de erro do gateway exibem código/HTTP quando disponível.
+
+
+## Fase 24.7.3 — refatoração segura e limpeza
+
+Sem mudança de regra de negócio ou funcionalidade:
+
+- utilitários DOM/form compartilhados em `frontend/js/shared/dom-utils.js`;
+- remoção de helpers duplicados entre Cliente, Loja, Admin e Super Admin;
+- `frontend/js/api.js` dividido em funções menores e constantes nomeadas;
+- renderização de assinatura do Admin dividida em funções menores e focadas;
+- acompanhamento de pedidos/agendamentos reformatado e organizado;
+- importações Python não utilizadas removidas;
+- scripts HTML padronizados, `.editorconfig` adicionado e cache PWA atualizado;
+- sem migration nova; backend `24.7.3`.

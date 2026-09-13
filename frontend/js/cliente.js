@@ -8,11 +8,7 @@ let customerAccount = null;
 let customerOrders = [];
 let customerAppointments = [];
 
-const cq = selector => document.querySelector(selector);
-
-function customerInitials(value = '') {
-  return String(value).trim().split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'CD';
-}
+const { query: cq, queryAll: cqa, initials } = window.CatalogoUtils;
 
 function customerToken() {
   return sessionStorage.getItem(customerTokenKey) || '';
@@ -50,8 +46,8 @@ function customerApplyTheme(store) {
   const secondary = store?.secondary_color || '#4f46e5';
   document.documentElement.style.setProperty('--brand', primary);
   document.documentElement.style.setProperty('--brand2', secondary);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', primary);
-  const logo = store?.logo_url ? `<img src="${escapeHtml(assetUrl(store.logo_url))}" alt="Logo de ${escapeHtml(store.name)}">` : escapeHtml(customerInitials(store?.name));
+  cq('meta[name="theme-color"]')?.setAttribute('content', primary);
+  const logo = store?.logo_url ? `<img src="${escapeHtml(assetUrl(store.logo_url))}" alt="Logo de ${escapeHtml(store.name)}">` : escapeHtml(initials(store?.name, 'CD'));
   cq('#customerBrandMark').innerHTML = logo;
   cq('#customerStoreBadge').innerHTML = logo;
   cq('#customerMobileBrandMark').innerHTML = logo;
@@ -203,7 +199,7 @@ cq('#customerLogoutBtn').onclick = () => {
   switchAuthMode('login');
 };
 
-for (const toggle of document.querySelectorAll('[data-password-toggle]')) {
+for (const toggle of cqa('[data-password-toggle]')) {
   toggle.addEventListener('click', () => {
     const input = toggle.closest('.customer-input-wrap')?.querySelector('input');
     if (!input) return;
@@ -214,9 +210,9 @@ for (const toggle of document.querySelectorAll('[data-password-toggle]')) {
   });
 }
 
-for (const button of document.querySelectorAll('[data-customer-tab]')) {
+for (const button of cqa('[data-customer-tab]')) {
   button.onclick = () => {
-    document.querySelectorAll('[data-customer-tab]').forEach(row => row.classList.toggle('active', row === button));
+    cqa('[data-customer-tab]').forEach(row => row.classList.toggle('active', row === button));
     const orders = button.dataset.customerTab === 'orders';
     cq('#customerOrdersPanel').classList.toggle('hidden', !orders);
     cq('#customerAppointmentsPanel').classList.toggle('hidden', orders);

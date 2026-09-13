@@ -1,0 +1,18 @@
+CATÁLOGO DIGITAL — FASE 24.7.3
+Refatoração segura e limpeza de código
+
+1. Extraia o ZIP.
+2. Copie TODO o conteúdo da pasta extraída para a pasta principal do projeto.
+3. Escolha "Substituir os arquivos no destino" quando o Windows perguntar.
+4. Não apague .env, .venv, banco local, uploads ou .git.
+5. Com a .venv ativa, rode apenas:
+
+   python backend\scripts\phase24_5_release_gate.py
+
+6. Se aparecer RELEASE GATE APROVADO:
+
+   git add .
+   git commit -m "Fase 24.7.3 - refatoracao segura e limpeza de codigo"
+   git push
+
+Não há migration nova nesta fase.

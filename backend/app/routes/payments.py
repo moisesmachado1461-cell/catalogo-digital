@@ -9,7 +9,6 @@ from ..repositories.catalog_repository import get_store_by_slug
 from ..schemas.payments import PaymentSettingsUpdate, PaymentStatusUpdate
 from ..services.payment_service import (
     available_payment_options,
-    default_settings_dict,
     get_settings_row,
     payment_dict,
     payment_settings_dict,

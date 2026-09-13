@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session, selectinload
 from ..database import get_db
 from ..dependencies import get_current_store_id
 from ..models.store import Store
-from ..repositories.catalog_repository import get_store_by_slug
 from ..schemas.store import StoreUpdate
 from ..services.subscription_service import plan_context
 

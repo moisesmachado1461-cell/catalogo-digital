@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.7.2**.
+Versão consolidada até a **Fase 24.7.3**.
 
 ## Concluído
 
@@ -267,3 +267,16 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - Sandbox Pix por Orders usa R$ 50,00 apenas quando `MERCADO_PAGO_TEST_MODE=true` e o pagador é `test_user_br@testuser.com`.
 - Fatura interna mantém o preço real do plano.
 - Produção permanece protegida: a exceção de valor não é aceita com modo de teste desligado.
+
+
+## Fase 24.7.3 — refatoração segura e manutenção
+
+- comportamento funcional preservado;
+- utilitários genéricos de DOM e formulários centralizados em `frontend/js/shared/dom-utils.js`;
+- duplicações de helpers removidas das interfaces principais;
+- `api.js` reorganizado em funções menores, constantes claras e tratamento de resposta isolado;
+- tela de assinatura do Admin dividida em funções de renderização menores;
+- acompanhamento público reformatado e separado em responsabilidades claras;
+- imports Python sem uso removidos;
+- scripts HTML, `.editorconfig` e cache PWA alinhados com a nova estrutura;
+- sem migration; backend `24.7.3`; cache PWA `catalogo-digital-v24-7-3`.

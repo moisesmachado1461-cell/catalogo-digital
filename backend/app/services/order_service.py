@@ -1,11 +1,11 @@
-from datetime import datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
 import secrets
+from datetime import datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from ..models.catalog import Product, ProductOption, ProductOptionItem, ProductVariant
+from ..models.catalog import Product, ProductOption
 from ..models.marketing import CouponUsage
 from ..models.sales import Customer, Inventory, Order, OrderItem
 from ..models.store import Store

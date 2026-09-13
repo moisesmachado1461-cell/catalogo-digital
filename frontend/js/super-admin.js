@@ -1,4 +1,4 @@
-const $s = selector => document.querySelector(selector);
+const { query: $s, queryAll: $$s, initials } = window.CatalogoUtils;
 let superMe = null;
 let superStores = [];
 let businessCategories = [];
@@ -12,12 +12,6 @@ let currentSuperSection = 'dashboard';
 let selectedCouponStoreId = null;
 let selectedStoreCoupons = [];
 let selectedStoreProducts = [];
-
-function initials(value, fallback = 'SA') {
-  const parts = String(value || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return fallback;
-  return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
-}
 
 const superMetricPaths = {
   stores:'<path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/>',
@@ -63,14 +57,14 @@ function updateSuperBreadcrumb(id) {
 
 window.switchSuperSection = function(id) {
   currentSuperSection = id;
-  document.querySelectorAll('#superView .admin-section').forEach(section => section.classList.remove('active'));
+  $$s('#superView .admin-section').forEach(section => section.classList.remove('active'));
   $s(`#super-${id}`)?.classList.add('active');
-  document.querySelectorAll('[data-super-section]').forEach(button => button.classList.toggle('active', button.dataset.superSection === id));
+  $$s('[data-super-section]').forEach(button => button.classList.toggle('active', button.dataset.superSection === id));
   updateSuperBreadcrumb(id);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-document.querySelectorAll('[data-super-section]').forEach(button => {
+$$s('[data-super-section]').forEach(button => {
   button.onclick = () => switchSuperSection(button.dataset.superSection);
 });
 

@@ -1,5 +1,4 @@
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
+const { query: $, queryAll: $$, initials, nullable, checked, optionSelected, toDateTimeLocal } = window.CatalogoUtils;
 
 let me = null;
 let store = null;
@@ -92,12 +91,6 @@ function adminIcon(id) {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
 }
 
-function initials(value, fallback = 'CD') {
-  const parts = String(value || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return fallback;
-  return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
-}
-
 function renderAdminIdentity() {
   const userName = me?.name || me?.full_name || 'Administrador';
   const storeName = store?.name || 'Sua loja';
@@ -143,27 +136,6 @@ function renderDashboardAttention() {
   if (store?.capabilities?.payments && alerts.length < 3) alerts.push({ level: pendingPayments ? 'warning' : '', title: `${pendingPayments} pagamento${pendingPayments === 1 ? '' : 's'} pendente${pendingPayments === 1 ? '' : 's'}`, note: pendingPayments ? 'Há pagamentos aguardando confirmação.' : 'Financeiro em dia.' });
   if (!alerts.length) alerts.push({ level: '', title: 'Operação em dia', note: 'Nenhuma pendência importante detectada.' });
   root.innerHTML = alerts.slice(0, 3).map(item => `<div class="attention-item ${item.level}"><span class="attention-dot"></span><div class="attention-copy"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.note)}</small></div></div>`).join('');
-}
-
-function nullable(value) {
-  const text = String(value ?? '').trim();
-  return text === '' ? null : text;
-}
-
-function checked(value) {
-  return value ? 'checked' : '';
-}
-
-function optionSelected(a, b) {
-  return String(a ?? '') === String(b ?? '') ? 'selected' : '';
-}
-
-function toDateTimeLocal(value) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
 }
 
 function couponValidityLabel(coupon) {
@@ -349,7 +321,7 @@ async function startAdmin() {
 function applyStoreTheme() {
   document.documentElement.style.setProperty('--brand', store?.primary_color || '#7C3AED');
   document.documentElement.style.setProperty('--brand2', store?.secondary_color || '#4F46E5');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', store?.primary_color || '#7C3AED');
+  $('meta[name="theme-color"]')?.setAttribute('content', store?.primary_color || '#7C3AED');
 }
 
 function setAdminSidebarOpen(open) {
@@ -602,12 +574,6 @@ window.loadSubscription = async function loadSubscription() {
   renderDashboardReportPreview();
 };
 
-function limitValue(key) {
-  const raw = subscriptionInfo?.limits?.[key];
-  if (raw === undefined || raw === null || Number(raw) < 0) return 'Ilimitado';
-  return Number(raw);
-}
-
 function usageCard(label, key) {
   const used = Number(subscriptionInfo?.usage?.[key] || 0);
   const raw = subscriptionInfo?.limits?.[key];
@@ -649,32 +615,18 @@ function billingCycleLabel(value) {
   return String(value || 'MONTHLY').toUpperCase() === 'YEARLY' ? 'Anual' : 'Mensal';
 }
 
-function renderSubscription() {
-  const root = $('#subscriptionContent');
-  if (!root || !subscriptionInfo) return;
-  const plan = subscriptionInfo.plan;
-  const sub = subscriptionInfo.subscription;
-  const features = subscriptionInfo.features || {};
-  const invoices = billingOverview?.recent_invoices || [];
-  const policy = billingOverview?.billing_policy || {};
-  const featureLabels = {
-    coupons:'Cupons', promotions:'Promoções', custom_branding:'Personalização visual', reports:'Relatórios',
-    priority_support:'Suporte prioritário', custom_domain:'Domínio personalizado', online_payments:'Pagamentos online'
-  };
-  if (!plan) {
-    root.innerHTML = '<div class="empty">Nenhum plano configurado para esta loja.</div>';
-    return;
-  }
+const billingFeatureLabels = {
+  coupons: 'Cupons',
+  promotions: 'Promoções',
+  custom_branding: 'Personalização visual',
+  reports: 'Relatórios',
+  priority_support: 'Suporte prioritário',
+  custom_domain: 'Domínio personalizado',
+  online_payments: 'Pagamentos online',
+};
 
-  const cycle = sub?.billing_cycle || 'MONTHLY';
-  const price = cycle === 'YEARLY' ? plan.yearly_price : plan.monthly_price;
-  const latestInvoice = invoices[0] || null;
-  const automaticProvider = (billingOverview?.providers || []).find(item => item.code === sub?.provider && item.configured);
-  const paymentMethod = latestInvoice?.payment_method || (automaticProvider ? automaticProvider.display_name : 'Ainda não configurada');
-  const pixProvider = (billingOverview?.providers || []).find(item => item.code === 'MERCADO_PAGO');
-  const pixReady = Boolean(pixProvider?.available_for_checkout);
-
-  root.innerHTML = `<div class="billing-admin-hero">
+function subscriptionHeroHtml({ plan, sub, cycle, price, paymentMethod }) {
+  return `<div class="billing-admin-hero">
     <div class="billing-plan-card">
       <div class="billing-plan-top"><span class="eyebrow">PLANO ATUAL</span><span class="status ${billingStatusClass(sub?.status || 'ACTIVE')}">${escapeHtml(billingStatusLabel(sub?.status || 'ACTIVE'))}</span></div>
       <h3>${escapeHtml(plan.name)}</h3>
@@ -693,15 +645,26 @@ function renderSubscription() {
       ${usageCard('Serviços','services')}
       ${usageCard('Profissionais','professionals')}
     </div>
-  </div>
+  </div>`;
+}
 
-  <div class="billing-two-columns">
-    <div class="panel-soft billing-feature-panel">
+function subscriptionFeaturesHtml(features, pixReady) {
+  const chips = Object.entries(billingFeatureLabels)
+    .map(([key, label]) => `<span class="feature-chip ${features[key] ? 'enabled' : 'disabled'}">${features[key] ? '✓' : '—'} ${escapeHtml(label)}</span>`)
+    .join('');
+  const help = pixReady
+    ? 'A confirmação do Mercado Pago ativa o plano automaticamente.'
+    : 'O Pix aparecerá assim que as credenciais do Mercado Pago forem configuradas com segurança.';
+
+  return `<div class="panel-soft billing-feature-panel">
       <div class="billing-card-title"><div><span class="eyebrow">RECURSOS</span><h3>O que está incluído</h3></div></div>
-      <div class="feature-chips">${Object.entries(featureLabels).map(([key,label]) => `<span class="feature-chip ${features[key] ? 'enabled' : 'disabled'}">${features[key] ? '✓' : '—'} ${escapeHtml(label)}</span>`).join('')}</div>
-      <p class="section-copy billing-help-copy">Você pode escolher outro plano, aplicar cupom e pagar por Pix. ${pixReady ? 'A confirmação do Mercado Pago ativa o plano automaticamente.' : 'O Pix aparecerá assim que as credenciais do Mercado Pago forem configuradas com segurança.'}</p>
-    </div>
-    <div class="panel-soft billing-summary-panel">
+      <div class="feature-chips">${chips}</div>
+      <p class="section-copy billing-help-copy">Você pode escolher outro plano, aplicar cupom e pagar por Pix. ${help}</p>
+    </div>`;
+}
+
+function subscriptionSummaryHtml(sub, invoices, policy) {
+  return `<div class="panel-soft billing-summary-panel">
       <div class="billing-card-title"><div><span class="eyebrow">COBRANÇA</span><h3>Resumo financeiro</h3></div></div>
       <div class="billing-summary-list">
         <div><span>Período atual</span><b>${formatBillingDate(sub?.current_period_start)} → ${formatBillingDate(sub?.current_period_end)}</b></div>
@@ -709,40 +672,90 @@ function renderSubscription() {
         <div><span>Faturas recentes</span><b>${invoices.length}</b></div>
         <div><span>Renovação automática</span><b>${sub?.auto_renew ? 'Ativada' : 'Ainda não ativada'}</b></div>
       </div>
-    </div>
-  </div>
+    </div>`;
+}
 
-  <div class="panel-soft billing-plan-marketplace">
-    <div class="billing-card-title"><div><span class="eyebrow">PLANOS</span><h3>Escolha o plano ideal</h3></div><small>Cupons promocionais podem ser aplicados antes de confirmar</small></div>
-    <div class="billing-plan-choice-grid">${availableBillingPlans.map(candidate => {
-      const isCurrent = Number(candidate.id) === Number(plan.id);
-      const featureCount = Object.values(candidate.features || {}).filter(Boolean).length;
-      const hasPendingRenewal = isCurrent && invoices.some(invoice => invoice.invoice_type === 'RENEWAL' && ['PENDING','FAILED'].includes(String(invoice.status || '').toUpperCase()));
-      const isTrialCurrent = isCurrent && String(sub?.status || '').toUpperCase() === 'TRIAL';
-      const canChangeCurrentCycle = isCurrent && candidate.yearly_price != null && cycle !== 'YEARLY';
-      const buttonEnabled = pixReady && (!isCurrent || canChangeCurrentCycle || hasPendingRenewal || isTrialCurrent);
-      const buttonLabel = !pixReady ? 'Pix em configuração' : hasPendingRenewal ? 'Pagar renovação com Pix' : isTrialCurrent ? 'Garantir plano com Pix' : isCurrent ? (canChangeCurrentCycle ? 'Mudar ciclo com Pix' : 'Plano atual') : 'Pagar com Pix';
-      return `<article class="billing-choice-card ${isCurrent ? 'is-current' : ''} ${candidate.is_featured ? 'is-featured' : ''}">
+function planChoiceCardHtml(candidate, currentPlan, sub, cycle, invoices, pixReady) {
+  const isCurrent = Number(candidate.id) === Number(currentPlan.id);
+  const featureCount = Object.values(candidate.features || {}).filter(Boolean).length;
+  const hasPendingRenewal = isCurrent && invoices.some(invoice => invoice.invoice_type === 'RENEWAL' && ['PENDING','FAILED'].includes(String(invoice.status || '').toUpperCase()));
+  const isTrialCurrent = isCurrent && String(sub?.status || '').toUpperCase() === 'TRIAL';
+  const canChangeCurrentCycle = isCurrent && candidate.yearly_price != null && cycle !== 'YEARLY';
+  const buttonEnabled = pixReady && (!isCurrent || canChangeCurrentCycle || hasPendingRenewal || isTrialCurrent);
+  const buttonLabel = !pixReady
+    ? 'Pix em configuração'
+    : hasPendingRenewal
+      ? 'Pagar renovação com Pix'
+      : isTrialCurrent
+        ? 'Garantir plano com Pix'
+        : isCurrent
+          ? (canChangeCurrentCycle ? 'Mudar ciclo com Pix' : 'Plano atual')
+          : 'Pagar com Pix';
+
+  return `<article class="billing-choice-card ${isCurrent ? 'is-current' : ''} ${candidate.is_featured ? 'is-featured' : ''}">
         ${candidate.badge ? `<span class="billing-plan-badge">${escapeHtml(candidate.badge)}</span>` : ''}
         <div class="billing-choice-head"><div><b>${escapeHtml(candidate.name)}</b><small>${escapeHtml(candidate.description || 'Plano Catálogo Digital')}</small></div>${isCurrent ? '<span class="status CONFIRMADO">Atual</span>' : ''}</div>
         <div class="billing-choice-price"><strong>${money(candidate.monthly_price)}</strong><span>/mês</span></div>
         <div class="billing-choice-meta"><span>${featureCount} recurso(s)</span><span>${Number(candidate.trial_days || 0)} dia(s) grátis</span><span>${candidate.yearly_price != null ? `${money(candidate.yearly_price)}/ano` : 'Mensal'}</span></div>
         <button class="btn ${isCurrent ? 'ghost' : 'primary'} small" type="button" ${buttonEnabled ? `onclick="openPlanCheckout(${candidate.id})"` : 'disabled'}>${buttonLabel}</button>
       </article>`;
-    }).join('') || '<div class="empty">Nenhum plano disponível.</div>'}</div>
-  </div>
+}
 
-  <div class="panel-soft billing-history-panel">
-    <div class="billing-card-title"><div><span class="eyebrow">HISTÓRICO</span><h3>Cobranças da assinatura</h3></div><small>Últimas ${Math.min(invoices.length,20)} faturas</small></div>
-    <div class="table-wrap">${invoices.length ? `<table class="table billing-table"><thead><tr><th>Fatura</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Pagamento</th><th>Status</th></tr></thead><tbody>${invoices.map(invoice => `<tr>
+function subscriptionPlansHtml(plan, sub, cycle, invoices, pixReady) {
+  const cards = availableBillingPlans
+    .map(candidate => planChoiceCardHtml(candidate, plan, sub, cycle, invoices, pixReady))
+    .join('');
+
+  return `<div class="panel-soft billing-plan-marketplace">
+    <div class="billing-card-title"><div><span class="eyebrow">PLANOS</span><h3>Escolha o plano ideal</h3></div><small>Cupons promocionais podem ser aplicados antes de confirmar</small></div>
+    <div class="billing-plan-choice-grid">${cards || '<div class="empty">Nenhum plano disponível.</div>'}</div>
+  </div>`;
+}
+
+function subscriptionHistoryHtml(invoices, plan) {
+  const rows = invoices.map(invoice => `<tr>
       <td><b>#${invoice.id}</b><br><small>${escapeHtml(invoice.invoice_type === 'PLAN_CHANGE' ? 'Troca de plano' : 'Renovação')}</small></td>
       <td>${escapeHtml(invoice.plan_name || plan.name)}</td>
       <td>${formatBillingDate(invoice.due_at || invoice.created_at)}</td>
       <td><b>${money(invoice.amount)}</b>${Number(invoice.discount_amount || 0) > 0 ? `<br><small>desconto ${money(invoice.discount_amount)}${invoice.coupon_code ? ` · ${escapeHtml(invoice.coupon_code)}` : ''}</small>` : ''}</td>
       <td>${escapeHtml(invoice.payment_method || billingProviderLabel(invoice.provider))}</td>
       <td><span class="status ${billingStatusClass(invoice.status)}">${escapeHtml(billingStatusLabel(invoice.status))}</span></td>
-    </tr>`).join('')}</tbody></table>` : '<div class="empty small-empty">Ainda não há cobranças registradas para esta assinatura.</div>'}</div>
+    </tr>`).join('');
+
+  return `<div class="panel-soft billing-history-panel">
+    <div class="billing-card-title"><div><span class="eyebrow">HISTÓRICO</span><h3>Cobranças da assinatura</h3></div><small>Últimas ${Math.min(invoices.length,20)} faturas</small></div>
+    <div class="table-wrap">${invoices.length ? `<table class="table billing-table"><thead><tr><th>Fatura</th><th>Plano</th><th>Vencimento</th><th>Valor</th><th>Pagamento</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty small-empty">Ainda não há cobranças registradas para esta assinatura.</div>'}</div>
   </div>`;
+}
+
+function renderSubscription() {
+  const root = $('#subscriptionContent');
+  if (!root || !subscriptionInfo) return;
+
+  const plan = subscriptionInfo.plan;
+  if (!plan) {
+    root.innerHTML = '<div class="empty">Nenhum plano configurado para esta loja.</div>';
+    return;
+  }
+
+  const sub = subscriptionInfo.subscription;
+  const features = subscriptionInfo.features || {};
+  const invoices = billingOverview?.recent_invoices || [];
+  const policy = billingOverview?.billing_policy || {};
+  const cycle = sub?.billing_cycle || 'MONTHLY';
+  const price = cycle === 'YEARLY' ? plan.yearly_price : plan.monthly_price;
+  const latestInvoice = invoices[0] || null;
+  const automaticProvider = (billingOverview?.providers || []).find(item => item.code === sub?.provider && item.configured);
+  const paymentMethod = latestInvoice?.payment_method || (automaticProvider ? automaticProvider.display_name : 'Ainda não configurada');
+  const pixProvider = (billingOverview?.providers || []).find(item => item.code === 'MERCADO_PAGO');
+  const pixReady = Boolean(pixProvider?.available_for_checkout);
+
+  root.innerHTML = [
+    subscriptionHeroHtml({ plan, sub, cycle, price, paymentMethod }),
+    `<div class="billing-two-columns">${subscriptionFeaturesHtml(features, pixReady)}${subscriptionSummaryHtml(sub, invoices, policy)}</div>`,
+    subscriptionPlansHtml(plan, sub, cycle, invoices, pixReady),
+    subscriptionHistoryHtml(invoices, plan),
+  ].join('');
 }
 
 function billingCheckoutPreview(plan, cycle, preview = null) {

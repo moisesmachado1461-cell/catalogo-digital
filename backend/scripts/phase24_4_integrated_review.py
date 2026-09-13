@@ -52,6 +52,7 @@ def check_required_surfaces() -> None:
         FRONTEND / "js" / "admin.js",
         FRONTEND / "js" / "super-admin.js",
         FRONTEND / "js" / "api.js",
+        FRONTEND / "js" / "shared" / "dom-utils.js",
         FRONTEND / "css" / "store-premium.css",
         FRONTEND / "css" / "admin-premium.css",
         FRONTEND / "css" / "super-admin-premium.css",
@@ -186,7 +187,7 @@ def check_shared_frontend_runtime() -> None:
     issues: list[str] = []
     for name in ("loja.html", "admin.html", "super-admin.html"):
         page = text(FRONTEND / name)
-        for script in ("js/runtime-config.js", "js/api.js", "js/ui-system.js", "js/pwa.js"):
+        for script in ("js/runtime-config.js", "js/shared/dom-utils.js", "js/api.js", "js/ui-system.js", "js/pwa.js"):
             if script not in page:
                 issues.append(f"{name}: {script}")
     if issues:

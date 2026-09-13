@@ -164,8 +164,14 @@
     <div class="footer-links"><a id="privacyStoreLink" href="privacidade.html">Privacidade</a><a href="termos.html">Termos de uso</a><a href="admin.html">Painel da loja</a><a href="#storeHero">Voltar ao topo</a></div>
   </div>
 </footer>
-<script src="js/runtime-config.js"></script><script src="js/api.js"></script>
-<script>document.getElementById('privacyStoreLink').href = `privacidade.html?slug=${encodeURIComponent(new URLSearchParams(location.search).get('slug') || '')}`;</script>
+<script src="js/runtime-config.js"></script>
+<script src="js/shared/dom-utils.js"></script>
+<script src="js/api.js"></script>
+<script>
+  document.getElementById('privacyStoreLink').href = `privacidade.html?slug=${encodeURIComponent(new URLSearchParams(location.search).get('slug') || '')}`;
+</script>
 <script src="js/loja.js"></script>
-<script src="js/ui-system.js"></script><script src="js/pwa.js"></script></body>
+<script src="js/ui-system.js"></script>
+<script src="js/pwa.js"></script>
+</body>
 </html>
