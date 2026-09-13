@@ -1,0 +1,321 @@
+/*
+  Catálogo Digital — Fase 24.7.4
+  Acabamento visual premium compartilhado.
+  Somente apresentação: nenhuma regra de negócio é alterada aqui.
+*/
+
+:root {
+  --font-display: "Segoe UI Variable Display", "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "Segoe UI Variable Text", "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --premium-radius: 20px;
+  --premium-radius-lg: 26px;
+  --premium-shadow: 0 18px 48px rgba(15, 23, 42, .08);
+  --premium-shadow-hover: 0 24px 58px rgba(15, 23, 42, .12);
+}
+
+html { text-rendering: optimizeLegibility; }
+body {
+  font-family: var(--font-body);
+  font-weight: 580;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4,
+.brand,
+.section-title,
+.panel-head h2,
+.admin-header h1,
+.store-section-head h2,
+.customer-auth-heading h2,
+.price,
+.stat-card strong {
+  font-family: var(--font-display);
+  font-weight: 850;
+}
+
+small, .muted, .section-copy { font-weight: 560; }
+
+/* Botões: presença visual consistente sem exagero. */
+.btn,
+.tab-btn,
+.side-btn,
+.store-cart-trigger,
+.customer-auth-tab {
+  min-height: 42px;
+  font-weight: 780;
+}
+
+.btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: linear-gradient(110deg, transparent 15%, rgba(255,255,255,.22) 48%, transparent 78%);
+  transform: translateX(-110%);
+  transition: transform .5s var(--ease), opacity .2s var(--ease);
+}
+.btn:hover::after { opacity: 1; transform: translateX(110%); }
+.btn.primary {
+  border-color: color-mix(in srgb, var(--brand) 72%, #fff);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--brand) 23%, transparent), inset 0 1px 0 rgba(255,255,255,.24);
+}
+.btn.ghost {
+  background: rgba(255,255,255,.88);
+  border-color: color-mix(in srgb, var(--brand) 10%, var(--line));
+}
+
+/* Cabeçalhos e superfícies ganham hierarquia mais clara. */
+.topbar {
+  backdrop-filter: blur(18px) saturate(1.12);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+}
+.admin-header,
+.panel-head,
+.store-section-head {
+  align-items: center;
+}
+.admin-header h1,
+.section-title,
+.store-section-head h2 {
+  color: #0f172a;
+}
+
+.panel,
+.stat-card,
+.store-card,
+.product-card,
+.product-card-v2,
+.service-card,
+.service-card-v2,
+.contact-card,
+.customer-portal-panel,
+.customer-tracking-card {
+  border-color: color-mix(in srgb, var(--brand) 7%, var(--line));
+  box-shadow: var(--premium-shadow);
+}
+
+.panel:hover,
+.stat-card:hover {
+  border-color: color-mix(in srgb, var(--brand) 13%, var(--line));
+}
+
+/* Loja pública: vitrine mais refinada e legível. */
+.premium-store-topbar .container,
+.store-nav-shell {
+  min-height: 64px;
+}
+.store-header-brand strong,
+.store-header-primary {
+  font-family: var(--font-display);
+  font-weight: 850;
+}
+.store-header-copy small { font-weight: 650; }
+.store-nav-v2 {
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+}
+.store-nav-v2 .tab-btn {
+  padding-inline: 17px;
+  border-radius: 999px;
+  color: #596579;
+}
+.store-nav-v2 .tab-btn.active {
+  color: #fff;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 24%, transparent);
+}
+.toolbar-v2 {
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--brand) 6%, rgba(15,23,42,.06));
+}
+.category-chips .tab-btn,
+.category-chips button {
+  font-weight: 760;
+}
+.product-grid-v2,
+.service-grid-v2 {
+  align-items: stretch;
+}
+.product-card-v2,
+.service-card-v2 {
+  height: 100%;
+  border-radius: var(--premium-radius-lg);
+  box-shadow: 0 14px 34px rgba(15,23,42,.075);
+}
+.product-card-v2:hover,
+.service-card-v2:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--premium-shadow-hover);
+}
+.product-card-v2 h3,
+.service-card-v2 h3,
+.product-card-v2 .price {
+  font-family: var(--font-display);
+  font-weight: 850;
+}
+.product-card-v2 .btn,
+.service-card-v2 .btn {
+  min-height: 44px;
+}
+.store-cart-trigger {
+  min-height: 44px;
+  padding-inline: 14px 10px;
+  border: 1px solid rgba(255,255,255,.28);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--brand) 26%, transparent), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.cart-drawer {
+  border-top-left-radius: 24px;
+  border-bottom-left-radius: 24px;
+}
+.cart-drawer-head h2 { font-family: var(--font-display); font-weight: 880; }
+
+/* Admin: maior densidade visual e acabamento de produto SaaS. */
+.admin-main,
+.super-main { isolation: isolate; }
+.admin-welcome-card,
+.super-welcome-card,
+.billing-command-hero,
+.super-section-hero {
+  border: 1px solid color-mix(in srgb, var(--brand) 11%, var(--line));
+  box-shadow: var(--premium-shadow);
+}
+.admin-user-chip,
+.super-user-chip {
+  border: 1px solid color-mix(in srgb, var(--brand) 10%, var(--line));
+  box-shadow: 0 8px 22px rgba(15,23,42,.055);
+}
+.admin-user-avatar,
+.super-profile-avatar {
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+.stats .stat-card,
+.admin-stats-premium .stat-card,
+.super-stats-premium .super-metric-card {
+  min-height: 142px;
+  border-radius: 21px;
+}
+.stat-card strong,
+.super-metric-card strong {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -.045em;
+}
+.side-menu { gap: 4px; }
+.side-btn {
+  min-height: 44px;
+  padding-block: 10px;
+}
+.side-btn span:last-child { font-weight: 760; }
+.side-btn.active {
+  box-shadow: 0 12px 28px rgba(0,0,0,.16), inset 3px 0 0 rgba(255,255,255,.82);
+}
+.sidebar-collapse-btn {
+  box-shadow: 0 12px 28px rgba(15,23,42,.22), 0 0 0 1px rgba(255,255,255,.14);
+}
+
+/* Tabelas: leitura mais rápida e menos aparência de planilha crua. */
+.table-wrap {
+  border: 1px solid #edf0f4;
+  border-radius: 16px;
+  background: #fff;
+}
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: .74rem;
+  font-weight: 850;
+  letter-spacing: .055em;
+  background: rgba(250,251,252,.96);
+  backdrop-filter: blur(8px);
+}
+.table td { font-weight: 570; }
+.table tbody tr:last-child td { border-bottom: 0; }
+.status, .badge { font-weight: 800; }
+
+/* Formulários: acabamento uniforme nas três áreas. */
+.field label {
+  font-weight: 760;
+  color: #344054;
+}
+.input, .select, .textarea {
+  min-height: 44px;
+  font-weight: 600;
+}
+.textarea { min-height: 104px; }
+.input::placeholder,
+.textarea::placeholder { color: #98a2b3; font-weight: 520; }
+.modal {
+  border-radius: 24px;
+  box-shadow: 0 32px 86px rgba(15,23,42,.24);
+}
+.modal-head h2 { font-family: var(--font-display); font-weight: 860; }
+
+/* Área do cliente e acompanhamento. */
+.customer-login-shell {
+  box-shadow: 0 40px 110px rgba(2,6,23,.38);
+}
+.customer-showcase-copy h1,
+.customer-auth-heading h2,
+.customer-portal-head h1,
+.customer-tracking-main h1 {
+  font-family: var(--font-display);
+  font-weight: 880;
+}
+.customer-showcase-copy p,
+.customer-auth-heading p { font-weight: 560; }
+.customer-login-submit {
+  min-height: 52px;
+  font-family: var(--font-display);
+  font-weight: 850;
+}
+.customer-auth-tab { min-height: 44px; }
+.customer-summary-grid > *,
+.customer-record-list > *,
+.customer-tracking-card {
+  border-color: color-mix(in srgb, var(--brand) 10%, var(--line));
+}
+
+/* Estados vazios e avisos ficam intencionais, não inacabados. */
+.empty,
+.loading-state,
+.notice {
+  border-radius: 16px;
+  font-weight: 600;
+}
+.empty {
+  border-color: color-mix(in srgb, var(--brand) 14%, #cbd5e1);
+  background: linear-gradient(145deg, #fff, color-mix(in srgb, var(--brand) 3%, #fff));
+}
+
+/* Rodapés e textos institucionais. */
+.footer,
+.premium-store-footer { font-weight: 560; }
+.footer-links a:hover { color: var(--brand); }
+
+@media (max-width: 980px) {
+  .admin-main, .super-main { padding-inline: 18px; }
+  .panel { border-radius: 18px; }
+}
+
+@media (max-width: 620px) {
+  body { font-weight: 570; }
+  .btn { min-height: 44px; }
+  .product-card-v2, .service-card-v2 { border-radius: 21px; }
+  .cart-drawer { border-radius: 22px 0 0 22px; }
+  .customer-auth-stage { padding: 12px; }
+  .customer-login-shell { border-radius: 25px; }
+  .customer-login-panel { padding-inline: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn::after { display: none; }
+  .product-card-v2:hover,
+  .service-card-v2:hover { transform: none; }
+}

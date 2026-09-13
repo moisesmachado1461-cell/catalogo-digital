@@ -1,0 +1,10 @@
+CATÁLOGO DIGITAL — FASE 24.7.4
+
+1. Copie o conteúdo desta atualização para a pasta principal do projeto.
+2. Substitua os arquivos quando o Windows solicitar.
+3. Não há migration nova.
+4. Rode: python backend\scripts\phase24_5_release_gate.py
+5. Se aprovado: git add .
+6. git commit -m "Fase 24.7.4 - acabamento visual premium"
+7. git push
+8. Após o Render ficar Live, confirme /api/health = 24.7.4.

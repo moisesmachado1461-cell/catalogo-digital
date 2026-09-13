@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.7.3**.
+Versão consolidada até a **Fase 24.7.4**.
 
 ## Concluído
 
@@ -280,3 +280,12 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - imports Python sem uso removidos;
 - scripts HTML, `.editorconfig` e cache PWA alinhados com a nova estrutura;
 - sem migration; backend `24.7.3`; cache PWA `catalogo-digital-v24-7-3`.
+
+
+## Fase 24.7.4 — acabamento visual premium
+
+- nova camada visual compartilhada sem alteração funcional;
+- tipografia, botões, cards, formulários, tabelas, modais e estados vazios refinados;
+- Cliente, Admin e Super Admin mantêm a mesma identidade visual e maior consistência;
+- responsividade preservada e reforçada;
+- sem migration; backend `24.7.4`; cache PWA `catalogo-digital-v24-7-4`.
