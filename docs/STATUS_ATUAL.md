@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.7.1**.
+Versão consolidada até a **Fase 24.7.2**.
 
 ## Concluído
 
@@ -251,7 +251,7 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - plano ativado somente após pagamento aprovado;
 - desktop da loja pública ajustado para 3 produtos por linha;
 - tipografia reforçada em toda a plataforma;
-- migration `019_dynamic_plans_pix`; backend `24.7.1`; cache PWA `catalogo-digital-v24-7-0`.
+- migration `019_dynamic_plans_pix`; backend `24.7.2`; cache PWA `catalogo-digital-v24-7-0`.
 
 
 ## Hotfix 24.7.1 — Pix Mercado Pago via Orders API
@@ -261,3 +261,9 @@ Fase 24.7 — preparação final de lançamento: domínio, SEO, PWA final, resto
 - Consulta de status passa a usar `GET /v1/orders/{id}`.
 - Webhook aceita o tópico `order` e mantém compatibilidade com `payment` legado.
 - Erros da API exibem detalhes melhores quando disponíveis.
+
+
+## Hotfix 24.7.2 — teste Pix com valor predefinido
+- Sandbox Pix por Orders usa R$ 50,00 apenas quando `MERCADO_PAGO_TEST_MODE=true` e o pagador é `test_user_br@testuser.com`.
+- Fatura interna mantém o preço real do plano.
+- Produção permanece protegida: a exceção de valor não é aceita com modo de teste desligado.

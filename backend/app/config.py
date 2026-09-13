@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     mercado_pago_access_token: str | None = None
     mercado_pago_webhook_secret: str | None = None
     mercado_pago_webhook_url: str | None = None
+    mercado_pago_test_mode: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

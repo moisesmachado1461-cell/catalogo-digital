@@ -1,0 +1,7 @@
+CATÁLOGO DIGITAL — HOTFIX 24.7.2
+
+1. Copie todo o conteúdo deste pacote para a raiz do projeto e substitua os arquivos.
+2. Rode: python backend\scripts\phase24_5_release_gate.py
+3. Se aprovado: git add . && git commit -m "Fase 24.7.2 - correcao sandbox Pix Mercado Pago" && git push
+4. No Render, adicione/ajuste MERCADO_PAGO_TEST_MODE=true enquanto estiver usando o Access Token de teste.
+5. Quando migrar para credenciais de produção, altere MERCADO_PAGO_TEST_MODE=false.

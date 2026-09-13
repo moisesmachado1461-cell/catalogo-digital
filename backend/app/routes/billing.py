@@ -216,7 +216,17 @@ def _pix_invoice_payload(invoice: SubscriptionInvoice, *, include_qr: bool = Tru
     return payload
 
 
-def _sync_mp_payment(db: Session, invoice: SubscriptionInvoice, payment: dict) -> SubscriptionInvoice:
+def _invoice_mp_test_mode(invoice: SubscriptionInvoice) -> bool:
+    return str(invoice.provider_status or "").startswith("test:")
+
+
+def _sync_mp_payment(
+    db: Session,
+    invoice: SubscriptionInvoice,
+    payment: dict,
+    *,
+    integration_test: bool = False,
+) -> SubscriptionInvoice:
     payment_id = str(payment.get("id") or "")
     expected_reference = f"saas_invoice_{invoice.id}"
     if payment.get("external_reference") != expected_reference:
@@ -227,7 +237,11 @@ def _sync_mp_payment(db: Session, invoice: SubscriptionInvoice, payment: dict) -
     amount = Decimal(str(payment.get("transaction_amount") or "0")).quantize(Decimal("0.01"))
     expected_amount = Decimal(invoice.amount or 0).quantize(Decimal("0.01"))
     if amount != expected_amount:
-        raise ValueError("Valor confirmado pelo gateway diverge da fatura")
+        # No sandbox oficial do Mercado Pago, o cenário Pix usa R$ 50,00
+        # predefinidos. Só aceitamos essa divergência quando o servidor está
+        # explicitamente em modo de teste e a fatura foi marcada como teste.
+        if not (integration_test and settings.mercado_pago_test_mode and amount == Decimal("50.00")):
+            raise ValueError("Valor confirmado pelo gateway diverge da fatura")
     currency = str(payment.get("currency_id") or invoice.currency or "BRL").upper()
     if currency != str(invoice.currency or "BRL").upper():
         raise ValueError("Moeda do pagamento diverge da fatura")
@@ -237,13 +251,14 @@ def _sync_mp_payment(db: Session, invoice: SubscriptionInvoice, payment: dict) -
 
     invoice.external_payment_id = payment_id or invoice.external_payment_id
     mp_status = str(payment.get("status") or "pending").lower()
-    invoice.provider_status = mp_status
+    stored_provider_status = f"test:{mp_status}" if integration_test else mp_status
+    invoice.provider_status = stored_provider_status
     invoice.provider = "MERCADO_PAGO"
     invoice.payment_method = "PIX"
 
     if mp_status == "approved":
         apply_invoice_status(db, invoice, new_status="PAID", payment_method="PIX")
-        invoice.provider_status = mp_status
+        invoice.provider_status = stored_provider_status
     elif mp_status in {"rejected"} and invoice.status != "PAID":
         if invoice.status != "FAILED":
             apply_invoice_status(
@@ -253,15 +268,15 @@ def _sync_mp_payment(db: Session, invoice: SubscriptionInvoice, payment: dict) -
                 payment_method="PIX",
                 failure_reason=str(payment.get("status_detail") or "Pagamento Pix rejeitado"),
             )
-        invoice.provider_status = mp_status
+        invoice.provider_status = stored_provider_status
     elif mp_status in {"cancelled", "canceled"} and invoice.status != "PAID":
         if invoice.status != "CANCELED":
             apply_invoice_status(db, invoice, new_status="CANCELED", payment_method="PIX")
-        invoice.provider_status = mp_status
+        invoice.provider_status = stored_provider_status
     elif mp_status in {"refunded", "charged_back"}:
         # Não removemos acesso automaticamente após uma reversão já paga: o Super Admin
         # recebe o estado para revisão financeira, evitando cancelamento indevido.
-        invoice.provider_status = mp_status
+        invoice.provider_status = stored_provider_status
         if invoice.status == "PAID":
             invoice.failure_reason = f"Pagamento {mp_status}; requer revisão do Super Admin."
         else:
@@ -330,7 +345,7 @@ def admin_create_pix_checkout(
         raise HTTPException(status_code=409, detail="Esta fatura já foi paga")
 
     # Reaproveita um Pix ainda pendente; retry de pagamento rejeitado recebe nova chave.
-    if invoice.external_payment_id and invoice.provider_status in {"pending", "in_process"} and invoice.pix_qr_code:
+    if invoice.external_payment_id and invoice.provider_status in {"pending", "in_process", "test:pending", "test:in_process"} and invoice.pix_qr_code:
         row = get_invoice(db, invoice.id) or invoice
         return {"created": False, "invoice": _pix_invoice_payload(row)}
 
@@ -340,7 +355,9 @@ def admin_create_pix_checkout(
         invoice.status = "PENDING"
         invoice.failed_at = None
         invoice.failure_reason = None
-    if not invoice.provider_idempotency_key or invoice.provider_status in {"rejected", "cancelled", "canceled"}:
+    if not invoice.provider_idempotency_key or invoice.provider_status in {
+        "rejected", "cancelled", "canceled", "test:rejected", "test:cancelled", "test:canceled"
+    }:
         invoice.provider_idempotency_key = str(uuid.uuid4())
         invoice.external_payment_id = None
         invoice.external_invoice_id = None
@@ -376,12 +393,12 @@ def admin_create_pix_checkout(
     invoice = get_invoice(db, invoice.id) or invoice
     invoice.external_payment_id = result.payment_id
     invoice.external_invoice_id = result.order_id or result.payment_id
-    invoice.provider_status = result.status
+    invoice.provider_status = f"test:{result.status}" if result.test_mode else result.status
     invoice.pix_qr_code = result.qr_code
     invoice.pix_qr_code_base64 = result.qr_code_base64
     invoice.checkout_url = result.ticket_url
     try:
-        _sync_mp_payment(db, invoice, result.raw)
+        _sync_mp_payment(db, invoice, result.raw, integration_test=result.test_mode)
     except ValueError as exc:
         db.rollback()
         raise HTTPException(status_code=502, detail=f"Pagamento criado, mas a validação retornou erro: {exc}") from exc
@@ -418,7 +435,7 @@ def admin_refresh_pix_invoice(
             payment = gateway.getorder_as_payment(str(invoice.external_invoice_id))
         else:
             payment = gateway.get_payment(str(invoice.external_payment_id))
-        _sync_mp_payment(db, invoice, payment)
+        _sync_mp_payment(db, invoice, payment, integration_test=_invoice_mp_test_mode(invoice))
         db.commit()
     except MercadoPagoError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -518,7 +535,7 @@ async def mercado_pago_webhook(request: Request, db: Session = Depends(get_db)):
             event.status = "IGNORED"
             event.error_message = "Pagamento sem fatura SaaS correspondente"
         else:
-            _sync_mp_payment(db, invoice, payment)
+            _sync_mp_payment(db, invoice, payment, integration_test=_invoice_mp_test_mode(invoice))
             event.status = "PROCESSED"
     except (MercadoPagoError, ValueError) as exc:
         from datetime import datetime, timezone

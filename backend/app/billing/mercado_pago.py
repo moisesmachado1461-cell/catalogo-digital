@@ -25,6 +25,7 @@ class PixPaymentResult:
     qr_code_base64: str | None
     ticket_url: str | None
     raw: dict[str, Any]
+    test_mode: bool = False
 
 
 class MercadoPagoGateway(BillingGateway):
@@ -61,14 +62,14 @@ class MercadoPagoGateway(BillingGateway):
                 detail = json.loads(exc.read().decode("utf-8"))
             except Exception:
                 detail = {"message": str(exc)}
-            message = detail.get("message") or detail.get("error")
+            message = detail.get("message") or detail.get("error") or detail.get("code")
             if not message:
                 cause = detail.get("cause") or detail.get("causes") or detail.get("details") or []
                 if isinstance(cause, list) and cause:
                     first = cause[0] if isinstance(cause[0], dict) else {}
                     message = first.get("description") or first.get("message") or first.get("code")
             message = message or "Falha ao comunicar com o Mercado Pago"
-            raise MercadoPagoError(str(message)) from exc
+            raise MercadoPagoError(f"{message} (HTTP {exc.code})") from exc
         except (URLError, TimeoutError) as exc:
             raise MercadoPagoError("Mercado Pago indisponível no momento. Tente novamente.") from exc
 
@@ -130,11 +131,17 @@ class MercadoPagoGateway(BillingGateway):
         # Desde 2025/2026, o fluxo recomendado do Checkout Transparente para Pix
         # usa Orders API. O endpoint legado /v1/payments pode retornar internal_error
         # em testes com as credenciais atuais.
-        amount_text = f"{Decimal(amount).quantize(Decimal('0.01')):.2f}"
+        is_test_scenario = bool(
+            settings.mercado_pago_test_mode
+            and payer_email.strip().lower() == "test_user_br@testuser.com"
+        )
+        # O cenário oficial de integração Pix do Mercado Pago usa valor
+        # predefinido de R$ 50,00. Esse valor é somente do sandbox e não altera
+        # o valor comercial da fatura interna do Catálogo Digital.
+        gateway_amount = Decimal("50.00") if is_test_scenario else Decimal(amount)
+        amount_text = f"{gateway_amount.quantize(Decimal('0.01')):.2f}"
         payer: dict[str, Any] = {"email": payer_email}
-        # Cenário de teste oficial do Mercado Pago para Pix via Orders. Para o
-        # pagador de teste usamos exatamente os campos do cenário documentado.
-        if payer_email.strip().lower() == "test_user_br@testuser.com":
+        if is_test_scenario:
             payer["first_name"] = "APRO"
         else:
             payer["identification"] = {"type": document_type, "number": document_number}
@@ -158,6 +165,7 @@ class MercadoPagoGateway(BillingGateway):
         # notification_url no body da Orders API para evitar parâmetros legados.
         data = self._request("POST", "/v1/orders", payload=payload, idempotency_key=idempotency_key)
         normalized = self.order_as_payment(data)
+        normalized["_integration_test"] = is_test_scenario
         transaction = ((normalized.get("point_of_interaction") or {}).get("transaction_data") or {})
         order_id = data.get("id")
         payment_id = normalized.get("id")
@@ -174,6 +182,7 @@ class MercadoPagoGateway(BillingGateway):
             qr_code_base64=transaction.get("qr_code_base64"),
             ticket_url=transaction.get("ticket_url"),
             raw=normalized,
+            test_mode=is_test_scenario,
         )
 
     def get_order(self, order_id: str) -> dict:

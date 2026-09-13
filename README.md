@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.7.1
+# Catálogo Digital — Fase 24.7.2
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.7.1 — Planos dinâmicos + Pix imediato via Mercado Pago**
+**24.7.2 — Planos dinâmicos + Pix imediato via Mercado Pago**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -253,6 +253,13 @@ A vitrine de produtos passa a ocupar toda a largura útil da loja. O carrinho de
 - idempotência, validação de webhook e reconciliação do pagamento antes de ativar o plano;
 - vitrine desktop com 3 produtos por linha;
 - tipografia mais robusta em Cliente, Admin e Super Admin;
-- migration `019_dynamic_plans_pix`; backend `24.7.1`.
+- migration `019_dynamic_plans_pix`; backend `24.7.2`.
 
 Veja `docs/FASE_24_7_PLANOS_PIX_MERCADO_PAGO.md`.
+
+
+## Hotfix 24.7.2 — sandbox Pix oficial
+- modo de teste explícito via `MERCADO_PAGO_TEST_MODE`;
+- cenário `test_user_br@testuser.com` usa os R$ 50,00 predefinidos pelo sandbox oficial;
+- valor comercial da fatura permanece inalterado;
+- mensagens de erro do gateway exibem código/HTTP quando disponível.
