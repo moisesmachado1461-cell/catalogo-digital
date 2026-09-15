@@ -1,0 +1,14 @@
+CATÁLOGO DIGITAL — FASE 24.9.5
+
+1. Copie o conteúdo desta pasta para a raiz do projeto e substitua os arquivos.
+2. No Render, mantenha MERCADO_PAGO_MARKETPLACE_APP_ID com o Número da aplicação.
+3. Confirme MERCADO_PAGO_MARKETPLACE_CLIENT_SECRET com o segredo da MESMA aplicação Marketplace.
+4. MERCADO_PAGO_MARKETPLACE_CLIENT_ID pode permanecer no Render, mas não é usado pelo fluxo Split 1:1 nesta fase.
+5. Rode: python backend\scripts\phase24_5_release_gate.py
+6. Se aprovado:
+   git add .
+   git commit -m "Fase 24.9.5 - corrige client id OAuth Split Marketplace"
+   git push
+7. Aguarde Render Live e teste Admin > Pagamentos > Conectar Mercado Pago.
+
+Sem migration.

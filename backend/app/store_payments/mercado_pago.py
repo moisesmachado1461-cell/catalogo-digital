@@ -145,10 +145,43 @@ class StoreMercadoPagoClient:
         except (URLError, TimeoutError) as exc:
             raise StoreMercadoPagoError("Mercado Pago indisponível no momento. Tente novamente.") from exc
 
+    @staticmethod
+    def _form_request(
+        method: str,
+        url: str,
+        *,
+        payload: dict[str, Any],
+        timeout: int = 20,
+    ) -> dict:
+        # O endpoint OAuth do Marketplace documenta o envio como
+        # application/x-www-form-urlencoded. Mantemos esse formato aqui
+        # para evitar ambiguidades de autenticação no /oauth/token.
+        clean_payload = {key: str(value) for key, value in payload.items() if value is not None}
+        data = urlencode(clean_payload).encode("utf-8")
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+        request = Request(url, data=data, headers=headers, method=method)
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                raw = response.read().decode("utf-8")
+                return json.loads(raw) if raw else {}
+        except HTTPError as exc:
+            try:
+                detail = json.loads(exc.read().decode("utf-8"))
+            except Exception:
+                detail = {"message": str(exc)}
+            raise StoreMercadoPagoError(_safe_error(detail, exc.code)) from exc
+        except (URLError, TimeoutError) as exc:
+            raise StoreMercadoPagoError("Mercado Pago indisponível no momento. Tente novamente.") from exc
+
     @classmethod
     def exchange_authorization_code(cls, *, code: str, code_verifier: str) -> dict:
         payload = {
-            "client_id": settings.mercado_pago_marketplace_client_id,
+            # Na documentação específica do Split/Marketplace, o client_id
+            # enviado ao /oauth/token é o próprio APP_ID da aplicação.
+            "client_id": settings.mercado_pago_marketplace_app_id,
             "client_secret": settings.mercado_pago_marketplace_client_secret,
             "code": code,
             "grant_type": "authorization_code",
@@ -156,18 +189,20 @@ class StoreMercadoPagoClient:
             "code_verifier": code_verifier,
             "test_token": "true" if settings.store_payments_test_mode else "false",
         }
-        return cls._json_request("POST", f"{cls.api_base}/oauth/token", payload=payload)
+        return cls._form_request("POST", f"{cls.api_base}/oauth/token", payload=payload)
 
     @classmethod
     def refresh_token(cls, refresh_token: str) -> dict:
         payload = {
-            "client_id": settings.mercado_pago_marketplace_client_id,
+            # Na documentação específica do Split/Marketplace, o client_id
+            # enviado ao /oauth/token é o próprio APP_ID da aplicação.
+            "client_id": settings.mercado_pago_marketplace_app_id,
             "client_secret": settings.mercado_pago_marketplace_client_secret,
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
             "test_token": "true" if settings.store_payments_test_mode else "false",
         }
-        return cls._json_request("POST", f"{cls.api_base}/oauth/token", payload=payload)
+        return cls._form_request("POST", f"{cls.api_base}/oauth/token", payload=payload)
 
     @classmethod
     def ensure_access_token(cls, db: Session, account: StorePaymentGatewayAccount) -> str:

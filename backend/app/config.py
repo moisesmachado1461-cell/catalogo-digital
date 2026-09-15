@@ -124,7 +124,6 @@ class Settings(BaseSettings):
         return all(
             [
                 self.mercado_pago_marketplace_app_id,
-                self.mercado_pago_marketplace_client_id,
                 self.mercado_pago_marketplace_client_secret,
                 self.mercado_pago_marketplace_redirect_uri,
                 self.mercado_pago_marketplace_webhook_secret,
@@ -172,7 +171,7 @@ class Settings(BaseSettings):
         if bool(self.mercado_pago_access_token) != bool(self.mercado_pago_webhook_secret):
             raise RuntimeError("Configure MERCADO_PAGO_ACCESS_TOKEN e MERCADO_PAGO_WEBHOOK_SECRET juntos.")
         marketplace_values = [
-            self.mercado_pago_marketplace_client_id,
+            self.mercado_pago_marketplace_app_id,
             self.mercado_pago_marketplace_client_secret,
             self.mercado_pago_marketplace_redirect_uri,
             self.mercado_pago_marketplace_webhook_secret,
@@ -180,7 +179,7 @@ class Settings(BaseSettings):
         ]
         if any(marketplace_values) and not all(marketplace_values):
             raise RuntimeError(
-                "Marketplace Mercado Pago exige CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, WEBHOOK_SECRET e STORE_PAYMENT_CREDENTIALS_KEY."
+                "Marketplace Mercado Pago exige APP_ID, CLIENT_SECRET/SECRET_KEY, REDIRECT_URI, WEBHOOK_SECRET e STORE_PAYMENT_CREDENTIALS_KEY."
             )
         if self.mercado_pago_marketplace_app_id and not str(self.mercado_pago_marketplace_app_id).strip().isdigit():
             raise RuntimeError("MERCADO_PAGO_MARKETPLACE_APP_ID deve ser o ID numérico da aplicação Mercado Pago.")

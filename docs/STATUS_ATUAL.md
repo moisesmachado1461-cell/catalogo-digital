@@ -1,3 +1,14 @@
+# Catálogo Digital — Status atual
+
+## Hotfix 24.9.5 — OAuth Split/Marketplace alinhado à documentação específica
+
+- usa o **APP ID / Número da aplicação** como `client_id` também na troca do authorization code por token;
+- mantém `MERCADO_PAGO_MARKETPLACE_CLIENT_SECRET` como segredo da aplicação (Secret Key/Client Secret);
+- envia `/oauth/token` em `application/x-www-form-urlencoded`, conforme o fluxo documentado de Split Payments 1:1;
+- mantém PKCE S256 e `code_verifier`;
+- `MERCADO_PAGO_MARKETPLACE_CLIENT_ID` fica apenas como variável legada opcional e não participa mais do fluxo Split;
+- sem migration; backend `24.9.5`.
+
 # Status atual — Catálogo Digital
 
 Versão consolidada até a **Fase 24.9.4**.
