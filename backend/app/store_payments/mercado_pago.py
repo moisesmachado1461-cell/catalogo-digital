@@ -98,7 +98,7 @@ class StoreMercadoPagoClient:
         if not StoreMercadoPagoClient.configured():
             raise StoreMercadoPagoError("Marketplace Mercado Pago ainda não configurado no servidor")
         params = {
-            "client_id": settings.mercado_pago_marketplace_client_id,
+            "client_id": settings.mercado_pago_marketplace_app_id,
             "response_type": "code",
             "platform_id": "mp",
             "state": state,

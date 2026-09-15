@@ -1,10 +1,10 @@
-# Catálogo Digital — Fase 24.9.3
+# Catálogo Digital — Fase 24.9.4
 
 SaaS multi-loja e multi-segmento em HTML/CSS/JavaScript puro + FastAPI + SQLAlchemy/Alembic + PostgreSQL.
 
 ## Fase atual
 
-**24.9.3 — Correção da troca OAuth do Marketplace**
+**24.9.4 — Separação APP ID e Client ID no OAuth Marketplace**
 
 A plataforma mantém separadas as duas áreas financeiras:
 
@@ -13,6 +13,16 @@ A plataforma mantém separadas as duas áreas financeiras:
 
 
 
+
+
+## Fase 24.9.4 — APP ID separado do Client ID
+
+- corrige a causa estrutural do `invalid_client` no OAuth Marketplace;
+- a URL de autorização usa o **APP ID numérico** da aplicação, como exige o Mercado Pago;
+- a troca do `authorization_code` por token continua usando o **Client ID + Client Secret** das credenciais da mesma aplicação;
+- adiciona `MERCADO_PAGO_MARKETPLACE_APP_ID`;
+- mantém PKCE S256 e o restante do fluxo inalterado;
+- nenhuma migration nova.
 
 ## Fase 24.9.3 — correção da troca OAuth do Marketplace
 
@@ -25,7 +35,7 @@ A plataforma mantém separadas as duas áreas financeiras:
 
 ## Fase 24.9.2 — correção OAuth/PKCE do Marketplace
 
-- corrige o parâmetro PKCE enviado ao Mercado Pago de `code_challenge_method` para `code_method`, conforme a documentação atual do OAuth;
+- mantém o parâmetro PKCE oficial `code_challenge_method=S256` na URL de autorização;
 - mantém `S256`, `state` e Redirect URI existentes;
 - melhora a mensagem de retorno quando a autorização OAuth falha;
 - nenhuma migration nova.
@@ -42,7 +52,7 @@ A plataforma mantém separadas as duas áreas financeiras:
 - pagamentos online não podem ser marcados manualmente como pagos pelo Admin;
 - Pix manual, dinheiro, cartão na entrega e WhatsApp continuam disponíveis;
 - migration `020_store_marketplace_payments`;
-- backend `24.9.3`.
+- backend `24.9.4`.
 
 A cobrança da assinatura SaaS continua totalmente separada dos pagamentos dos clientes das lojas.
 

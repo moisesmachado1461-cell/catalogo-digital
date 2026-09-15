@@ -1,6 +1,6 @@
 # Status atual — Catálogo Digital
 
-Versão consolidada até a **Fase 24.9.3**.
+Versão consolidada até a **Fase 24.9.4**.
 
 ## Concluído
 
@@ -31,6 +31,15 @@ Versão consolidada até a **Fase 24.9.3**.
 
 
 
+
+## Fase 24.9.4 — correção definitiva da identidade OAuth Marketplace
+
+- separa o APP ID numérico usado na URL de autorização do Client ID usado em `/oauth/token`;
+- elimina a ambiguidade que causava `invalid_client` ao tentar usar o mesmo valor nas duas etapas;
+- mantém Client Secret, Redirect URI e PKCE sem alteração;
+- nova variável: `MERCADO_PAGO_MARKETPLACE_APP_ID`;
+- sem migration nova.
+
 ## Fase 24.9.3 — troca OAuth do Marketplace
 
 - payload de `/oauth/token` alinhado ao formato documentado pelo Mercado Pago;
@@ -40,7 +49,7 @@ Versão consolidada até a **Fase 24.9.3**.
 
 ## Fase 24.9.2 — correção OAuth/PKCE do Marketplace
 
-- parâmetro PKCE alinhado à documentação atual do Mercado Pago (`code_method=S256`);
+- parâmetro PKCE alinhado à documentação atual do Mercado Pago (`code_challenge_method=S256`);
 - mensagens de erro OAuth mais específicas no Admin;
 - sem migration nova.
 
@@ -54,7 +63,7 @@ Versão consolidada até a **Fase 24.9.3**.
 - webhook e consulta pública sincronizam o status do pagamento;
 - opção online respeita o recurso `online_payments` do plano contratado;
 - migration `020_store_marketplace_payments`;
-- backend `24.9.3`.
+- backend `24.9.4`.
 
 ## Fase 24.8.3 — IA objetiva e segura para o usuário final
 

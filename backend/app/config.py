@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     mercado_pago_test_mode: bool = False
 
     # Pagamentos dos clientes das lojas via Marketplace/OAuth
+    mercado_pago_marketplace_app_id: str | None = None
     mercado_pago_marketplace_client_id: str | None = None
     mercado_pago_marketplace_client_secret: str | None = None
     mercado_pago_marketplace_redirect_uri: str | None = None
@@ -122,6 +123,7 @@ class Settings(BaseSettings):
     def store_payment_marketplace_configuration_complete(self) -> bool:
         return all(
             [
+                self.mercado_pago_marketplace_app_id,
                 self.mercado_pago_marketplace_client_id,
                 self.mercado_pago_marketplace_client_secret,
                 self.mercado_pago_marketplace_redirect_uri,
@@ -180,6 +182,8 @@ class Settings(BaseSettings):
             raise RuntimeError(
                 "Marketplace Mercado Pago exige CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, WEBHOOK_SECRET e STORE_PAYMENT_CREDENTIALS_KEY."
             )
+        if self.mercado_pago_marketplace_app_id and not str(self.mercado_pago_marketplace_app_id).strip().isdigit():
+            raise RuntimeError("MERCADO_PAGO_MARKETPLACE_APP_ID deve ser o ID numérico da aplicação Mercado Pago.")
         if self.mercado_pago_marketplace_redirect_uri:
             parsed_marketplace_redirect = urlsplit(self.mercado_pago_marketplace_redirect_uri)
             if parsed_marketplace_redirect.scheme not in {"http", "https"} or not parsed_marketplace_redirect.netloc:
