@@ -28,3 +28,10 @@ backups/
 *.backup
 *.fernet
 *.enc
+
+# caches/artefatos locais adicionais
+.mypy_cache/
+.ruff_cache/
+*.bak
+*.orig
+Thumbs.db

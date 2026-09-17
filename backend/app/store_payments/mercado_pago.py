@@ -272,23 +272,39 @@ class StoreMercadoPagoClient:
         external_reference: str,
         idempotency_key: str,
     ) -> StorePixResult:
-        amount_text = f"{Decimal(amount).quantize(Decimal('0.01')):.2f}"
+        real_amount_text = f"{Decimal(amount).quantize(Decimal('0.01')):.2f}"
+        document_digits = "".join(ch for ch in payer_document if ch.isdigit())
+
+        # A API Orders do Mercado Pago usa um cenário predefinido para testar Pix.
+        # Em sandbox, o valor de R$ 50,00 + e-mail de teste + first_name=APRO
+        # cria a order de teste e permite que o provedor simule a aprovação.
+        # Em produção, nunca substituímos os dados reais do comprador.
+        if settings.store_payments_test_mode:
+            provider_amount_text = "50.00"
+            payer_payload = {
+                "email": "test_user_br@testuser.com",
+                "first_name": "APRO",
+            }
+        else:
+            provider_amount_text = real_amount_text
+            payer_payload = {
+                "email": payer_email,
+                "identification": {
+                    "type": "CNPJ" if len(document_digits) == 14 else "CPF",
+                    "number": document_digits,
+                },
+            }
+
         payload = {
             "type": "online",
             "processing_mode": "automatic",
             "external_reference": external_reference[:64],
-            "total_amount": amount_text,
-            "payer": {
-                "email": payer_email,
-                "identification": {
-                    "type": "CNPJ" if len("".join(ch for ch in payer_document if ch.isdigit())) == 14 else "CPF",
-                    "number": "".join(ch for ch in payer_document if ch.isdigit()),
-                },
-            },
+            "total_amount": provider_amount_text,
+            "payer": payer_payload,
             "transactions": {
                 "payments": [
                     {
-                        "amount": amount_text,
+                        "amount": provider_amount_text,
                         "payment_method": {"id": "pix", "type": "bank_transfer"},
                     }
                 ]
