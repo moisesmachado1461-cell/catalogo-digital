@@ -87,6 +87,19 @@
         </div>
         <div id="dashboardAttention" class="admin-attention"></div>
       </div>
+      <div id="publicStoreShare" class="public-store-share" aria-label="Divulgação da loja">
+        <div class="public-store-share-copy">
+          <span class="public-store-share-icon" aria-hidden="true">↗</span>
+          <div><b>Sua loja está pronta para receber clientes</b><small>Copie o endereço público e envie para seus clientes.</small></div>
+        </div>
+        <div class="public-store-link-row">
+          <input id="publicStoreUrl" class="input public-store-url" type="text" readonly aria-label="Endereço público da loja">
+          <a id="publicStoreOpenBtn" class="btn ghost" target="_blank" rel="noopener"><span>Abrir loja</span><span aria-hidden="true">↗</span></a>
+          <button id="publicStoreCopyBtn" class="btn primary" type="button">Copiar link</button>
+          <button id="publicStoreShareBtn" class="btn ghost" type="button">Compartilhar</button>
+        </div>
+        <small id="publicStoreShareHint" class="public-store-share-hint" role="status" aria-live="polite"></small>
+      </div>
       <div id="stats" class="stats admin-stats-premium"></div>
       <div class="dashboard-grid">
         <div class="panel">

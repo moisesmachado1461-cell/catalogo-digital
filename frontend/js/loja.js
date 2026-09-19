@@ -368,8 +368,8 @@ function renderProducts() {
     const unavailable = p.track_inventory && p.inventory && Number(inventory) <= 0 && !(p.variants || []).length;
     const offer = discountedBasePrice(p);
     const productCoupon = publicCoupons.find(coupon => (coupon.product_ids || []).includes(p.id));
-    return `<article class="product-card product-card-v2">
-      <div class="product-image product-image-v2">${p.image_url ? `<img src="${escapeHtml(assetUrl(p.image_url))}" alt="${escapeHtml(p.name)}" loading="lazy">` : `<span class="image-placeholder">${initials(p.name)}</span>`}${(p.compare_at_price || offer.promotion) ? `<span class="promo-tag">${offer.promotion ? escapeHtml(offer.promotion.name) : 'Oferta'}</span>` : ''}${productCoupon ? `<button class="product-coupon-tag" type="button" onclick="event.stopPropagation(); usePublicCoupon('${String(productCoupon.code).replace(/'/g, "\\'")}')" title="Usar cupom ${escapeHtml(productCoupon.code)}">Cupom ${escapeHtml(productCoupon.code)}</button>` : ''}</div>
+    return `<article class="product-card product-card-v2 product-card-clickable" tabindex="0" role="button" aria-label="Ver detalhes de ${escapeHtml(p.name)}" onclick="if (!event.target.closest('button')) openProductDetails(${p.id})" onkeydown="if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('button')) { event.preventDefault(); openProductDetails(${p.id}); }">
+      <div class="product-image product-image-v2">${p.image_url ? `<img src="${escapeHtml(assetUrl(p.image_url))}" alt="${escapeHtml(p.name)}" loading="lazy">` : `<span class="image-placeholder">${initials(p.name)}</span>`}${(p.compare_at_price || offer.promotion) ? `<span class="promo-tag">${offer.promotion ? escapeHtml(offer.promotion.name) : 'Oferta'}</span>` : ''}${productCoupon ? `<button class="product-coupon-tag" type="button" onclick="event.stopPropagation(); usePublicCoupon('${String(productCoupon.code).replace(/'/g, "\\'")}')" title="Usar cupom ${escapeHtml(productCoupon.code)}">Cupom ${escapeHtml(productCoupon.code)}</button>` : ''}<span class="product-view-hint">Ver detalhes</span></div>
       <div class="card-body">
         <div class="product-category">${escapeHtml(catalog.categories.find(c => c.id === p.category_id)?.name || 'Produto')}</div>
         <h3>${escapeHtml(p.name)}</h3>
@@ -382,6 +382,36 @@ function renderProducts() {
     </article>`;
   }).join('') : '<div class="empty empty-wide">Nenhum produto encontrado com esses filtros.</div>';
 }
+
+window.openProductDetails = function openProductDetails(id) {
+  const p = catalog?.products.find(x => x.id === id);
+  if (!p) return;
+  const category = catalog.categories.find(c => c.id === p.category_id)?.name || 'Produto';
+  const inventory = p.inventory?.quantity;
+  const unavailable = p.track_inventory && p.inventory && Number(inventory) <= 0 && !(p.variants || []).length;
+  const offer = discountedBasePrice(p);
+  const variants = (p.variants || []).map(v => `<li><span>${escapeHtml(v.name)}</span><b>${money(v.price ?? p.price)}</b>${v.inventory ? `<small>${Number(v.inventory.quantity) > 0 ? `${v.inventory.quantity} disponível(is)` : 'Sem estoque'}</small>` : ''}</li>`).join('');
+  const options = (p.options || []).map(option => `<div class="product-detail-option"><b>${escapeHtml(option.name)}</b><span>${(option.items || []).map(item => `${escapeHtml(item.name)}${Number(item.price_adjustment) ? ` (+ ${money(item.price_adjustment)})` : ''}`).join(' · ')}</span></div>`).join('');
+  const image = p.image_url
+    ? `<img src="${escapeHtml(assetUrl(p.image_url))}" alt="${escapeHtml(p.name)}">`
+    : `<span class="product-details-placeholder">${initials(p.name)}</span>`;
+  $('#productDetailsTitle').textContent = p.name;
+  $('#productDetailsContent').innerHTML = `
+    <div class="product-details-grid">
+      <div class="product-details-media">${image}${offer.promotion ? `<span class="promo-tag">${escapeHtml(offer.promotion.name)}</span>` : ''}</div>
+      <div class="product-details-info">
+        <span class="product-category">${escapeHtml(category)}</span>
+        <h3>${escapeHtml(p.name)}</h3>
+        <p class="product-details-description">${escapeHtml(p.description || 'A loja ainda não informou uma descrição para este produto.')}</p>
+        <div class="product-details-price">${offer.promotion || p.compare_at_price ? `<small>${money(offer.promotion ? offer.original : p.compare_at_price)}</small>` : ''}<strong>${money(offer.price)}</strong></div>
+        <div class="product-details-badges"><span class="${unavailable ? 'is-out' : ''}">${unavailable ? 'Sem estoque' : ((p.variants || []).length ? 'Disponível em opções' : (p.track_inventory && p.inventory ? `${inventory} em estoque` : 'Disponível'))}</span>${p.sku ? `<span>Código: ${escapeHtml(p.sku)}</span>` : ''}</div>
+        ${variants ? `<div class="product-details-section"><h4>Variações disponíveis</h4><ul class="product-details-variants">${variants}</ul></div>` : ''}
+        ${options ? `<div class="product-details-section"><h4>Opções e adicionais</h4>${options}</div>` : ''}
+        <button class="btn primary full-btn product-details-action" type="button" onclick="closeModal('productDetailsModal'); addToCart(${p.id})" ${unavailable ? 'disabled' : ''}>${unavailable ? 'Produto indisponível' : (((p.variants || []).length || (p.options || []).length) ? 'Escolher opções' : 'Adicionar ao carrinho')}</button>
+      </div>
+    </div>`;
+  openModal('productDetailsModal');
+};
 
 window.addToCart = function addToCart(id) {
   const p = catalog.products.find(x => x.id === id);

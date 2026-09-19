@@ -187,7 +187,7 @@ class StoreMercadoPagoClient:
             "grant_type": "authorization_code",
             "redirect_uri": settings.mercado_pago_marketplace_redirect_uri,
             "code_verifier": code_verifier,
-            "test_token": "true" if settings.store_payments_test_mode else "false",
+            "test_token": "false",
         }
         return cls._form_request("POST", f"{cls.api_base}/oauth/token", payload=payload)
 
@@ -200,7 +200,7 @@ class StoreMercadoPagoClient:
             "client_secret": settings.mercado_pago_marketplace_client_secret,
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
-            "test_token": "true" if settings.store_payments_test_mode else "false",
+            "test_token": "false",
         }
         return cls._form_request("POST", f"{cls.api_base}/oauth/token", payload=payload)
 

@@ -54,6 +54,52 @@ const labels = {
 
 const weekdayLabels = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
+function publicStoreUrl() {
+  if (!store?.slug) return '';
+  return new URL(`loja.html?slug=${encodeURIComponent(store.slug)}`, window.location.href).href;
+}
+
+function renderPublicStoreShare() {
+  const url = publicStoreUrl();
+  const input = $('#publicStoreUrl');
+  const openButton = $('#publicStoreOpenBtn');
+  const shareButton = $('#publicStoreShareBtn');
+  if (!input || !openButton) return;
+  input.value = url;
+  openButton.href = url;
+  if (shareButton) shareButton.hidden = !navigator.share;
+}
+
+async function copyPublicStoreUrl() {
+  const url = publicStoreUrl();
+  if (!url) return;
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch (_error) {
+    const input = $('#publicStoreUrl');
+    input?.select();
+    document.execCommand('copy');
+    input?.setSelectionRange(0, 0);
+  }
+  const hint = $('#publicStoreShareHint');
+  if (hint) hint.textContent = 'Link copiado. Agora é só enviar para o cliente.';
+  showToast('Link da loja copiado.');
+}
+
+async function sharePublicStore() {
+  const url = publicStoreUrl();
+  if (!url) return;
+  if (!navigator.share) return copyPublicStoreUrl();
+  try {
+    await navigator.share({ title: store?.name || 'Minha loja', text: `Conheça ${store?.name || 'minha loja'}:`, url });
+  } catch (error) {
+    if (error?.name !== 'AbortError') showToast('Não foi possível compartilhar. Copie o link.', 'error');
+  }
+}
+
+$('#publicStoreCopyBtn')?.addEventListener('click', copyPublicStoreUrl);
+$('#publicStoreShareBtn')?.addEventListener('click', sharePublicStore);
+
 const adminMenuGroups = [
   { title: 'Visão geral', ids: ['dashboard', 'reports'] },
   { title: 'Vendas e catálogo', ids: ['categories', 'products', 'orders', 'inventory', 'coupons', 'promotions'] },
@@ -306,6 +352,7 @@ async function startAdmin() {
     $('#sideStoreName').textContent = store.name;
     $('#sideStoreModel').textContent = store.business_model?.name || 'Negócio';
     $('#openStoreBtn').href = `loja.html?slug=${encodeURIComponent(store.slug)}`;
+    renderPublicStoreShare();
     buildMenu();
     renderAdminIdentity();
     await loadAll();
@@ -1846,6 +1893,7 @@ function renderSettings() {
       $('#sideStoreName').textContent = store.name;
       renderAdminIdentity();
       $('#openStoreBtn').href = `loja.html?slug=${encodeURIComponent(store.slug)}`;
+      renderPublicStoreShare();
       renderSettings();
       showToast('Configurações salvas.');
     } catch (error) {

@@ -1,0 +1,30 @@
+CATÁLOGO DIGITAL — ATUALIZAÇÃO 24.9.6.2
+
+MELHORIAS INCLUÍDAS
+- Área "Sua loja está pronta para receber clientes" no Dashboard.
+- Endereço público completo da loja.
+- Botões Abrir loja, Copiar link e Compartilhar.
+- Layout responsivo para computador e celular.
+- Produtos clicáveis com detalhes, descrição, preço, estoque, código, variações e adicionais.
+- Janela premium de detalhes com ação para escolher opções ou adicionar ao carrinho.
+- Botão do chatbot arrastável, com a posição salva automaticamente no navegador.
+- Correção PIXOAUTHAPPUSR incluída para não perder o ajuste do OAuth.
+
+INSTALAÇÃO RÁPIDA
+1. Extraia este ZIP.
+2. Use a pasta catalogo-digital-arquitetura-v1-corrigido como projeto principal.
+3. Abra o PowerShell dentro dessa pasta.
+4. Ative o ambiente virtual já existente no seu computador, se necessário.
+5. Execute:
+   python backend\scripts\phase24_5_release_gate.py
+6. Se o resultado terminar com RELEASE GATE APROVADO, execute:
+   git add -A
+   git commit -m "Fase 24.9.6.2 - adiciona link publico da loja"
+   git push origin main
+7. Aguarde o deploy do Render ficar Live.
+8. Entre no painel e teste Copiar link e Abrir loja.
+9. Na loja pública, abra um produto e arraste o botão do chatbot para outra posição.
+
+OBSERVAÇÃO
+O ambiente virtual .venv não acompanha o ZIP. Continue usando o .venv que já
+está instalado na pasta principal do seu computador.

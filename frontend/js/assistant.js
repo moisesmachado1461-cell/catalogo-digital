@@ -172,6 +172,68 @@
   const conversationHistory = [];
   let greeted = false;
   let busy = false;
+  let launcherWasDragged = false;
+
+  function keepLauncherInView(left, top) {
+    const margin = 8;
+    return {
+      left: Math.min(Math.max(margin, left), Math.max(margin, window.innerWidth - launcher.offsetWidth - margin)),
+      top: Math.min(Math.max(margin, top), Math.max(margin, window.innerHeight - launcher.offsetHeight - margin)),
+    };
+  }
+
+  function positionLauncher(left, top, save = false) {
+    const position = keepLauncherInView(left, top);
+    launcher.classList.add('has-custom-position');
+    launcher.style.left = `${position.left}px`;
+    launcher.style.top = `${position.top}px`;
+    if (save) localStorage.setItem('catalogo_assistant_position', JSON.stringify(position));
+  }
+
+  function restoreLauncherPosition() {
+    try {
+      const position = JSON.parse(localStorage.getItem('catalogo_assistant_position') || 'null');
+      if (Number.isFinite(position?.left) && Number.isFinite(position?.top)) positionLauncher(position.left, position.top);
+    } catch (_error) {}
+  }
+
+  function enableLauncherDrag() {
+    let drag = null;
+    launcher.addEventListener('pointerdown', (event) => {
+      if (event.button !== undefined && event.button !== 0) return;
+      const rect = launcher.getBoundingClientRect();
+      drag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, left: rect.left, top: rect.top, moved: false };
+      launcher.setPointerCapture?.(event.pointerId);
+    });
+    launcher.addEventListener('pointermove', (event) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const dx = event.clientX - drag.startX;
+      const dy = event.clientY - drag.startY;
+      if (!drag.moved && Math.hypot(dx, dy) < 7) return;
+      drag.moved = true;
+      launcher.classList.add('is-dragging');
+      positionLauncher(drag.left + dx, drag.top + dy);
+    });
+    const finishDrag = (event) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      launcher.releasePointerCapture?.(event.pointerId);
+      if (drag.moved) {
+        const rect = launcher.getBoundingClientRect();
+        positionLauncher(rect.left, rect.top, true);
+        launcherWasDragged = true;
+        window.setTimeout(() => { launcherWasDragged = false; }, 80);
+      }
+      launcher.classList.remove('is-dragging');
+      drag = null;
+    };
+    launcher.addEventListener('pointerup', finishDrag);
+    launcher.addEventListener('pointercancel', finishDrag);
+    window.addEventListener('resize', () => {
+      if (!launcher.classList.contains('has-custom-position')) return;
+      const rect = launcher.getBoundingClientRect();
+      positionLauncher(rect.left, rect.top, true);
+    });
+  }
 
   function addMessage(kind, content, steps = []) {
     const item = document.createElement('div');
@@ -309,7 +371,12 @@
     launcher.setAttribute('aria-expanded', 'false');
   }
 
-  launcher.addEventListener('click', () => panel.classList.contains('open') ? closeAssistant() : openAssistant());
+  restoreLauncherPosition();
+  enableLauncherDrag();
+  launcher.addEventListener('click', () => {
+    if (launcherWasDragged) return;
+    panel.classList.contains('open') ? closeAssistant() : openAssistant();
+  });
   closeButton.addEventListener('click', closeAssistant);
   form.addEventListener('submit', (event) => {
     event.preventDefault();
