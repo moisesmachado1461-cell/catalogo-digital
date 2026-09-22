@@ -1,0 +1,29 @@
+CATÁLOGO DIGITAL — PAGAMENTOS SIMPLES 24.9.6.3
+
+INCLUÍDO
+- Pix imediato sem conexão obrigatória com Mercado Pago.
+- Pix Copia e Cola contém o valor final do pedido, depois do cupom.
+- Cliente pode informar "Já paguei".
+- Somente o lojista confirma o pagamento como PAGO no painel.
+- Status intermediário seguro: CLIENTE INFORMOU O PAGAMENTO.
+- Dinheiro e cartão no atendimento/entrega permanecem disponíveis.
+- Checkout mostra subtotal, desconto estimado e total estimado.
+- Cupom continua sendo recalculado e validado no servidor.
+- Área de pagamentos simplificada no painel.
+
+INSTALAÇÃO
+1. Extraia este ZIP.
+2. Copie as pastas backend e frontend.
+3. Cole dentro da pasta principal catalogo-digital-arquitetura-v1-corrigido.
+4. Escolha Substituir os arquivos no destino.
+5. No PowerShell, dentro da pasta principal, execute:
+   .\backend\.venv\Scripts\Activate.ps1
+   python backend\scripts\phase24_5_release_gate.py
+6. Faça commit/push somente se aparecer RELEASE GATE APROVADO.
+
+TESTE FOCADO APÓS O DEPLOY
+1. Configure a chave Pix no painel da loja.
+2. Crie um cupom e faça um pedido usando esse cupom.
+3. Confira se o total do pedido é igual ao valor do Pix Copia e Cola.
+4. Clique em Já paguei.
+5. No painel, confirme o pagamento como PAGO.

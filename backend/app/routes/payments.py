@@ -52,6 +52,29 @@ def public_payment(slug: str, token: str, db: Session = Depends(get_db)):
     return payment_dict(row)
 
 
+@public_router.post("/stores/{slug}/payments/{token}/inform-paid")
+def public_inform_payment(slug: str, token: str, db: Session = Depends(get_db)):
+    store = get_store_by_slug(db, slug)
+    if not store:
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
+    row = db.query(Payment).filter(Payment.store_id == store.id, Payment.public_token == token).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Pagamento não encontrado")
+    if row.provider != "MANUAL":
+        raise HTTPException(status_code=409, detail="Este pagamento é confirmado automaticamente pelo provedor")
+    if row.status == "PAGO":
+        return payment_dict(row)
+    if row.status == "INFORMADO":
+        return payment_dict(row)
+    if row.status != "PENDENTE":
+        raise HTTPException(status_code=409, detail="Este pagamento não pode mais ser informado")
+    row.status = "INFORMADO"
+    row.provider_status = "CUSTOMER_REPORTED_PAID"
+    db.commit()
+    db.refresh(row)
+    return payment_dict(row)
+
+
 @admin_router.get("/payment-settings")
 def admin_payment_settings(store_id: int = Depends(get_current_store_id), db: Session = Depends(get_db)):
     _admin_store(db, store_id)

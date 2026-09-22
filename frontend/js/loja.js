@@ -133,6 +133,40 @@ function publicCouponRules(coupon) {
   return rules.length ? rules.join(' · ') : 'Sem pedido mínimo informado';
 }
 
+function checkoutPreview() {
+  const subtotal = cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
+  const code = ($('#checkoutCouponCode')?.value || '').trim().toUpperCase().replaceAll(' ', '');
+  const coupon = publicCoupons.find(item => String(item.code).toUpperCase() === code);
+  let discount = 0;
+  let message = '';
+  if (code && !coupon) message = 'Cupom não encontrado ou indisponível.';
+  if (coupon) {
+    if (subtotal < Number(coupon.min_order_value || 0)) {
+      message = `Este cupom exige pedido mínimo de ${money(coupon.min_order_value)}.`;
+    } else {
+      const eligibleIds = coupon.product_ids || [];
+      const eligible = eligibleIds.length
+        ? cart.filter(item => eligibleIds.includes(Number(item.product_id))).reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0)
+        : subtotal;
+      if (eligible <= 0) message = 'Este cupom não vale para os produtos do carrinho.';
+      else {
+        discount = coupon.discount_type === 'PERCENT' ? eligible * (Number(coupon.value) / 100) : Number(coupon.value);
+        if (coupon.max_discount != null) discount = Math.min(discount, Number(coupon.max_discount));
+        discount = Math.max(0, Math.min(discount, eligible));
+        message = `Cupom ${coupon.code}: desconto estimado de ${money(discount)}.`;
+      }
+    }
+  }
+  const total = Math.max(0, subtotal - discount);
+  const summary = $('#checkoutSummary');
+  if (summary) summary.innerHTML = `<div><b>Subtotal</b><span>${money(subtotal)}</span></div>${discount > 0 ? `<div class="checkout-discount"><b>Desconto</b><span>− ${money(discount)}</span></div>` : ''}<div class="checkout-preview-total"><b>Total estimado</b><strong>${money(total)}</strong></div><small>${escapeHtml(message || 'O valor final será confirmado com segurança pelo servidor.')}</small>`;
+  const hint = $('#checkoutCouponHint');
+  if (hint) {
+    hint.textContent = message;
+    hint.classList.toggle('hidden', !message);
+  }
+}
+
 async function loadPublicCoupons() {
   try {
     publicCoupons = await api(`/api/public/stores/${encodeURIComponent(slug)}/coupons`);
@@ -231,7 +265,10 @@ function paymentResultHtml(payment) {
     return `${base}<div class="online-pix-box">${qrImage ? `<img class="online-pix-qr" src="${escapeHtml(qrImage)}" alt="QR Code Pix">` : ''}<div class="online-pix-copy"><small>Pix Copia e Cola</small><code>${escapeHtml(qr)}</code><button class="btn primary small" type="button" onclick="copyOnlinePix('${String(qr).replace(/'/g, "\\'")}')">Copiar Pix</button></div><small class="online-pix-wait">Aguardando pagamento. Esta tela atualiza automaticamente.</small></div></div>`;
   }
   if (payment.method === 'PIX') {
-    return `${base}<div class="pix-box"><small>Chave PIX ${payment.pix_key_type ? `· ${escapeHtml(payment.pix_key_type)}` : ''}</small><div class="pix-key-row"><code>${escapeHtml(payment.pix_key || '')}</code><button class="btn ghost small" type="button" onclick="copyPixKey('${String(payment.pix_key || '').replace(/'/g, "\\'")}')">Copiar chave</button></div>${payment.pix_receiver_name ? `<small>Recebedor: ${escapeHtml(payment.pix_receiver_name)}${payment.pix_receiver_city ? ` · ${escapeHtml(payment.pix_receiver_city)}` : ''}</small>` : ''}</div></div>`;
+    const informed = payment.status === 'INFORMADO';
+    const paid = payment.status === 'PAGO';
+    const pixCode = payment.pix_qr_code || '';
+    return `${base}<div class="pix-box"><small>Chave PIX ${payment.pix_key_type ? `· ${escapeHtml(payment.pix_key_type)}` : ''}</small><div class="pix-key-row"><code>${escapeHtml(payment.pix_key || '')}</code><button class="btn ghost small" type="button" onclick="copyPixKey('${String(payment.pix_key || '').replace(/'/g, "\\'")}')">Copiar chave</button></div>${pixCode ? `<div class="online-pix-copy"><small>Pix Copia e Cola com o valor final</small><code>${escapeHtml(pixCode)}</code><button class="btn primary small" type="button" onclick="copyOnlinePix('${String(pixCode).replace(/'/g, "\\'")}')">Copiar Pix</button></div>` : ''}${payment.pix_receiver_name ? `<small>Recebedor: ${escapeHtml(payment.pix_receiver_name)}${payment.pix_receiver_city ? ` · ${escapeHtml(payment.pix_receiver_city)}` : ''}</small>` : ''}${paid ? '<div class="online-pix-paid"><strong>✓ Pagamento confirmado</strong></div>' : informed ? '<div class="payment-informed"><strong>Pagamento informado</strong><small>A loja verificará o recebimento antes de confirmar.</small></div>' : `<button class="btn primary full-btn" type="button" onclick="informPaymentPaid('${escapeHtml(payment.public_token || '')}', this)">Já paguei</button>`}</div></div>`;
   }
   return `${base}</div>`;
 }
@@ -272,6 +309,22 @@ window.copyPixKey = async function copyPixKey(value) {
     showToast('Chave PIX copiada.');
   } catch (_error) {
     showToast('Não foi possível copiar automaticamente. Selecione a chave manualmente.', 'error');
+  }
+};
+
+window.informPaymentPaid = async function informPaymentPaid(token, button) {
+  if (!token || !confirm('Você já concluiu o pagamento? A loja ainda verificará o recebimento.')) return;
+  button.disabled = true;
+  button.textContent = 'Informando...';
+  try {
+    const payment = await api(`/api/public/stores/${encodeURIComponent(slug)}/payments/${encodeURIComponent(token)}/inform-paid`, { method: 'POST' });
+    const card = button.closest('.payment-card');
+    if (card) card.outerHTML = paymentResultHtml(payment);
+    showToast('Pagamento informado. Aguarde a confirmação da loja.');
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = 'Já paguei';
+    showToast(error.message, 'error');
   }
 };
 
@@ -666,16 +719,12 @@ $('#quoteForm').onsubmit = async e => {
 $('#checkoutBtn').onclick = () => {
   if (!cart.length) return showToast('Adicione um produto ao carrinho.', 'error');
   closeCartDrawer();
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  $('#checkoutSummary').textContent = `Subtotal estimado: ${money(total)}. Promoções e cupom serão validados no servidor.`;
   if (selectedCouponCode && $('#checkoutCouponCode') && !$('#checkoutCouponCode').value) $('#checkoutCouponCode').value = selectedCouponCode;
-  const hint = $('#checkoutCouponHint');
-  if (hint) {
-    if ($('#checkoutCouponCode')?.value) { hint.textContent = `Cupom ${$('#checkoutCouponCode').value.toUpperCase()} será validado no servidor.`; hint.classList.remove('hidden'); }
-    else hint.classList.add('hidden');
-  }
+  checkoutPreview();
   openModal('checkoutModal');
 };
+
+$('#checkoutCouponCode')?.addEventListener('input', checkoutPreview);
 
 $('#checkoutForm').fulfillment_method.onchange = (event) => {
   const delivery = event.target.value === 'ENTREGA';

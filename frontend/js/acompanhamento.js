@@ -97,6 +97,10 @@ function paymentTrackHtml(payment) {
   if (!payment) return '';
   const method = payment.method_label || payment.method || '—';
   const base = `<div class="tracking-data"><small>Pagamento</small><strong>${escapeHtml(method)} · ${escapeHtml(payment.status || '')}</strong></div>`;
+  if (payment.method === 'PIX' && ['PENDENTE', 'INFORMADO'].includes(payment.status)) {
+    const informed = payment.status === 'INFORMADO';
+    return `${base}<div class="tracking-online-pix"><div><small>Valor final</small><b>${money(payment.amount)}</b><code>${escapeHtml(payment.pix_qr_code || payment.pix_key || '')}</code>${informed ? '<span class="payment-informed"><strong>Pagamento informado</strong><small>A loja verificará o recebimento.</small></span>' : `<button class="btn primary small" type="button" data-inform-payment="${escapeHtml(payment.public_token || '')}">Já paguei</button>`}</div></div>`;
+  }
   if (payment.method !== 'PIX_ONLINE' || payment.status !== 'PENDENTE') return base;
   const qrImage = payment.pix_qr_code_base64 ? (String(payment.pix_qr_code_base64).startsWith('data:') ? payment.pix_qr_code_base64 : `data:image/png;base64,${payment.pix_qr_code_base64}`) : '';
   return `${base}<div class="tracking-online-pix">${qrImage ? `<img src="${escapeHtml(qrImage)}" alt="QR Code Pix">` : ''}<div><small>Pagamento pendente</small><b>Conclua pelo Pix</b><code>${escapeHtml(payment.pix_qr_code || '')}</code><button class="btn primary small" type="button" data-copy-tracking-pix="${escapeHtml(payment.pix_qr_code || '')}">Copiar Pix</button></div></div>`;
@@ -204,6 +208,20 @@ async function startTracking() {
 }
 
 document.addEventListener('click', async (event) => {
+  const informButton = event.target.closest('[data-inform-payment]');
+  if (informButton) {
+    if (!confirm('Você já concluiu o pagamento? A loja verificará o recebimento antes de confirmar.')) return;
+    informButton.disabled = true;
+    try {
+      await api(`/api/public/stores/${encodeURIComponent(trackSlug)}/payments/${encodeURIComponent(informButton.dataset.informPayment)}/inform-paid`, { method: 'POST' });
+      showToast('Pagamento informado. Aguarde a confirmação da loja.');
+      if (trackType === 'APPOINTMENT') await loadAppointmentTracking(); else await loadOrderTracking();
+    } catch (error) {
+      informButton.disabled = false;
+      showToast(error.message, 'error');
+    }
+    return;
+  }
   const button = event.target.closest('[data-copy-tracking-pix]');
   if (!button) return;
   try { await navigator.clipboard.writeText(button.dataset.copyTrackingPix || ''); showToast('Código Pix copiado.'); }
@@ -211,4 +229,3 @@ document.addEventListener('click', async (event) => {
 });
 
 startTracking();
-

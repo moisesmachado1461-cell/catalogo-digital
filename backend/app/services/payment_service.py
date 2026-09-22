@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 import secrets
+import unicodedata
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -12,18 +13,56 @@ from .subscription_service import feature_enabled
 
 CENT = Decimal("0.01")
 PAYMENT_METHOD_LABELS = {
-    "PIX": "Pix manual",
+    "PIX": "Pix imediato",
     "PIX_ONLINE": "Pix online",
     "DINHEIRO": "Dinheiro",
     "CARTAO_ENTREGA": "Cartão no atendimento/entrega",
     "WHATSAPP": "Combinar pelo WhatsApp",
 }
 PAYMENT_TRANSITIONS = {
-    "PENDENTE": {"PAGO", "RECUSADO", "CANCELADO"},
+    "PENDENTE": {"INFORMADO", "PAGO", "RECUSADO", "CANCELADO"},
+    "INFORMADO": {"PAGO", "RECUSADO", "CANCELADO"},
     "RECUSADO": {"PENDENTE", "CANCELADO"},
     "PAGO": set(),
     "CANCELADO": set(),
 }
+
+
+def _pix_field(field_id: str, value: str) -> str:
+    return f"{field_id}{len(value):02d}{value}"
+
+
+def _pix_text(value: str | None, fallback: str, limit: int) -> str:
+    raw = unicodedata.normalize("NFKD", value or fallback).encode("ascii", "ignore").decode("ascii")
+    cleaned = "".join(ch for ch in raw.upper() if ch.isalnum() or ch in " .-").strip()
+    return (cleaned or fallback)[:limit]
+
+
+def _pix_crc16(payload: str) -> str:
+    crc = 0xFFFF
+    for byte in payload.encode("utf-8"):
+        crc ^= byte << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if crc & 0x8000 else (crc << 1) & 0xFFFF
+    return f"{crc:04X}"
+
+
+def pix_copy_and_paste(*, key: str, amount: Decimal, receiver_name: str | None, receiver_city: str | None, reference: str) -> str:
+    merchant = _pix_field("00", "BR.GOV.BCB.PIX") + _pix_field("01", key.strip())
+    additional = _pix_field("05", _pix_text(reference, "CDPAGAMENTO", 25))
+    payload = "".join([
+        _pix_field("00", "01"),
+        _pix_field("26", merchant),
+        _pix_field("52", "0000"),
+        _pix_field("53", "986"),
+        _pix_field("54", f"{money(amount):.2f}"),
+        _pix_field("58", "BR"),
+        _pix_field("59", _pix_text(receiver_name, "RECEBEDOR", 25)),
+        _pix_field("60", _pix_text(receiver_city, "CIDADE", 15)),
+        _pix_field("62", additional),
+        "6304",
+    ])
+    return payload + _pix_crc16(payload)
 
 
 def money(value) -> Decimal:
@@ -87,17 +126,8 @@ def available_payment_options(db: Session, store: Store) -> list[dict]:
         return []
 
     options: list[dict] = []
-    if feature_enabled(db, store.id, "online_payments") and values["online_gateway"] == "MERCADO_PAGO" and get_connected_gateway_account(db, store.id):
-        options.append(
-            {
-                "code": "PIX_ONLINE",
-                "label": "Pix online · confirmação automática",
-                "online": True,
-                "requires_document": True,
-            }
-        )
     if values["pix_enabled"] and values["pix_key"] and values["pix_receiver_name"]:
-        options.append({"code": "PIX", "label": "Pix manual", "online": False, "requires_document": False})
+        options.append({"code": "PIX", "label": "Pix imediato", "online": False, "requires_document": False})
     if values["cash_enabled"]:
         options.append({"code": "DINHEIRO", "label": "Dinheiro", "online": False, "requires_document": False})
     if values["card_on_delivery_enabled"]:
@@ -105,15 +135,6 @@ def available_payment_options(db: Session, store: Store) -> list[dict]:
             {
                 "code": "CARTAO_ENTREGA",
                 "label": "Cartão no atendimento/entrega",
-                "online": False,
-                "requires_document": False,
-            }
-        )
-    if values["whatsapp_enabled"]:
-        options.append(
-            {
-                "code": "WHATSAPP",
-                "label": "Combinar pelo WhatsApp",
                 "online": False,
                 "requires_document": False,
             }
@@ -233,6 +254,14 @@ def create_payment(
         pix_receiver_city_snapshot=settings["pix_receiver_city"] if method == "PIX" else None,
         instructions=instructions,
     )
+    if method == "PIX":
+        row.pix_qr_code = pix_copy_and_paste(
+            key=settings["pix_key"],
+            amount=amount,
+            receiver_name=settings["pix_receiver_name"],
+            receiver_city=settings["pix_receiver_city"],
+            reference=f"CD{reference_type}{reference_id}",
+        )
     db.add(row)
     db.flush()
     if method == "PIX_ONLINE":
@@ -260,9 +289,9 @@ def payment_dict(row: Payment | None) -> dict | None:
         "pix_key": row.pix_key_snapshot,
         "pix_receiver_name": row.pix_receiver_name_snapshot,
         "pix_receiver_city": row.pix_receiver_city_snapshot,
-        "pix_qr_code": row.pix_qr_code if row.status == "PENDENTE" else None,
-        "pix_qr_code_base64": row.pix_qr_code_base64 if row.status == "PENDENTE" else None,
-        "pix_ticket_url": row.pix_ticket_url if row.status == "PENDENTE" else None,
+        "pix_qr_code": row.pix_qr_code if row.status in {"PENDENTE", "INFORMADO"} else None,
+        "pix_qr_code_base64": row.pix_qr_code_base64 if row.status in {"PENDENTE", "INFORMADO"} else None,
+        "pix_ticket_url": row.pix_ticket_url if row.status in {"PENDENTE", "INFORMADO"} else None,
         "pix_expires_at": row.pix_expires_at.isoformat() if row.pix_expires_at else None,
         "instructions": row.instructions,
         "paid_at": row.paid_at.isoformat() if row.paid_at else None,
@@ -303,7 +332,7 @@ def sync_online_payment(db: Session, payment: Payment) -> Payment:
 
 def cancel_reference_payment(db: Session, store_id: int, reference_type: str, reference_id: int) -> None:
     row = payment_for_reference(db, store_id, reference_type, reference_id)
-    if row and row.status in {"PENDENTE", "RECUSADO"}:
+    if row and row.status in {"PENDENTE", "INFORMADO", "RECUSADO"}:
         row.status = "CANCELADO"
         row.paid_at = None
 
