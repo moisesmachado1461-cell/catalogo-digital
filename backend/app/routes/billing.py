@@ -296,7 +296,6 @@ def admin_create_pix_checkout(
     current_user: User = Depends(get_current_store_admin),
     db: Session = Depends(get_db),
 ):
-    gateway = _mercado_pago_gateway()
     store_id = current_user.store_id
     subscription = get_store_subscription(db, store_id)
     if not subscription:
@@ -358,7 +357,29 @@ def admin_create_pix_checkout(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     if Decimal(invoice.amount or 0) <= 0:
-        raise HTTPException(status_code=400, detail="Esta cobrança não exige Pix")
+        # Cupom integral: não existe valor para enviar ao Mercado Pago. A baixa
+        # é registrada internamente e o plano é ativado pelo mesmo fluxo seguro
+        # usado após a confirmação de um pagamento.
+        invoice.provider = "MANUAL"
+        invoice.provider_status = "coupon_approved"
+        try:
+            apply_invoice_status(db, invoice, new_status="PAID", payment_method="CUPOM")
+        except ValueError as exc:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        _audit(
+            db,
+            request,
+            current_user,
+            action="BILLING_COUPON_FULL_DISCOUNT_APPLIED",
+            store_id=store_id,
+            entity_type="subscription_invoice",
+            entity_id=invoice.id,
+            metadata={"plan_id": plan.id, "coupon_code": invoice.coupon_code, "amount": "0.00"},
+        )
+        db.commit()
+        row = get_invoice(db, invoice.id) or invoice
+        return {"created": True, "invoice": _pix_invoice_payload(row)}
     if invoice.status == "PAID":
         raise HTTPException(status_code=409, detail="Esta fatura já foi paga")
 
@@ -390,6 +411,7 @@ def admin_create_pix_checkout(
     if not notification_url and settings.public_api_base_url:
         notification_url = f"{settings.public_api_base_url}/api/billing/webhooks/mercado-pago"
 
+    gateway = _mercado_pago_gateway()
     try:
         result = gateway.create_pix_payment(
             amount=Decimal(invoice.amount),

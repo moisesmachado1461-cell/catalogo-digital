@@ -1,0 +1,22 @@
+CATÁLOGO DIGITAL — CUPOM INTEGRAL 24.9.6.6
+
+CORREÇÃO
+- Cupom que reduz a assinatura para R$ 0,00 não tenta mais gerar Pix.
+- A fatura é registrada como paga por CUPOM.
+- O uso do cupom é contabilizado normalmente.
+- O plano é ativado pelo mesmo fluxo seguro de uma cobrança confirmada.
+- A operação fica registrada na auditoria.
+
+INSTALAÇÃO
+1. Extraia este ZIP.
+2. Copie a pasta backend.
+3. Cole dentro da pasta principal catalogo-digital-arquitetura-v1-corrigido.
+4. Escolha Substituir os arquivos no destino.
+5. Execute: python backend\scripts\phase24_5_release_gate.py
+6. Faça commit e push somente se aparecer RELEASE GATE APROVADO.
+
+TESTE APÓS O DEPLOY
+1. No Admin, abra Meu Plano.
+2. Selecione o plano correto e aplique o cupom integral.
+3. Confirme que o total fica R$ 0,00.
+4. Finalize: o plano deve ser ativado sem QR Code Pix.
