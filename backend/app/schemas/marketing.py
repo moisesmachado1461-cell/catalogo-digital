@@ -38,6 +38,22 @@ class CouponUpdate(CouponCreate):
     pass
 
 
+class CouponPreviewItem(BaseModel):
+    product_id: int = Field(gt=0)
+    line_total: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
+
+
+class CouponPreviewRequest(BaseModel):
+    code: str = Field(min_length=2, max_length=40)
+    subtotal: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
+    items: list[CouponPreviewItem] = Field(min_length=1, max_length=200)
+
+    @field_validator("code")
+    @classmethod
+    def normalize_preview_code(cls, value: str) -> str:
+        return value.strip().upper().replace(" ", "")
+
+
 class PromotionCreate(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     description: str | None = None

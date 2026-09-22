@@ -117,7 +117,7 @@
     return selected.slice(0, limit).map((item) => ({
       title: item.title,
       answer: item.answer,
-      steps: (item.steps || []).slice(0, 4),
+      steps: (item.steps || []).slice(0, 3),
     }));
   }
 
@@ -297,7 +297,7 @@
   function localFallback(question, ctx) {
     const generic = normalize(question);
     if (/o que posso fazer|me ajuda|ajuda nesta tela|como usar esta tela/.test(generic)) {
-      const entries = contextualEntries(ctx, 3);
+      const entries = contextualEntries(ctx, 2);
       return {
         answer: entries.length
           ? `Nesta área eu posso te orientar principalmente sobre ${entries.map((item) => item.title.toLowerCase()).join(', ')}.`

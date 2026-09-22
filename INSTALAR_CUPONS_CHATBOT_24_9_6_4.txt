@@ -1,0 +1,37 @@
+CATÁLOGO DIGITAL — CUPONS E CHATBOT 24.9.6.4
+
+O QUE FOI MELHORADO
+- Área pública exclusiva para cupons ativos e publicados pela loja.
+- Botão Aplicar cupom no checkout, com mensagem clara de sucesso ou erro.
+- Subtotal, desconto e total final aparecem antes da confirmação do pedido.
+- Validação da prévia do cupom feita pelo backend.
+- O pedido recalcula o cupom com segurança no servidor.
+- O pagamento e o Pix recebem o total final já descontado.
+- Cupom por produto continua restrito aos produtos escolhidos pelo lojista.
+- Teste automático confirma que o cupom desconta o pedido e o pagamento.
+- Chatbot responde em português, de forma direta e com no máximo 3 passos curtos.
+- Respostas do chatbot foram limitadas para evitar textos longos e fora do assunto.
+
+INSTALAÇÃO
+1. Extraia este ZIP.
+2. Copie as pastas backend e frontend.
+3. Cole dentro da pasta principal catalogo-digital-arquitetura-v1-corrigido.
+4. Escolha Substituir os arquivos no destino.
+5. No PowerShell, dentro da pasta principal, execute:
+   .\backend\.venv\Scripts\Activate.ps1
+   python backend\scripts\phase24_5_release_gate.py
+6. Faça commit e push somente se aparecer RELEASE GATE APROVADO.
+
+TESTE FOCADO APÓS O DEPLOY
+1. No painel, crie um cupom ativo e marque como público.
+2. Se o cupom for de produto, selecione pelo menos um produto.
+3. Abra a loja pública em uma guia anônima e adicione o produto ao carrinho.
+4. No checkout, digite o código e clique em Aplicar cupom.
+5. Confirme que aparecem subtotal, desconto e total menor.
+6. Crie o pedido e confira se o pedido e o Pix mostram o mesmo total com desconto.
+7. Faça duas perguntas ao chatbot e confira se a resposta é curta e objetiva.
+
+IMPORTANTE
+- Cupons de venda da loja são separados dos cupons de assinatura do SaaS.
+- Somente cupons marcados como públicos aparecem para o cliente.
+- O cliente informa que pagou; somente o lojista confirma o pagamento como PAGO.

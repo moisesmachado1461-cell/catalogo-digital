@@ -407,6 +407,24 @@ def main() -> int:
             require(coupon.get("product_ids") == [market_product["id"]], "Cupom não ficou vinculado ao produto")
             public_coupons = request_json(base, "/api/public/stores/mercado-bom-preco/coupons")
             require(any(c.get("code") == "F24PROD10" for c in public_coupons), "Cupom público não apareceu")
+            coupon_order = request_json(
+                base,
+                "/api/public/stores/mercado-bom-preco/orders",
+                method="POST",
+                expected=201,
+                body={
+                    "customer": {"name": "Cliente Cupom", "email": "cliente.cupom@example.com", "phone": "11988887777"},
+                    "items": [{"product_id": market_product["id"], "quantity": 1, "selected_option_item_ids": []}],
+                    "payment_method": "DINHEIRO",
+                    "fulfillment_method": "RETIRADA",
+                    "coupon_code": "F24PROD10",
+                },
+            )
+            require(float(coupon_order.get("discount_amount") or 0) > 0, "Cupom não descontou o pedido")
+            require(
+                float((coupon_order.get("payment") or {}).get("amount") or -1) == float(coupon_order.get("total") or -2),
+                "Pagamento não recebeu o total final com desconto",
+            )
             request_json(
                 base,
                 "/api/admin/coupons",
@@ -422,7 +440,7 @@ def main() -> int:
                     "product_ids": [market_product["id"]],
                 },
             )
-            ok("Cupom por produto funciona e não aceita produto de outra loja")
+            ok("Cupom desconta pedido e pagamento, sem aceitar produto de outra loja")
 
             # Cupom de plano SaaS
             plans = request_json(base, "/api/plans")

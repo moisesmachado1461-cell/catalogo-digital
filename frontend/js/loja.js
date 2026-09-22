@@ -2,6 +2,7 @@ const params = new URLSearchParams(location.search);
 const slug = params.get('slug') || 'mercado-bom-preco';
 let store = null, catalog = null, serviceData = null, promotions = [], publicCoupons = [], resourcesData = null, rentalItemsData = null, paymentOptions = [];
 let selectedCouponCode = null;
+let validatedCoupon = null;
 let storePaymentPollTimer = null;
 let cart = JSON.parse(localStorage.getItem(`cart_${slug}`) || '[]');
 const { query: $, queryAll: $$, initials } = window.CatalogoUtils;
@@ -133,37 +134,53 @@ function publicCouponRules(coupon) {
   return rules.length ? rules.join(' · ') : 'Sem pedido mínimo informado';
 }
 
-function checkoutPreview() {
+function checkoutTotalsPayload() {
   const subtotal = cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
-  const code = ($('#checkoutCouponCode')?.value || '').trim().toUpperCase().replaceAll(' ', '');
-  const coupon = publicCoupons.find(item => String(item.code).toUpperCase() === code);
-  let discount = 0;
-  let message = '';
-  if (code && !coupon) message = 'Cupom não encontrado ou indisponível.';
-  if (coupon) {
-    if (subtotal < Number(coupon.min_order_value || 0)) {
-      message = `Este cupom exige pedido mínimo de ${money(coupon.min_order_value)}.`;
-    } else {
-      const eligibleIds = coupon.product_ids || [];
-      const eligible = eligibleIds.length
-        ? cart.filter(item => eligibleIds.includes(Number(item.product_id))).reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0)
-        : subtotal;
-      if (eligible <= 0) message = 'Este cupom não vale para os produtos do carrinho.';
-      else {
-        discount = coupon.discount_type === 'PERCENT' ? eligible * (Number(coupon.value) / 100) : Number(coupon.value);
-        if (coupon.max_discount != null) discount = Math.min(discount, Number(coupon.max_discount));
-        discount = Math.max(0, Math.min(discount, eligible));
-        message = `Cupom ${coupon.code}: desconto estimado de ${money(discount)}.`;
-      }
-    }
-  }
-  const total = Math.max(0, subtotal - discount);
+  const grouped = new Map();
+  cart.forEach(item => grouped.set(Number(item.product_id), (grouped.get(Number(item.product_id)) || 0) + Number(item.price) * Number(item.quantity)));
+  return { subtotal, items: [...grouped].map(([product_id, line_total]) => ({ product_id, line_total })) };
+}
+
+function renderCheckoutSummary(preview = null, message = '') {
+  const { subtotal } = checkoutTotalsPayload();
+  const discount = Number(preview?.discount_amount || 0);
+  const total = Number(preview?.total ?? subtotal);
   const summary = $('#checkoutSummary');
-  if (summary) summary.innerHTML = `<div><b>Subtotal</b><span>${money(subtotal)}</span></div>${discount > 0 ? `<div class="checkout-discount"><b>Desconto</b><span>− ${money(discount)}</span></div>` : ''}<div class="checkout-preview-total"><b>Total estimado</b><strong>${money(total)}</strong></div><small>${escapeHtml(message || 'O valor final será confirmado com segurança pelo servidor.')}</small>`;
+  if (summary) summary.innerHTML = `<div><b>Subtotal</b><span>${money(subtotal)}</span></div>${discount > 0 ? `<div class="checkout-discount"><b>Desconto aplicado</b><span>− ${money(discount)}</span></div>` : ''}<div class="checkout-preview-total"><b>Total</b><strong>${money(total)}</strong></div><small>${escapeHtml(message || 'Digite o cupom e clique em Aplicar cupom.')}</small>`;
+}
+
+async function validateCheckoutCoupon(showSuccess = true) {
+  const field = $('#checkoutCouponCode');
+  const code = (field?.value || '').trim().toUpperCase().replaceAll(' ', '');
   const hint = $('#checkoutCouponHint');
-  if (hint) {
-    hint.textContent = message;
-    hint.classList.toggle('hidden', !message);
+  if (!code) {
+    validatedCoupon = null;
+    selectedCouponCode = null;
+    if (hint) hint.classList.add('hidden');
+    renderCheckoutSummary();
+    return null;
+  }
+  const button = $('#applyCheckoutCouponBtn');
+  if (button) { button.disabled = true; button.textContent = 'Validando...'; }
+  try {
+    const totals = checkoutTotalsPayload();
+    const preview = await api(`/api/public/stores/${encodeURIComponent(slug)}/coupons/validate`, { method: 'POST', body: JSON.stringify({ code, ...totals }) });
+    validatedCoupon = preview;
+    selectedCouponCode = preview.code;
+    if (field) field.value = preview.code;
+    const message = `Cupom ${preview.code} aplicado: você economiza ${money(preview.discount_amount)}.`;
+    if (hint) { hint.textContent = message; hint.classList.remove('hidden', 'error'); hint.classList.add('success'); }
+    renderCheckoutSummary(preview, message);
+    if (showSuccess) showToast('Cupom aplicado com sucesso.');
+    return preview;
+  } catch (error) {
+    validatedCoupon = null;
+    selectedCouponCode = null;
+    if (hint) { hint.textContent = error.message; hint.classList.remove('hidden', 'success'); hint.classList.add('error'); }
+    renderCheckoutSummary(null, error.message);
+    throw error;
+  } finally {
+    if (button) { button.disabled = false; button.textContent = 'Aplicar cupom'; }
   }
 }
 
@@ -201,9 +218,10 @@ window.usePublicCoupon = async function usePublicCoupon(code) {
   const input = $('#checkoutCouponCode');
   if (input) input.value = code;
   const hint = $('#checkoutCouponHint');
-  if (hint) { hint.textContent = `Cupom ${code} selecionado. O desconto será validado ao criar o pedido.`; hint.classList.remove('hidden'); }
+  validatedCoupon = null;
+  if (hint) { hint.textContent = `Cupom ${code} selecionado. Clique em Aplicar cupom no checkout.`; hint.classList.remove('hidden'); }
   try { await navigator.clipboard.writeText(code); } catch (_error) {}
-  if (cart.length) showToast(`Cupom ${code} selecionado para o checkout.`);
+  if (cart.length) showToast(`Cupom ${code} selecionado. Finalize o pedido para aplicar.`);
   else showToast(`Cupom ${code} copiado. Adicione produtos ao carrinho para usar.`);
 };
 
@@ -720,11 +738,18 @@ $('#checkoutBtn').onclick = () => {
   if (!cart.length) return showToast('Adicione um produto ao carrinho.', 'error');
   closeCartDrawer();
   if (selectedCouponCode && $('#checkoutCouponCode') && !$('#checkoutCouponCode').value) $('#checkoutCouponCode').value = selectedCouponCode;
-  checkoutPreview();
+  validatedCoupon = null;
+  renderCheckoutSummary();
   openModal('checkoutModal');
 };
 
-$('#checkoutCouponCode')?.addEventListener('input', checkoutPreview);
+$('#applyCheckoutCouponBtn')?.addEventListener('click', () => validateCheckoutCoupon().catch(() => {}));
+$('#checkoutCouponCode')?.addEventListener('input', () => {
+  validatedCoupon = null;
+  const hint = $('#checkoutCouponHint');
+  hint?.classList.add('hidden');
+  renderCheckoutSummary();
+});
 
 $('#checkoutForm').fulfillment_method.onchange = (event) => {
   const delivery = event.target.value === 'ENTREGA';
@@ -735,13 +760,15 @@ $('#checkoutForm').fulfillment_method.onchange = (event) => {
 $('#checkoutForm').onsubmit = async e => {
   e.preventDefault(); const f = e.currentTarget;
   try {
+    const couponCode = f.coupon_code.value.trim();
+    if (couponCode) await validateCheckoutCoupon(false);
     const result = await api(`/api/public/stores/${encodeURIComponent(slug)}/orders`, { method: 'POST', body: JSON.stringify({
       customer: { name: f.name.value, email: f.email.value || null, phone: f.phone.value || null },
       items: cart.map(({ product_id, variant_id, selected_option_item_ids, quantity }) => ({ product_id, variant_id, selected_option_item_ids: selected_option_item_ids || [], quantity })),
       payment_method: f.payment_method.value, payment_document: f.payment_document?.value || null, fulfillment_method: f.fulfillment_method.value, coupon_code: f.coupon_code.value || null,
       notes: f.notes.value || null, delivery_address: f.delivery_address.value || null, delivery_city: f.delivery_city.value || null, delivery_state: f.delivery_state.value || null, delivery_zip_code: f.delivery_zip_code.value || null,
     }) });
-    cart = []; saveCart(); selectedCouponCode = null; closeModal('checkoutModal'); f.reset(); $('#checkoutCouponHint')?.classList.add('hidden'); $('#deliveryFields').classList.add('hidden');
+    cart = []; saveCart(); selectedCouponCode = null; validatedCoupon = null; closeModal('checkoutModal'); f.reset(); $('#checkoutCouponHint')?.classList.add('hidden'); $('#deliveryFields').classList.add('hidden');
     const discountText = Number(result.discount_amount) > 0 ? ` Desconto: ${money(result.discount_amount)}.` : '';
     showToast(`Pedido ${result.order_number} criado. Total: ${money(result.total)}.${discountText}`);
     $('#orderSuccessTitle').textContent = `Pedido ${result.order_number} criado!`;

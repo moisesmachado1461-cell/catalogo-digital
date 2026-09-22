@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -8,8 +9,8 @@ from ..dependencies import get_current_store_id
 from ..models.catalog import Product
 from ..models.marketing import Coupon, CouponProduct, Promotion, PromotionItem
 from ..repositories.catalog_repository import get_store_by_slug
-from ..schemas.marketing import CouponCreate, CouponUpdate, PromotionCreate, PromotionUpdate
-from ..services.marketing_service import active_promotions_for_store, active_public_coupons_for_store
+from ..schemas.marketing import CouponCreate, CouponPreviewRequest, CouponUpdate, PromotionCreate, PromotionUpdate
+from ..services.marketing_service import active_promotions_for_store, active_public_coupons_for_store, validate_coupon
 from ..services.subscription_service import feature_enabled, require_feature
 
 public_router = APIRouter(prefix="/api/public", tags=["marketing-public"])
@@ -79,6 +80,29 @@ def public_coupons(slug: str, db: Session = Depends(get_db)):
     if not store.capabilities.get("coupons", False) or not feature_enabled(db, store.id, "coupons"):
         return []
     return active_public_coupons_for_store(db, store.id)
+
+
+@public_router.post("/stores/{slug}/coupons/validate")
+def public_validate_coupon(slug: str, data: CouponPreviewRequest, db: Session = Depends(get_db)):
+    store = get_store_by_slug(db, slug)
+    if not store:
+        raise HTTPException(status_code=404, detail="Loja não encontrada")
+    if not store.capabilities.get("coupons", False) or not feature_enabled(db, store.id, "coupons"):
+        raise HTTPException(status_code=403, detail="Cupons não estão disponíveis nesta loja")
+    product_totals: dict[int, Decimal] = {}
+    for item in data.items:
+        product_totals[item.product_id] = product_totals.get(item.product_id, Decimal("0.00")) + item.line_total
+    coupon, discount = validate_coupon(db, store.id, data.code, data.subtotal, product_line_totals=product_totals)
+    total = max(Decimal("0.00"), data.subtotal - discount)
+    return {
+        "valid": True,
+        "code": coupon.code,
+        "description": coupon.description,
+        "discount_amount": discount,
+        "subtotal": data.subtotal,
+        "total": total,
+        "scope": "PRODUCTS" if db.query(CouponProduct.id).filter(CouponProduct.store_id == store.id, CouponProduct.coupon_id == coupon.id).first() else "ORDER",
+    }
 
 
 @admin_router.get("/coupons")
