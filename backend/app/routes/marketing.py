@@ -8,6 +8,7 @@ from ..database import get_db
 from ..dependencies import get_current_store_id
 from ..models.catalog import Product
 from ..models.marketing import Coupon, CouponProduct, Promotion, PromotionItem
+from ..models.store import Store
 from ..repositories.catalog_repository import get_store_by_slug
 from ..schemas.marketing import CouponCreate, CouponPreviewRequest, CouponUpdate, PromotionCreate, PromotionUpdate
 from ..services.marketing_service import active_promotions_for_store, active_public_coupons_for_store, validate_coupon
@@ -121,6 +122,9 @@ def create_coupon(data: CouponCreate, store_id: int = Depends(get_current_store_
     payload = data.model_dump(exclude={"product_ids"})
     c = Coupon(store_id=store_id, **payload)
     db.add(c); db.flush()
+    store = db.query(Store).filter(Store.id == store_id).first()
+    if store and not (store.capabilities or {}).get("coupons", False):
+        store.capabilities = {**(store.capabilities or {}), "coupons": True}
     _sync_coupon_products(db, c, store_id, data.product_ids)
     db.commit(); db.refresh(c)
     return coupon_dict(db, c)

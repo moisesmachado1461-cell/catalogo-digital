@@ -476,7 +476,27 @@ def main() -> int:
             )
             require(validation.get("valid") is True, "Admin não conseguiu validar cupom do plano")
             require(float(validation.get("discount_amount") or 0) > 0, "Cupom de plano não calculou desconto")
-            ok("Cupom de plano é criado pelo Super Admin e validado pelo Admin")
+            original_features = dict(professional.get("features") or {})
+            disabled_features = {**original_features, "coupons": False}
+            request_json(
+                base,
+                f"/api/super-admin/plans/{professional['id']}",
+                method="PATCH",
+                token=tokens["super"],
+                body={"features": disabled_features},
+            )
+            disabled_context = request_json(base, "/api/admin/subscription", token=tokens["market"])
+            require(disabled_context.get("features", {}).get("coupons") is False, "Edição do plano não atualizou a assinatura ativa")
+            request_json(
+                base,
+                f"/api/super-admin/plans/{professional['id']}",
+                method="PATCH",
+                token=tokens["super"],
+                body={"features": original_features},
+            )
+            restored_context = request_json(base, "/api/admin/subscription", token=tokens["market"])
+            require(restored_context.get("features", {}).get("coupons") is True, "Reativação de cupons não chegou à assinatura ativa")
+            ok("Cupom de plano funciona no Admin e edição do plano atualiza assinaturas ativas")
 
             # Cobrança / assinatura somente leitura
             request_json(base, "/api/admin/subscription", token=tokens["market"])

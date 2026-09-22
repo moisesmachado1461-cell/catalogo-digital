@@ -321,13 +321,31 @@ def admin_create_pix_checkout(
             )
             if not invoice and subscription.status == "TRIAL":
                 invoice, _created = create_renewal_invoice(
-                    db, subscription, due_at=subscription.trial_ends_at or subscription.current_period_end
+                    db,
+                    subscription,
+                    due_at=subscription.trial_ends_at or subscription.current_period_end,
+                    coupon_code=data.coupon_code,
                 )
             if not invoice:
                 raise HTTPException(
                     status_code=400,
                     detail="Seu plano atual já está ativo. A cobrança de renovação será liberada próximo ao vencimento.",
                 )
+            if data.coupon_code:
+                subtotal = Decimal(invoice.subtotal_amount if invoice.subtotal_amount is not None else invoice.amount)
+                coupon, discount, total = validate_billing_coupon(
+                    db,
+                    data.coupon_code,
+                    plan=plan,
+                    billing_cycle=data.billing_cycle,
+                    amount=subtotal,
+                )
+                invoice.subtotal_amount = subtotal
+                invoice.discount_amount = discount
+                invoice.amount = total
+                invoice.billing_coupon_id = coupon.id if coupon else None
+                invoice.coupon_code = coupon.code if coupon else None
+                db.flush()
         else:
             invoice, _created = create_plan_change_invoice(
                 db,

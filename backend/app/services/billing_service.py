@@ -319,6 +319,7 @@ def create_renewal_invoice(
     *,
     due_at: datetime | None = None,
     payment_method: str | None = None,
+    coupon_code: str | None = None,
     now: datetime | None = None,
 ) -> tuple[SubscriptionInvoice, bool]:
     now = aware(now) or utcnow()
@@ -336,7 +337,16 @@ def create_renewal_invoice(
     coupon = None
     discount_amount = Decimal("0.00")
     amount = subtotal_amount
-    if subscription.billing_coupon_id:
+    if coupon_code:
+        coupon, discount_amount, amount = validate_billing_coupon(
+            db,
+            coupon_code,
+            plan=subscription.plan,
+            billing_cycle=subscription.billing_cycle,
+            amount=subtotal_amount,
+            now=now,
+        )
+    elif subscription.billing_coupon_id:
         recurring_coupon = db.query(BillingCoupon).filter(BillingCoupon.id == subscription.billing_coupon_id).first()
         if recurring_coupon and recurring_coupon.duration == "RECURRING":
             try:
@@ -362,6 +372,14 @@ def create_renewal_invoice(
         .first()
     )
     if existing:
+        if coupon_code:
+            existing.subtotal_amount = subtotal_amount
+            existing.discount_amount = discount_amount
+            existing.amount = amount
+            existing.billing_coupon_id = coupon.id if coupon else None
+            existing.coupon_code = coupon.code if coupon else None
+            existing.updated_at = now
+            db.flush()
         return existing, False
 
     row = SubscriptionInvoice(

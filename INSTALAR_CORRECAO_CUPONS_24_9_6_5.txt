@@ -1,0 +1,30 @@
+CATÁLOGO DIGITAL — CORREÇÃO DE CUPONS 24.9.6.5
+
+CORREÇÕES
+- Repara automaticamente lojas antigas que possuem cupons, mas estavam com o recurso interno desligado.
+- Atualiza assinaturas ativas quando o Super Admin altera recursos ou limites do plano.
+- Preserva o preço contratado ao atualizar os recursos do plano.
+- Ativa a capacidade de cupons quando o Admin ou Super Admin cria um cupom para a loja.
+- Aplica cupom de assinatura também em faturas de renovação do plano atual.
+- Garante que subtotal, desconto, total da fatura e valor do Pix permaneçam alinhados.
+- Amplia o teste automático para conferir a atualização de recursos nas assinaturas ativas.
+
+INSTALAÇÃO
+1. Extraia este ZIP.
+2. Copie a pasta backend.
+3. Cole dentro da pasta principal catalogo-digital-arquitetura-v1-corrigido.
+4. Escolha Substituir os arquivos no destino.
+5. No PowerShell, dentro da pasta principal, execute:
+   .\backend\.venv\Scripts\Activate.ps1
+   python backend\scripts\phase24_5_release_gate.py
+6. Faça commit e push somente se aparecer RELEASE GATE APROVADO.
+
+TESTE APÓS O DEPLOY
+1. Abra a loja em guia anônima, atualize com Ctrl+F5 e aplique o cupom da loja.
+2. Confira subtotal, desconto e total reduzido.
+3. No Admin, abra Meu Plano, escolha um plano permitido e aplique o cupom criado pelo Super Admin.
+4. Confira o desconto antes de gerar o Pix.
+
+OBSERVAÇÃO
+- A migração 021 corrige os dados antigos automaticamente durante o deploy.
+- Cupons de pedidos e cupons de assinatura continuam separados.

@@ -618,6 +618,8 @@ def create_store_coupon(
     coupon = Coupon(store_id=store_id, **payload)
     db.add(coupon)
     db.flush()
+    if not (store.capabilities or {}).get("coupons", False):
+        store.capabilities = {**(store.capabilities or {}), "coupons": True}
     _sync_store_coupon_products(db, coupon, store_id, data.product_ids)
     ip_address, user_agent = _request_context(request)
     write_audit(

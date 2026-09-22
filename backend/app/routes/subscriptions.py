@@ -112,6 +112,21 @@ def update_plan(
         db.query(Plan).filter(Plan.id != plan_id, Plan.is_featured.is_(True)).update({"is_featured": False}, synchronize_session=False)
     for key, value in payload.items():
         setattr(plan, key, value)
+    # Recursos e limites editados pelo Super Admin entram em vigor nas
+    # assinaturas atuais. Preços permanecem congelados até a próxima cobrança.
+    if payload.get("features") is not None or payload.get("limits") is not None:
+        now = datetime.now(timezone.utc)
+        active_subscriptions = db.query(Subscription).filter(
+            Subscription.plan_id == plan.id,
+            Subscription.status.in_(["TRIAL", "ACTIVE", "PAST_DUE"]),
+        ).all()
+        for subscription in active_subscriptions:
+            if payload.get("features") is not None:
+                subscription.features_snapshot = dict(plan.features or {})
+            if payload.get("limits") is not None:
+                subscription.limits_snapshot = dict(plan.limits or {})
+            subscription.commercial_terms_at = now
+            subscription.updated_at = now
     db.commit()
     db.refresh(plan)
     return _plan_dict(plan)
