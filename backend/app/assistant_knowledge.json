@@ -1,5 +1,5 @@
 {
-  "version": "24.9.0",
+  "version": "24.9.6.7",
   "areaLabels": {
     "public": "Catálogo Digital",
     "store": "Loja e atendimento",
@@ -837,6 +837,150 @@
         "No checkout, o cliente escolhe Pix online e informa e-mail e CPF/CNPJ.",
         "O QR Code é gerado e o status muda automaticamente após o pagamento."
       ]
+    },
+    {
+      "id": "roles-and-permissions",
+      "areas": ["public", "admin", "super", "customer", "store"],
+      "sections": ["home", "dashboard", "profile", "account"],
+      "title": "Papéis e permissões",
+      "keywords": ["permissão", "permissoes", "acesso", "papel", "admin", "super admin", "cliente", "lojista"],
+      "answer": "Super Admin gerencia a plataforma, planos e lojas; o Admin gerencia somente a própria loja; o cliente acessa compras, pedidos e agendamentos próprios. Uma área não deve acessar dados ou funções reservadas a outro papel.",
+      "steps": ["Confirme em qual área você entrou.", "Use apenas as funções liberadas para seu papel.", "Se faltar acesso, fale com o responsável pela conta."]
+    },
+    {
+      "id": "tenant-isolation",
+      "areas": ["admin", "super"],
+      "sections": ["dashboard", "stores", "privacy"],
+      "title": "Separação segura entre lojas",
+      "keywords": ["outra loja", "dados misturados", "isolamento", "tenant", "segurança", "vazar dados"],
+      "answer": "Cada loja possui dados isolados. O Admin só pode consultar e alterar produtos, clientes, pedidos, pagamentos e configurações vinculados à própria loja.",
+      "steps": ["Confira se entrou com o usuário da loja correta.", "Não compartilhe sua sessão de Admin.", "Se aparecer dado de outra loja, interrompa o uso e informe o suporte."]
+    },
+    {
+      "id": "store-public-link",
+      "areas": ["admin", "store", "public"],
+      "sections": ["dashboard", "settings", "home", "catalog"],
+      "title": "Link público da loja",
+      "keywords": ["link da loja", "enviar link", "compartilhar", "copiar link", "site do cliente", "loja pública"],
+      "answer": "O link público abre a vitrine da loja para clientes, sem dar acesso ao painel administrativo. No Admin, use Ver loja, Copiar link ou Compartilhar.",
+      "steps": ["Abra o painel Admin.", "Use Ver loja ou Copiar link.", "Teste o endereço em uma guia anônima antes de divulgar."]
+    },
+    {
+      "id": "product-details-public",
+      "areas": ["store", "customer"],
+      "sections": ["catalog", "cart"],
+      "title": "Detalhes do produto",
+      "keywords": ["abrir produto", "descrição", "descricao", "detalhes", "informações do produto", "variante", "adicional"],
+      "answer": "Clique no produto para abrir os detalhes. A janela mostra imagem, descrição, preço, promoção, estoque, código, variações e adicionais disponíveis antes de adicionar ao carrinho.",
+      "steps": ["Clique no card do produto.", "Escolha variações e adicionais, se houver.", "Defina a quantidade e adicione ao carrinho."]
+    },
+    {
+      "id": "store-coupon-troubleshooting",
+      "areas": ["admin", "super", "store"],
+      "sections": ["coupons", "cart", "billing"],
+      "title": "Cupom da loja inválido",
+      "keywords": ["cupom inválido", "cupom nao funciona", "não descontou", "desconto não apareceu", "pedido mínimo", "produto selecionado"],
+      "answer": "Confira se o cupom está ativo, dentro da validade, com usos disponíveis e liberado no plano. Em cupom por produto, pelo menos um produto vinculado precisa estar no carrinho; em cupom público, marque Exibir no site.",
+      "steps": ["Confira status, validade e limite de usos.", "Confira pedido mínimo e produtos vinculados.", "No checkout, digite o código e clique em Aplicar cupom."]
+    },
+    {
+      "id": "store-vs-billing-coupons",
+      "areas": ["admin", "super"],
+      "sections": ["coupons", "subscription", "billing", "plans"],
+      "title": "Cupom da loja e cupom de plano",
+      "keywords": ["cupom de plano", "cupom da loja", "cupom assinatura", "diferença de cupom", "super admin cupom"],
+      "answer": "Cupons da loja descontam pedidos dos clientes. Cupons de plano são criados pelo Super Admin e descontam a assinatura do lojista; os dois tipos são separados.",
+      "steps": ["Para pedidos, use a área Cupons da loja.", "Para assinaturas, use Cupons para planos no Super Admin.", "Aplique o código de assinatura em Meu Plano."]
+    },
+    {
+      "id": "billing-full-coupon",
+      "areas": ["admin", "super"],
+      "sections": ["subscription", "billing", "plans"],
+      "title": "Cupom de 100% na assinatura",
+      "keywords": ["100%", "cem por cento", "total zero", "r$ 0", "não exige pix", "cupom integral"],
+      "answer": "Quando o cupom reduz a assinatura para R$ 0,00, o sistema registra a fatura como paga por cupom e ativa o plano sem gerar Pix. O uso do cupom permanece contabilizado.",
+      "steps": ["Aplique o cupom em Meu Plano.", "Confira se o total ficou R$ 0,00.", "Finalize para ativar o plano sem QR Code."]
+    },
+    {
+      "id": "simple-store-payments",
+      "areas": ["admin", "store", "customer"],
+      "sections": ["payments", "cart", "orders"],
+      "title": "Pix imediato, dinheiro e cartão",
+      "keywords": ["pix imediato", "pix manual", "dinheiro", "cartão na entrega", "forma de pagamento", "chave pix"],
+      "answer": "A loja pode oferecer Pix imediato pela própria chave, dinheiro, cartão no atendimento/entrega e combinação pelo WhatsApp. No Pix imediato, o cliente copia a chave ou o código e informa que pagou; o lojista confirma após conferir o recebimento.",
+      "steps": ["Configure as formas aceitas em Pagamentos.", "O cliente escolhe uma opção no checkout.", "Confirme como Pago somente após conferir o recebimento."]
+    },
+    {
+      "id": "payment-status-flow",
+      "areas": ["admin", "store", "customer"],
+      "sections": ["payments", "orders", "tracking"],
+      "title": "Status do pagamento",
+      "keywords": ["pendente", "já paguei", "cliente informou", "confirmar pago", "status pagamento", "marcar pago"],
+      "answer": "Pendente significa que o pagamento ainda não foi confirmado. Cliente informou indica apenas que o cliente declarou ter pago. Somente marque como Pago após confirmação automática do provedor ou conferência do valor pelo lojista.",
+      "steps": ["Abra o pedido ou pagamento.", "Confira o recebimento na conta correta.", "Depois confirme o status como Pago."]
+    },
+    {
+      "id": "marketplace-payments",
+      "areas": ["admin", "super"],
+      "sections": ["payments", "billing", "stores"],
+      "title": "Pagamentos das lojas e assinaturas",
+      "keywords": ["quem recebe", "dinheiro da venda", "dinheiro assinatura", "marketplace", "oauth", "conta mercado pago"],
+      "answer": "As assinaturas do Catálogo Digital pertencem à conta da plataforma. As vendas de cada loja devem ir para a conta Mercado Pago do próprio lojista conectada ao sistema.",
+      "steps": ["Use a cobrança SaaS para assinaturas.", "Conecte o Mercado Pago da loja para vendas online.", "Confira a conta de destino antes de liberar pagamentos reais."]
+    },
+    {
+      "id": "mercado-pago-credentials-error",
+      "areas": ["admin", "super"],
+      "sections": ["payments", "billing"],
+      "title": "Erro de credenciais do Mercado Pago",
+      "keywords": ["invalid_credentials", "http 401", "credenciais teste produção", "app_usr", "oauth erro", "sandbox"],
+      "answer": "HTTP 401 ou invalid_credentials normalmente indica mistura entre credenciais de teste e produção, token incorreto ou conta não autorizada. Nunca envie o valor do Access Token, Client Secret ou chave privada no chat.",
+      "steps": ["Confirme se ambiente e credenciais são do mesmo tipo.", "Confira apenas o nome das variáveis no Render.", "Teste novamente após salvar e fazer novo deploy."]
+    },
+    {
+      "id": "login-session-help",
+      "areas": ["admin", "super", "customer"],
+      "sections": ["profile", "account", "home"],
+      "title": "Problemas de login e sessão",
+      "keywords": ["não entra", "nao loga", "sessão expirou", "401", "login", "senha", "acesso negado"],
+      "answer": "Confirme que está usando a página e o usuário do papel correto. Sessões expiradas são encerradas por segurança; entre novamente e atualize a página se o deploy acabou de ser concluído.",
+      "steps": ["Confirme e-mail e área de login.", "Saia, atualize com Ctrl+F5 e entre novamente.", "Se persistir, informe a mensagem do erro sem enviar senha."]
+    },
+    {
+      "id": "deploy-cache-help",
+      "areas": ["admin", "super", "store", "customer", "public"],
+      "sections": ["home", "dashboard", "settings"],
+      "title": "Atualização não apareceu",
+      "keywords": ["não apareceu", "versão antiga", "cache", "ctrl f5", "render live", "deploy", "atualização"],
+      "answer": "Depois que o Render ficar Live, o navegador ainda pode manter arquivos antigos. Atualize com Ctrl+F5 ou teste em guia anônima; se continuar igual, confirme se o deploy usou o commit correto.",
+      "steps": ["Aguarde o Render mostrar Live.", "Pressione Ctrl+F5 ou abra guia anônima.", "Confira o commit do deploy se a mudança não aparecer."]
+    },
+    {
+      "id": "assistant-security",
+      "areas": ["public", "admin", "super", "store", "customer"],
+      "sections": ["home", "dashboard", "profile", "settings", "payments", "billing"],
+      "title": "Segurança ao pedir ajuda",
+      "keywords": ["senha", "token", "api key", "client secret", "segredo", "2fa", "credencial", "print seguro"],
+      "answer": "O assistente nunca precisa do valor de senha, Access Token, Client Secret, API Key, Webhook Secret, chave Fernet ou código 2FA. Para diagnóstico, envie somente a mensagem do erro ou um print com segredos ocultos.",
+      "steps": ["Oculte valores secretos no print.", "Informe apenas o nome da variável e o erro.", "Troque imediatamente qualquer segredo exposto."]
+    },
+    {
+      "id": "assistant-position",
+      "areas": ["public", "admin", "super", "store", "customer"],
+      "sections": ["home", "dashboard", "catalog", "cart", "account"],
+      "title": "Mover o botão do assistente",
+      "keywords": ["mover chatbot", "botão atrapalha", "arrastar", "posição", "reposicionar assistente"],
+      "answer": "O botão do assistente pode ser arrastado para outra parte da tela. A posição escolhida fica salva neste navegador.",
+      "steps": ["Pressione e segure o botão.", "Arraste para um local livre.", "Solte para salvar a nova posição."]
+    },
+    {
+      "id": "assistant-scope",
+      "areas": ["public", "admin", "super", "store", "customer"],
+      "sections": ["home", "dashboard", "catalog", "account", "billing"],
+      "title": "O que o assistente conhece",
+      "keywords": ["o que você sabe", "tudo sobre o site", "especialista", "funcionalidades", "ajuda completa"],
+      "answer": "O assistente explica telas, produtos, estoque, pedidos, clientes, cupons, promoções, pagamentos, planos, serviços, agendamentos, reservas, locações, orçamentos, permissões, segurança e erros comuns do Catálogo Digital.",
+      "steps": ["Diga o nome da tela ou função.", "Explique o que deseja fazer ou qual erro apareceu.", "Siga os passos compatíveis com sua área e permissão."]
     }
   ]
 }

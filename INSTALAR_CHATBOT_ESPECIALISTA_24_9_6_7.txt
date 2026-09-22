@@ -1,0 +1,35 @@
+CATÁLOGO DIGITAL — CHATBOT ESPECIALISTA 24.9.6.7
+
+MELHORIAS
+- Base oficial ampliada para 54 tópicos do sistema.
+- Conhecimento sobre Cliente, Admin, Super Admin e loja pública.
+- Produtos, estoque, pedidos, cupons, promoções e pagamentos.
+- Serviços, profissionais, agendamentos, reservas, locações e orçamentos.
+- Planos, assinaturas, cupom integral, Pix e Mercado Pago.
+- Links públicos, detalhes dos produtos, login, deploy e erros comuns.
+- Permissões, isolamento entre lojas e proteção de dados sensíveis.
+- Busca melhorada: considera títulos, palavras-chave, respostas e passos.
+- Respostas em português, objetivas e com no máximo 3 passos curtos.
+- Cache do navegador atualizado para publicar a nova base imediatamente.
+- Auditoria automática confirma cobertura, sincronização e segurança.
+
+INSTALAÇÃO
+1. Extraia este ZIP.
+2. Copie as pastas backend e frontend.
+3. Cole dentro da pasta principal catalogo-digital-arquitetura-v1-corrigido.
+4. Escolha Substituir os arquivos no destino.
+5. Execute: python backend\scripts\phase24_5_release_gate.py
+6. Faça commit e push somente se aparecer RELEASE GATE APROVADO.
+
+TESTE APÓS O DEPLOY
+1. Atualize o site com Ctrl+F5.
+2. Pergunte: Qual a diferença entre cupom da loja e cupom de plano?
+3. Pergunte: Quem recebe o dinheiro das vendas da loja?
+4. Pergunte: Como compartilho o link público da minha loja?
+5. Pergunte: O que fazer quando aparece invalid_credentials no Mercado Pago?
+6. Confirme que as respostas são curtas, em português e específicas do sistema.
+
+SEGURANÇA
+- O assistente nunca deve pedir senha, Access Token, Client Secret, API Key,
+  Webhook Secret, chave Fernet ou código 2FA.
+- WhatsApp permanece fora desta etapa; o assistente continua no site.

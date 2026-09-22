@@ -1,0 +1,18 @@
+CATÁLOGO DIGITAL — FASE 20
+Design System + identidade visual oficial
+
+1. Extraia o ZIP.
+2. Copie TODO o conteúdo extraído para a raiz do projeto.
+3. Substitua os arquivos quando o Windows perguntar.
+4. No terminal da raiz do projeto:
+
+   git status
+   git add .
+   git commit -m "Fase 20 - design system e identidade visual"
+   git push
+
+5. Aguarde o Render concluir o deploy.
+6. Abra /api/health e confirme version = 20.0.0.
+7. Faça atualização forçada da página no navegador (Ctrl+F5) para evitar cache antigo.
+
+Não há migration de banco nesta fase.

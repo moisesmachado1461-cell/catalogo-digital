@@ -1,0 +1,11 @@
+CATÁLOGO DIGITAL — FASE 24.9.4
+
+1. Copie os arquivos deste pacote para a raiz do projeto.
+2. Rode o release gate local.
+3. Antes/depois do deploy, adicione no Render:
+   MERCADO_PAGO_MARKETPLACE_APP_ID=<ID numérico da aplicação Marketplace>
+4. Mantenha MERCADO_PAGO_MARKETPLACE_CLIENT_ID e CLIENT_SECRET com os valores das credenciais da MESMA aplicação Marketplace.
+5. Commit/push e aguarde o Render ficar Live.
+6. Teste Admin > Pagamentos > Conectar Mercado Pago.
+
+Sem migration.

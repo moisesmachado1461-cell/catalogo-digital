@@ -10,6 +10,7 @@ Execute a partir de backend:
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -196,6 +197,44 @@ def check_shared_frontend_runtime() -> None:
         ok("As três áreas usam runtime de API, UI compartilhada e PWA")
 
 
+def check_assistant_expertise() -> None:
+    knowledge_path = ROOT / "backend" / "app" / "assistant_knowledge.json"
+    frontend_knowledge = text(FRONTEND / "js" / "assistant-knowledge.js")
+    assistant_backend = text(ROOT / "backend" / "app" / "routes" / "assistant.py")
+    assistant_frontend = text(FRONTEND / "js" / "assistant.js")
+    try:
+        knowledge = json.loads(text(knowledge_path))
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"Base do assistente inválida: {exc}")
+        return
+    entries = knowledge.get("entries") or []
+    entry_ids = {str(item.get("id")) for item in entries if isinstance(item, dict)}
+    required = {
+        "roles-and-permissions", "tenant-isolation", "store-public-link",
+        "store-coupon-troubleshooting", "store-vs-billing-coupons",
+        "billing-full-coupon", "simple-store-payments", "payment-status-flow",
+        "marketplace-payments", "mercado-pago-credentials-error",
+        "login-session-help", "deploy-cache-help", "assistant-security",
+    }
+    issues: list[str] = []
+    missing = sorted(required - entry_ids)
+    if missing:
+        issues.append("tópicos ausentes: " + ", ".join(missing))
+    if len(entries) < 50:
+        issues.append(f"cobertura insuficiente: {len(entries)} tópicos")
+    if str(knowledge.get("version")) not in frontend_knowledge:
+        issues.append("base frontend não está sincronizada")
+    for marker in ("SEMPRE em português do Brasil", "no máximo 3", "Não revele"):
+        if marker not in assistant_backend:
+            issues.append(f"regra backend ausente: {marker}")
+    if "slice(0, 3)" not in assistant_frontend:
+        issues.append("limite objetivo ausente no frontend")
+    if issues:
+        fail("Assistente especialista incompleto: " + "; ".join(issues))
+    else:
+        ok(f"Assistente especialista possui {len(entries)} tópicos, contexto, objetividade e proteção de segredos")
+
+
 def check_phase_metadata() -> None:
     version = current_app_version()
     readme = text(ROOT / "README.md")
@@ -224,6 +263,7 @@ def main() -> int:
         check_auth_integration,
         check_public_store_integration,
         check_shared_frontend_runtime,
+        check_assistant_expertise,
         check_phase_metadata,
     ]
     for check in checks:

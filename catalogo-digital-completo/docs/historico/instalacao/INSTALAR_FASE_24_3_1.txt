@@ -1,0 +1,19 @@
+FASE 24.3.1 - RESTORE DRILL SEM SEGUNDO BANCO NO RENDER
+
+O plano gratuito do Render não permite mais de um PostgreSQL free ativo.
+Esta correção faz o restore drill usar um PostgreSQL 18 temporário dentro do GitHub Actions.
+
+Agora os únicos GitHub Secrets necessários são:
+- BACKUP_DATABASE_URL
+- BACKUP_ENCRYPTION_KEY
+
+NÃO é necessário criar RESTORE_TEST_DATABASE_URL.
+
+Instalação:
+1. Copiar os arquivos para a raiz do projeto.
+2. git add .
+3. git commit -m "Fase 24.3.1 - restore drill temporario no GitHub Actions"
+4. git push
+
+Depois:
+GitHub -> Actions -> Restore drill do PostgreSQL -> Run workflow

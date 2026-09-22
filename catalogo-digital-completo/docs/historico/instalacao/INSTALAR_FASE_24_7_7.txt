@@ -1,0 +1,8 @@
+CATÁLOGO DIGITAL — FASE 24.7.7
+
+1. Copie os arquivos deste pacote sobre a pasta principal do projeto.
+2. Rode: python backend\scripts\phase24_5_release_gate.py
+3. Se aprovado: git add . && git commit -m "Fase 24.7.7 - acesso ao Pix pendente" && git push
+4. Aguarde o Render ficar Live e confira /api/health = 24.7.7.
+
+Sem migration nova.

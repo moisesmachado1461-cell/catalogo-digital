@@ -1,0 +1,17 @@
+CATÁLOGO DIGITAL — FASE 24.6.1
+
+1. Extraia o ZIP.
+2. Copie todo o conteúdo para a pasta principal do projeto e substitua os arquivos solicitados.
+3. Com a .venv ativa, rode:
+
+   python backend\scripts\phase24_5_release_gate.py
+
+4. Se aparecer RELEASE GATE APROVADO:
+
+   git add .
+   git commit -m "Fase 24.6.1 - login premium do cliente e sidebar"
+   git push
+
+5. Aguarde o Render ficar Live e confirme /api/health = 24.6.1.
+
+Não há migration nova nesta fase.

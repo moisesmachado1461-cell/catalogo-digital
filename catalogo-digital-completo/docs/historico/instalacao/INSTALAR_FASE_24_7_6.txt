@@ -1,0 +1,9 @@
+FASE 24.7.6 — DIAGNÓSTICO PIX EM PRODUÇÃO
+
+1. Copie o conteúdo deste pacote para a raiz do projeto e substitua os arquivos.
+2. Rode: python backend\scripts\phase24_5_release_gate.py
+3. Se o gate aprovar, faça commit/push e aguarde o Render ficar Live.
+4. Gere UM Pix real novamente, mas ainda não pague.
+5. Envie somente a mensagem de erro mostrada pelo site; nunca envie Access Token ou Webhook Secret.
+
+Sem migration nova.

@@ -1,0 +1,16 @@
+CATÁLOGO DIGITAL — FASE 24.5.0
+
+Atualização incremental. Copie o conteúdo deste pacote para a pasta principal do projeto e substitua os arquivos quando solicitado.
+
+Este pacote NÃO inclui .env, .venv, banco local, uploads, backups ou .git.
+
+Depois de copiar, com a .venv ativa, rode somente:
+
+python backend\scripts\phase24_5_release_gate.py
+
+Se aparecer RELEASE GATE APROVADO, faça commit/push.
+Quando o Render ficar Live, rode:
+
+python backend\scripts\production_smoke_check.py
+
+Se o smoke passar, a versão online, banco, Cloudinary, CORS, segurança e páginas principais estarão confirmados.

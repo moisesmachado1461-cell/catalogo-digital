@@ -85,9 +85,10 @@ def rank_knowledge(question: str, area: str, section: str) -> list[KnowledgeMatc
         areas = item.get("areas") or []
         sections = item.get("sections") or []
         keywords = item.get("keywords") or []
+        steps = item.get("steps") or []
         title = str(item.get("title") or "")
         answer = str(item.get("answer") or "")
-        searchable = _normalize(" ".join([title, answer, *map(str, keywords)]))
+        searchable = _normalize(" ".join([title, answer, *map(str, keywords), *map(str, steps)]))
 
         score = 0
         if area in areas:

@@ -1,0 +1,21 @@
+CATÁLOGO DIGITAL — FASE 24.1
+AUDITORIA AUTOMATIZADA + HARDENING
+
+1. Extraia o ZIP da Fase 24.1.
+2. Copie todo o conteúdo para a raiz do projeto.
+3. Substitua os arquivos existentes.
+4. Não há migration nesta fase.
+5. Rode git status, git add ., commit e push.
+6. Aguarde o Render ficar Live.
+7. Confira /api/health: versão esperada 24.1.0.
+8. Pressione Ctrl+F5 no site, Admin e Super Admin.
+
+Teste local opcional, sem alterar dados:
+  cd backend
+  python scripts/phase24_project_audit.py
+
+Smoke test do deploy, sem senha e sem alterar dados:
+  python scripts/production_smoke_check.py --api https://catalogo-digital-api.onrender.com --frontend https://catalogo-digital-v3zs.onrender.com
+
+A Fase 24.1 NÃO transforma backup manual em automático e NÃO substitui um
+restore drill real. Esses pontos continuam explícitos para a etapa operacional.

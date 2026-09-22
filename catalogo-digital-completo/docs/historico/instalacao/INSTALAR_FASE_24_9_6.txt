@@ -1,0 +1,11 @@
+FASE 24.9.6 — PIX TESTE MARKETPLACE
+
+1. Copie o conteúdo da pasta patch2496 para a raiz do projeto.
+2. Substitua os arquivos existentes.
+3. Rode: python backend\scripts\phase24_5_release_gate.py
+4. Se aprovado:
+   git add .
+   git commit -m "Fase 24.9.6 - ajusta Pix sandbox Marketplace"
+   git push
+5. Aguarde o Render ficar Live e confirme /api/health = 24.9.6.
+6. Mantenha STORE_PAYMENTS_TEST_MODE=true durante o teste.

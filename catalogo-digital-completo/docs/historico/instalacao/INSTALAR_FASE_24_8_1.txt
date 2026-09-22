@@ -1,0 +1,16 @@
+CATÁLOGO DIGITAL — FASE 24.8.1
+IA CONTEXTUAL DO CATÁLOGO DIGITAL
+
+1. Copie todo o conteúdo deste pacote para a raiz do projeto.
+2. Substitua os arquivos existentes.
+3. Rode:
+   python backend\scripts\phase24_5_release_gate.py
+4. Se o gate passar:
+   git add .
+   git commit -m "Fase 24.8.1 - IA contextual do Catalogo Digital"
+   git push
+5. Aguarde o Render ficar Live e confirme /api/health = 24.8.1.
+6. O assistente continua funcionando em modo local até a IA ser configurada no Render.
+
+Não há migration nesta fase.
+Não coloque ASSISTANT_AI_API_KEY no Git nem no frontend.

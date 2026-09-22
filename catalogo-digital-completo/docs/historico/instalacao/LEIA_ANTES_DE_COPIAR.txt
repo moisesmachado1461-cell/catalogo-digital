@@ -1,0 +1,1 @@
+Patch incremental 24.7.6. Não contém .env, banco, uploads, .venv ou credenciais.

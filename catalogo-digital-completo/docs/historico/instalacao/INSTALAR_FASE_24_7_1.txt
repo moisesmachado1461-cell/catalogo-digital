@@ -1,0 +1,11 @@
+CATÁLOGO DIGITAL — FASE 24.7.1
+
+1. Extraia este ZIP.
+2. Copie todo o conteúdo para a pasta principal do projeto.
+3. Substitua os arquivos existentes.
+4. Rode: python backend\scripts\phase24_5_release_gate.py
+5. Se aprovado: git add . && git commit -m "Fase 24.7.1 - Pix Mercado Pago Orders API" && git push
+6. No Mercado Pago Developers > Webhooks, use o evento Order (Mercado Pago).
+7. Após o Render ficar Live, teste novamente o Pix com test_user_br@testuser.com.
+
+Não há migration nova nesta correção.

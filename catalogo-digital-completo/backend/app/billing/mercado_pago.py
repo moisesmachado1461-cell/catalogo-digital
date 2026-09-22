@@ -1,0 +1,275 @@
+import hashlib
+import hmac
+import json
+from dataclasses import dataclass
+from decimal import Decimal
+from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+from ..config import settings
+from .base import BillingCheckoutRequest, BillingCheckoutResult, BillingGateway, GatewaySubscriptionState
+
+
+class MercadoPagoError(RuntimeError):
+    pass
+
+
+def _clean_error_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, (dict, list)):
+        return None
+    text = str(value).strip().replace("\n", " ").replace("\r", " ")
+    if not text:
+        return None
+    # Nunca propaga possíveis credenciais caso um provedor as ecoe por engano.
+    for marker in ("APP_USR-", "TEST-", "TESTE-"):
+        if marker in text:
+            text = text.split(marker, 1)[0] + "[credencial ocultada]"
+    return text[:300]
+
+
+def _extract_api_error(detail: Any) -> str:
+    """Resume respostas de erro do Mercado Pago sem expor payload ou credenciais."""
+    if not isinstance(detail, dict):
+        return "Falha ao comunicar com o Mercado Pago"
+
+    parts: list[str] = []
+
+    def add(value: Any) -> None:
+        text = _clean_error_text(value)
+        if text and text not in parts:
+            parts.append(text)
+
+    # Campos de topo mais comuns na Orders API.
+    add(detail.get("code"))
+    add(detail.get("error"))
+    add(detail.get("message"))
+    add(detail.get("description"))
+
+    # A Orders API pode devolver listas em errors/details/cause/causes.
+    for key in ("errors", "details", "cause", "causes"):
+        value = detail.get(key)
+        items = value if isinstance(value, list) else [value] if isinstance(value, dict) else []
+        for item in items[:3]:
+            if not isinstance(item, dict):
+                add(item)
+                continue
+            add(item.get("code"))
+            add(item.get("error"))
+            add(item.get("message"))
+            add(item.get("description"))
+            # Exibe somente o nome/caminho do campo inválido, nunca o valor enviado.
+            add(item.get("property"))
+            add(item.get("field"))
+            add(item.get("path"))
+
+    if not parts:
+        return "Falha ao comunicar com o Mercado Pago"
+    return " · ".join(parts[:5])
+
+
+@dataclass(frozen=True)
+class PixPaymentResult:
+    payment_id: str
+    order_id: str | None
+    status: str
+    status_detail: str | None
+    qr_code: str | None
+    qr_code_base64: str | None
+    ticket_url: str | None
+    raw: dict[str, Any]
+    test_mode: bool = False
+
+
+class MercadoPagoGateway(BillingGateway):
+    code = "MERCADO_PAGO"
+    display_name = "Mercado Pago"
+    api_base = "https://api.mercadopago.com"
+
+    def is_configured(self) -> bool:
+        # Exigimos token + segredo do webhook para que a ativação automática seja segura.
+        return bool(settings.mercado_pago_access_token and settings.mercado_pago_webhook_secret)
+
+    @property
+    def pix_ready(self) -> bool:
+        return self.is_configured()
+
+    def _request(self, method: str, path: str, *, payload: dict | None = None, idempotency_key: str | None = None) -> dict:
+        if not settings.mercado_pago_access_token:
+            raise MercadoPagoError("Mercado Pago ainda não está configurado no servidor")
+        body = json.dumps(payload).encode("utf-8") if payload is not None else None
+        headers = {
+            "Authorization": f"Bearer {settings.mercado_pago_access_token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+        if idempotency_key:
+            headers["X-Idempotency-Key"] = idempotency_key
+        request = Request(f"{self.api_base}{path}", data=body, headers=headers, method=method)
+        try:
+            with urlopen(request, timeout=20) as response:
+                raw = response.read().decode("utf-8")
+                return json.loads(raw) if raw else {}
+        except HTTPError as exc:
+            try:
+                detail = json.loads(exc.read().decode("utf-8"))
+            except Exception:
+                detail = {"message": str(exc)}
+            message = _extract_api_error(detail)
+            raise MercadoPagoError(f"{message} (HTTP {exc.code})") from exc
+        except (URLError, TimeoutError) as exc:
+            raise MercadoPagoError("Mercado Pago indisponível no momento. Tente novamente.") from exc
+
+    @staticmethod
+    def order_as_payment(order: dict[str, Any]) -> dict[str, Any]:
+        transactions = order.get("transactions") or {}
+        payments = transactions.get("payments") or []
+        tx = payments[0] if payments else {}
+        payment_method = tx.get("payment_method") or {}
+        order_status = str(order.get("status") or tx.get("status") or "created").lower()
+        order_detail = str(order.get("status_detail") or tx.get("status_detail") or "")
+
+        if order_status == "processed" and order_detail in {"accredited", "processed", ""}:
+            normalized_status = "approved"
+        elif order_status in {"failed"}:
+            normalized_status = "rejected"
+        elif order_status in {"canceled", "cancelled", "expired"}:
+            normalized_status = "cancelled"
+        elif order_status == "refunded":
+            normalized_status = "refunded"
+        elif order_status == "charged_back":
+            normalized_status = "charged_back"
+        elif order_status == "processing":
+            normalized_status = "in_process"
+        else:
+            normalized_status = "pending"
+
+        return {
+            "id": tx.get("id") or order.get("id"),
+            "status": normalized_status,
+            "status_detail": order_detail or tx.get("status_detail"),
+            "transaction_amount": order.get("total_amount") or tx.get("amount") or "0",
+            "currency_id": "BRL",
+            "payment_method_id": "pix",
+            "external_reference": order.get("external_reference"),
+            "point_of_interaction": {
+                "transaction_data": {
+                    "qr_code": payment_method.get("qr_code"),
+                    "qr_code_base64": payment_method.get("qr_code_base64"),
+                    "ticket_url": payment_method.get("ticket_url"),
+                }
+            },
+            "_order_id": order.get("id"),
+            "_order_status": order_status,
+        }
+
+    def create_pix_payment(
+        self,
+        *,
+        amount: Decimal,
+        description: str,
+        payer_email: str,
+        document_type: str,
+        document_number: str,
+        external_reference: str,
+        idempotency_key: str,
+        notification_url: str | None,
+    ) -> PixPaymentResult:
+        # Desde 2025/2026, o fluxo recomendado do Checkout Transparente para Pix
+        # usa Orders API. O endpoint legado /v1/payments pode retornar internal_error
+        # em testes com as credenciais atuais.
+        is_test_scenario = bool(
+            settings.mercado_pago_test_mode
+            and payer_email.strip().lower() == "test_user_br@testuser.com"
+        )
+        # O cenário oficial de integração Pix do Mercado Pago usa valor
+        # predefinido de R$ 50,00. Esse valor é somente do sandbox e não altera
+        # o valor comercial da fatura interna do Catálogo Digital.
+        gateway_amount = Decimal("50.00") if is_test_scenario else Decimal(amount)
+        amount_text = f"{gateway_amount.quantize(Decimal('0.01')):.2f}"
+        payer: dict[str, Any] = {"email": payer_email}
+        if is_test_scenario:
+            payer["first_name"] = "APRO"
+        else:
+            payer["identification"] = {"type": document_type, "number": document_number}
+
+        payload: dict[str, Any] = {
+            "type": "online",
+            "processing_mode": "automatic",
+            "external_reference": external_reference[:64],
+            "total_amount": amount_text,
+            "payer": payer,
+            "transactions": {
+                "payments": [
+                    {
+                        "amount": amount_text,
+                        "payment_method": {"id": "pix", "type": "bank_transfer"},
+                    }
+                ]
+            },
+        }
+        # A URL de webhook é configurada no painel da aplicação. Não enviamos
+        # notification_url no body da Orders API para evitar parâmetros legados.
+        data = self._request("POST", "/v1/orders", payload=payload, idempotency_key=idempotency_key)
+        normalized = self.order_as_payment(data)
+        normalized["_integration_test"] = is_test_scenario
+        transaction = ((normalized.get("point_of_interaction") or {}).get("transaction_data") or {})
+        order_id = data.get("id")
+        payment_id = normalized.get("id")
+        if order_id is None:
+            raise MercadoPagoError("Mercado Pago não retornou o identificador da order")
+        if payment_id is None:
+            payment_id = order_id
+        return PixPaymentResult(
+            payment_id=str(payment_id),
+            order_id=str(order_id),
+            status=str(normalized.get("status") or "pending"),
+            status_detail=normalized.get("status_detail"),
+            qr_code=transaction.get("qr_code"),
+            qr_code_base64=transaction.get("qr_code_base64"),
+            ticket_url=transaction.get("ticket_url"),
+            raw=normalized,
+            test_mode=is_test_scenario,
+        )
+
+    def get_order(self, order_id: str) -> dict:
+        return self._request("GET", f"/v1/orders/{order_id}")
+
+    def getorder_as_payment(self, order_id: str) -> dict:
+        return self.order_as_payment(self.get_order(order_id))
+
+    def get_payment(self, payment_id: str) -> dict:
+        return self._request("GET", f"/v1/payments/{payment_id}")
+
+    @staticmethod
+    def validate_webhook_signature(*, x_signature: str | None, x_request_id: str | None, data_id: str | None, secret: str | None) -> bool:
+        if not (x_signature and data_id and secret):
+            return False
+        values: dict[str, str] = {}
+        for item in x_signature.split(","):
+            if "=" in item:
+                key, value = item.split("=", 1)
+                values[key.strip()] = value.strip()
+        ts = values.get("ts")
+        received = values.get("v1")
+        if not (ts and received):
+            return False
+        parts = [f"id:{data_id};"]
+        if x_request_id:
+            parts.append(f"request-id:{x_request_id};")
+        parts.append(f"ts:{ts};")
+        manifest = "".join(parts)
+        calculated = hmac.new(secret.encode("utf-8"), manifest.encode("utf-8"), hashlib.sha256).hexdigest()
+        return hmac.compare_digest(calculated, received)
+
+    # A arquitetura continua pronta para recorrência, mas a Fase 24.7 habilita Pix imediato.
+    def create_subscription_checkout(self, request: BillingCheckoutRequest) -> BillingCheckoutResult:
+        raise NotImplementedError("Recorrência automática ainda não habilitada; use Pix imediato")
+
+    def cancel_subscription(self, external_subscription_id: str, *, at_period_end: bool = True) -> None:
+        raise NotImplementedError("Assinatura recorrente Mercado Pago ainda não habilitada")
+
+    def fetch_subscription(self, external_subscription_id: str) -> GatewaySubscriptionState:
+        raise NotImplementedError("Assinatura recorrente Mercado Pago ainda não habilitada")

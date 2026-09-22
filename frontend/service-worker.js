@@ -1,4 +1,4 @@
-const CACHE_NAME = 'catalogo-digital-v24-9-2493';
+const CACHE_NAME = 'catalogo-digital-v24-9-6-7-assistant';
 const APP_SHELL = [
   './', './index.html', './loja.html', './admin.html', './super-admin.html',
   './agendamento.html', './cliente.html', './acompanhar.html', './privacidade.html', './termos.html',

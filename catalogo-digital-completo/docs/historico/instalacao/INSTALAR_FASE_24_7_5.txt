@@ -1,0 +1,6 @@
+FASE 24.7.5 — HOTFIX FRONTEND BUILD
+
+1. Copie o conteúdo deste pacote para a raiz do projeto e substitua os arquivos.
+2. Rode: python backend\scripts\phase24_5_release_gate.py
+3. Se aprovado: git add . && git commit -m "Fase 24.7.5 - corrige build do frontend" && git push
+4. Aguarde o Render publicar novamente frontend e backend.

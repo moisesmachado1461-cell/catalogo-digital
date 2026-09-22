@@ -1,0 +1,13 @@
+CATÁLOGO DIGITAL — FASE 24.9.0
+
+1. Copie/substitua os arquivos do pacote na pasta principal.
+2. Execute:
+   python backend\scripts\phase24_5_release_gate.py
+3. Se aprovado:
+   git add .
+   git commit -m "Fase 24.9 - pagamentos online das lojas"
+   git push
+4. A migration 020 será aplicada pelo deploy conforme o fluxo atual do projeto.
+5. Depois do deploy, configure o Marketplace Mercado Pago seguindo docs/FASE_24_9_0_PAGAMENTOS_LOJAS.md.
+
+Não coloque CLIENT_SECRET, webhook secret nem STORE_PAYMENT_CREDENTIALS_KEY no GitHub.

@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Painel — Catálogo Digital</title>
+  <meta name="theme-color" content="#a15a2c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/app-icon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/design-system.css"><link rel="stylesheet" href="css/admin-premium.css">
+  <link rel="stylesheet" href="css/premium-polish.css">
+  <link rel="stylesheet" href="css/assistant.css">
+</head>
+<body>
+<section id="loginView" class="auth-page admin-login-page">
+  <div class="admin-login-shell">
+    <div class="admin-login-showcase" aria-hidden="true">
+      <div class="admin-login-orb admin-login-orb-a"></div><div class="admin-login-orb admin-login-orb-b"></div>
+      <div class="brand admin-login-brand"><span class="brand-mark">CD</span>Catálogo Digital</div>
+      <div class="admin-login-copy">
+        <span class="eyebrow">PAINEL DE GESTÃO</span>
+        <h2>Seu negócio organizado em um só lugar.</h2>
+        <p>Produtos, agenda, pedidos, clientes, relatórios e configurações com uma experiência simples e profissional.</p>
+      </div>
+      <div class="admin-login-preview">
+        <div class="login-preview-stat"><span>Operação</span><b>Visão completa</b><small>Dados essenciais em destaque</small></div>
+        <div class="login-preview-stat"><span>Produtividade</span><b>Ações rápidas</b><small>Menos cliques no dia a dia</small></div>
+        <div class="login-preview-stat"><span>Segurança</span><b>Acesso protegido</b><small>Dados isolados por loja</small></div>
+      </div>
+    </div>
+    <div class="panel login-box admin-login-box">
+      <div class="admin-login-mobile-brand brand"><span class="brand-mark">CD</span>Catálogo Digital</div>
+      <span class="eyebrow">BEM-VINDO DE VOLTA</span>
+      <h1>Entrar no painel</h1>
+      <p>Use os dados da sua loja para acessar o painel administrativo.</p>
+      <form id="loginForm" class="stack-form">
+        <div class="field"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="username" required placeholder="admin@sualoja.com"></div>
+        <div class="field"><label>Senha</label><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="Sua senha"></div>
+        <button class="btn primary admin-login-submit" type="submit">Entrar no painel</button>
+      </form>
+      <div class="notice admin-demo-note">Ambiente de demonstração disponível para testes internos.</div>
+      <a href="index.html" class="btn ghost full-btn">Voltar ao site</a>
+    </div>
+  </div>
+</section>
+
+<section id="adminView" class="admin-shell hidden">
+  <aside id="adminSidebar" class="sidebar admin-sidebar-premium" aria-label="Menu administrativo">
+    <div class="sidebar-brand-row">
+      <a class="brand sidebar-brand" href="index.html"><span id="adminBrandMark" class="brand-mark">CD</span><span><span id="adminBrandName">Catálogo Digital</span><small>Painel da loja</small></span></a>
+    </div>
+    <div class="side-store">
+      <div id="sideStoreAvatar" class="side-store-avatar">CD</div>
+      <div class="side-store-copy"><b id="sideStoreName">Sua loja</b><small id="sideStoreModel">Carregando...</small></div>
+      <span class="side-online" title="Sistema online"></span>
+    </div>
+    <nav id="sideMenu" class="side-menu"></nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-help"><span class="sidebar-help-icon">?</span><div><b>Precisa de ajuda?</b><small>Consulte as configurações e sua assinatura.</small></div></div>
+      <button id="logoutBtn" class="side-btn logout-side"><span class="side-icon" aria-hidden="true">↪</span><span>Sair</span></button>
+    </div>
+  </aside>
+  <button id="adminSidebarCollapse" class="sidebar-collapse-btn" type="button" title="Recolher menu" aria-label="Recolher menu" aria-expanded="true"><span class="sidebar-collapse-glyph" aria-hidden="true">‹</span></button>
+  <button id="adminSidebarBackdrop" class="admin-sidebar-backdrop" type="button" aria-label="Fechar menu"></button>
+
+  <main class="admin-main">
+    <div class="admin-mobile-nav">
+      <button id="adminSidebarToggle" class="admin-mobile-menu-button" type="button" aria-controls="adminSidebar" aria-expanded="false"><span aria-hidden="true">☰</span><span>Menu</span></button>
+      <strong id="adminMobileSection">Dashboard</strong>
+    </div>
+    <header class="admin-header admin-header-premium">
+      <div class="admin-heading">
+        <div class="admin-breadcrumb-row"><span class="admin-status-dot"></span><small id="adminBreadcrumb">Painel administrativo</small></div>
+        <h1 id="adminTitle">Dashboard</h1>
+      </div>
+      <div class="header-actions">
+        <button id="refreshBtn" class="btn ghost small admin-icon-btn" type="button" title="Atualizar dados"><span aria-hidden="true">↻</span><span>Atualizar</span></button>
+        <a id="openStoreBtn" class="btn ghost" target="_blank"><span>Ver loja</span><span aria-hidden="true">↗</span></a>
+        <div class="admin-user-chip"><div id="adminUserAvatar" class="admin-user-avatar">A</div><div><b id="adminUserName">Administrador</b><small>Administrador da loja</small></div></div>
+      </div>
+    </header>
+
+    <section id="dashboard" class="admin-section active">
+      <div class="admin-welcome-card">
+        <div class="admin-welcome-copy">
+          <span class="eyebrow">VISÃO GERAL</span>
+          <h2 id="dashboardGreeting">Bem-vindo ao seu painel</h2>
+          <p id="dashboardGreetingCopy">Acompanhe o que precisa de atenção e os principais indicadores da sua loja.</p>
+          <div class="admin-welcome-meta"><span id="dashboardPlanBadge" class="admin-plan-badge">Plano ativo</span><span id="dashboardToday">Hoje</span></div>
+        </div>
+        <div id="dashboardAttention" class="admin-attention"></div>
+      </div>
+      <div id="stats" class="stats admin-stats-premium"></div>
+      <div class="dashboard-grid">
+        <div class="panel">
+          <div class="panel-head"><h2>Resumo da loja</h2></div>
+          <div id="summaryContent" class="section-copy">Carregando dados...</div>
+        </div>
+      </div>
+      <div id="dashboardReportPreview" class="panel report-preview-panel hidden">
+        <div class="panel-head responsive-head"><div><h2>Desempenho — últimos 30 dias</h2><small>Resumo rápido de vendas e atendimentos.</small></div><button class="btn ghost small" type="button" onclick="switchSection('reports')">Ver relatórios</button></div>
+        <div id="dashboardReportContent"></div>
+      </div>
+    </section>
+
+    <section id="categories" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head">
+          <div><h2>Categorias</h2><small>Organize produtos e serviços.</small></div>
+          <button class="btn primary small" type="button" onclick="openCategoryModal()">+ Categoria</button>
+        </div>
+        <div id="categoriesTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="products" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head">
+          <div><h2>Produtos</h2><small>Cadastre, edite, ative ou desative produtos.</small></div>
+          <div class="inline-actions">
+            <input id="productSearch" class="input compact-input" placeholder="Buscar produto...">
+            <button class="btn primary small" type="button" onclick="openProductModal()">+ Produto</button>
+          </div>
+        </div>
+        <div id="productsTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="orders" class="admin-section">
+      <div class="panel">
+        <div class="panel-head"><div><h2>Pedidos</h2><small>Acompanhe o fluxo de vendas.</small></div><button class="btn ghost small" onclick="loadOrders()">Atualizar</button></div>
+        <div id="ordersTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="inventory" class="admin-section">
+      <div class="panel">
+        <div class="panel-head"><div><h2>Estoque</h2><small>Corrija quantidades e estoque mínimo.</small></div></div>
+        <div id="inventoryTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="coupons" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head"><div><h2>Cupons</h2><small>Crie códigos de desconto para o checkout.</small></div><button class="btn primary small" type="button" onclick="openCouponModal()">+ Cupom</button></div>
+        <div id="couponsTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="promotions" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head"><div><h2>Promoções</h2><small>Aplique descontos automáticos em produtos selecionados.</small></div><button class="btn primary small" type="button" onclick="openPromotionModal()">+ Promoção</button></div>
+        <div id="promotionsTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="services" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head">
+          <div><h2>Serviços</h2><small>Edite preço, duração, categoria e disponibilidade.</small></div>
+          <button class="btn primary small" type="button" onclick="openServiceModal()">+ Serviço</button>
+        </div>
+        <div id="servicesTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="professionals" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head">
+          <div><h2>Profissionais</h2><small>Configure dados, serviços atendidos e horários.</small></div>
+          <button class="btn primary small" type="button" onclick="openProfessionalModal()">+ Profissional</button>
+        </div>
+        <div id="professionalsTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="appointments" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head"><div><h2>Agenda</h2><small>Acompanhe atendimentos e bloqueie horários indisponíveis.</small></div><div class="inline-actions"><button class="btn ghost small" onclick="loadAppointments()">Atualizar</button><button class="btn primary small" onclick="openAgendaBlocksModal()">Bloquear horário</button></div></div>
+        <div class="appointment-toolbar"><select id="appointmentStatusFilter" class="select compact-input"><option value="">Todos os status</option><option>PENDENTE</option><option>CONFIRMADO</option><option>CONCLUIDO</option><option>CANCELADO</option><option>NAO_COMPARECEU</option></select><input id="appointmentDateFilter" class="input compact-input" type="date"><button id="appointmentTodayBtn" class="btn ghost small" type="button">Hoje</button><button id="appointmentClearBtn" class="btn ghost small" type="button">Limpar</button></div>
+        <div id="appointmentsTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="quotes" class="admin-section">
+      <div class="panel">
+        <div class="panel-head"><div><h2>Orçamentos</h2><small>Analise solicitações e envie propostas.</small></div><button class="btn ghost small" onclick="loadQuotes()">Atualizar</button></div>
+        <div id="quotesTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="resources" class="admin-section">
+      <div class="panel"><div class="panel-head responsive-head"><div><h2>Recursos reserváveis</h2><small>Quartos, espaços, salas e outros recursos.</small></div><button class="btn primary small" onclick="openResourceModal()">+ Recurso</button></div><div id="resourcesTable" class="table-wrap"></div></div>
+    </section>
+
+    <section id="reservations" class="admin-section">
+      <div class="panel"><div class="panel-head"><div><h2>Reservas</h2><small>Acompanhe períodos reservados e evite conflitos.</small></div><button class="btn ghost small" onclick="loadReservations()">Atualizar</button></div><div id="reservationsTable" class="table-wrap"></div></div>
+    </section>
+
+    <section id="rentalItems" class="admin-section">
+      <div class="panel"><div class="panel-head responsive-head"><div><h2>Itens de locação</h2><small>Cadastre equipamentos e produtos alugáveis.</small></div><button class="btn primary small" onclick="openRentalItemModal()">+ Item</button></div><div id="rentalItemsTable" class="table-wrap"></div></div>
+    </section>
+
+    <section id="rentals" class="admin-section">
+      <div class="panel"><div class="panel-head"><div><h2>Locações</h2><small>Controle retirada, devolução e cancelamentos.</small></div><button class="btn ghost small" onclick="loadRentals()">Atualizar</button></div><div id="rentalsTable" class="table-wrap"></div></div>
+    </section>
+
+    <section id="payments" class="admin-section">
+      <div class="settings-layout">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Formas de pagamento</h2><small>Configure o que seus clientes podem escolher.</small></div></div>
+          <form id="paymentSettingsForm" class="form-grid"></form>
+        </div>
+        <div class="panel">
+          <div class="panel-head responsive-head"><div><h2>Pagamentos recebidos</h2><small>Acompanhe e confirme pagamentos manuais.</small></div><button class="btn ghost small" type="button" onclick="loadPayments()">Atualizar</button></div>
+          <div id="paymentsTable" class="table-wrap"></div>
+        </div>
+      </div>
+    </section>
+
+
+
+    <section id="reports" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head">
+          <div><h2>Relatórios</h2><small>Indicadores da loja, evolução diária e exportação em CSV.</small></div>
+          <div class="inline-actions">
+            <select id="reportPeriod" class="select compact-input">
+              <option value="7">7 dias</option>
+              <option value="30" selected>30 dias</option>
+              <option value="90">90 dias</option>
+              <option value="365">365 dias</option>
+            </select>
+            <button class="btn ghost small" type="button" onclick="loadReports()">Atualizar</button>
+          </div>
+        </div>
+        <div id="reportStats" class="stats report-stats"></div>
+      </div>
+      <div class="dashboard-grid report-grid">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Evolução</h2><small>Pedidos, receita e agendamentos por dia.</small></div></div>
+          <div id="reportChart" class="report-chart-wrap"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div><h2>Mais procurados</h2><small>Produtos vendidos e serviços agendados.</small></div></div>
+          <div id="reportTopItems"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Exportar dados</h2><small>Arquivos CSV compatíveis com Excel e Google Planilhas.</small></div></div>
+        <div id="reportExports" class="report-export-grid"></div>
+      </div>
+    </section>
+
+    <section id="subscription" class="admin-section">
+      <div class="panel">
+        <div class="panel-head responsive-head"><div><h2>Meu plano</h2><small>Acompanhe sua assinatura, recursos e limites de uso.</small></div><button class="btn ghost small" type="button" onclick="loadSubscription()">Atualizar</button></div>
+        <div id="subscriptionContent"></div>
+      </div>
+    </section>
+
+
+    <section id="privacy" class="admin-section">
+      <div class="settings-layout">
+        <div class="panel">
+          <div class="panel-head responsive-head"><div><h2>Solicitações de privacidade</h2><small>Acompanhe pedidos de acesso, correção, exclusão e portabilidade.</small></div><button class="btn ghost small" type="button" onclick="loadPrivacy()">Atualizar</button></div>
+          <div id="privacyRequestsTable" class="table-wrap"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div><h2>Auditoria recente</h2><small>Eventos de segurança e privacidade registrados para esta loja.</small></div></div>
+          <div id="auditLogsTable" class="table-wrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings" class="admin-section">
+      <div class="settings-layout">
+        <div class="panel">
+          <div class="panel-head"><div><h2>Configurações da loja</h2><small>Dados públicos e identidade visual.</small></div></div>
+          <form id="settingsForm" class="form-grid"></form>
+        </div>
+        <div class="panel preview-panel">
+          <div class="panel-head"><h2>Prévia</h2></div>
+          <div id="storePreview" class="store-preview"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</section>
+
+<div id="adminModal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <div><small id="modalEyebrow">Editar</small><h2 id="modalTitle">Item</h2></div>
+      <button id="modalCloseBtn" class="close-btn" type="button">×</button>
+    </div>
+    <div id="modalContent" class="modal-content"></div>
+  </div>
+</div>
+
+<script src="js/runtime-config.js"></script>
+<script src="js/shared/dom-utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/ui-system.js"></script>
+<script src="js/assistant-knowledge.js"></script><script src="js/assistant.js"></script><script src="js/pwa.js"></script>
+</body>
+</html>

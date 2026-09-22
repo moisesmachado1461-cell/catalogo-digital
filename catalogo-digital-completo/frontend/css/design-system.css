@@ -1,0 +1,377 @@
+/*
+  Catálogo Digital — Design System v20
+  Camada visual base compartilhada entre cliente, admin e super admin.
+  As cores --brand e --brand2 continuam customizáveis por loja.
+*/
+:root{
+  --brand:#a15a2c;
+  --brand2:#7a431e;
+  --brand-rgb:161,90,44;
+  --ink:#211d19;
+  --muted:#6b6259;
+  --bg:#f5f4f1;
+  --card:#ffffff;
+  --surface:#ffffff;
+  --surface-soft:#f8f7f4;
+  --surface-tint:#f6f0ea;
+  --line:#e6e1d8;
+  --border:var(--line);
+  --danger:#b3261e;
+  --warning:#946010;
+  --ok:#166534;
+  --info:#2a5c8a;
+  --radius-xs:5px;
+  --radius-sm:7px;
+  --radius-md:10px;
+  --radius-lg:13px;
+  --radius-xl:16px;
+  --shadow-xs:0 1px 2px rgba(33,29,25,.05);
+  --shadow-sm:0 4px 14px rgba(33,29,25,.06);
+  --shadow-md:0 10px 28px rgba(33,29,25,.08);
+  --shadow-lg:0 20px 48px rgba(33,29,25,.12);
+  --focus-ring:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent);
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --duration-fast:160ms;
+  --duration:240ms;
+  --duration-slow:420ms;
+}
+
+*{scrollbar-color:#c9c2b6 transparent}
+::selection{background:color-mix(in srgb,var(--brand) 22%,#fff);color:var(--ink)}
+html{background:var(--bg)}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  letter-spacing:-.006em;
+}
+
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{
+  outline:none;
+  box-shadow:var(--focus-ring);
+}
+
+.topbar{
+  background:rgba(255,255,255,.86);
+  border-bottom:1px solid rgba(232,234,240,.92);
+  box-shadow:0 1px 0 rgba(15,23,42,.02);
+  transition:background var(--duration) var(--ease),box-shadow var(--duration) var(--ease);
+}
+.topbar.is-scrolled{background:rgba(255,255,255,.96);box-shadow:0 12px 30px rgba(15,23,42,.07)}
+.brand{letter-spacing:-.025em}
+.brand-mark{
+  border-radius:13px;
+  background:linear-gradient(145deg,var(--brand),var(--brand2));
+  box-shadow:0 10px 22px color-mix(in srgb,var(--brand) 28%,transparent),inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border-radius:13px;
+  border:1px solid transparent;
+  font-weight:760;
+  letter-spacing:-.01em;
+  box-shadow:var(--shadow-xs);
+  transition:transform var(--duration-fast) var(--ease),box-shadow var(--duration-fast) var(--ease),background var(--duration-fast) var(--ease),border-color var(--duration-fast) var(--ease),color var(--duration-fast) var(--ease);
+}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.btn:active{transform:translateY(0) scale(.985)}
+.btn.primary{
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  border-color:color-mix(in srgb,var(--brand) 70%,#fff);
+  box-shadow:0 10px 24px color-mix(in srgb,var(--brand) 24%,transparent);
+}
+.btn.primary:hover{box-shadow:0 14px 30px color-mix(in srgb,var(--brand) 30%,transparent)}
+.btn.ghost{background:rgba(255,255,255,.72);border-color:var(--line)}
+.btn.ghost:hover{background:#fff;border-color:color-mix(in srgb,var(--brand) 20%,var(--line))}
+.btn.danger{border-color:#fecaca}
+
+.input,.select,.textarea{
+  border-color:#dfe3eb;
+  border-radius:13px;
+  background:rgba(255,255,255,.96);
+  box-shadow:inset 0 1px 0 rgba(15,23,42,.015);
+  transition:border-color var(--duration-fast) var(--ease),box-shadow var(--duration-fast) var(--ease),background var(--duration-fast) var(--ease);
+}
+.input:hover,.select:hover,.textarea:hover{border-color:#cdd3de}
+.input:focus,.select:focus,.textarea:focus{border-color:color-mix(in srgb,var(--brand) 60%,#fff);box-shadow:var(--focus-ring);background:#fff}
+.field label{color:#475467;letter-spacing:-.005em}
+
+.panel,.store-card,.product-card,.service-card,.stat-card,.feature,.legal-card,.tracking-card{
+  border-color:var(--line);
+  box-shadow:var(--shadow-sm);
+  transition:transform var(--duration) var(--ease),box-shadow var(--duration) var(--ease),border-color var(--duration) var(--ease);
+}
+.store-card:hover,.product-card:hover,.service-card:hover,.feature:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow-md);
+  border-color:color-mix(in srgb,var(--brand) 16%,var(--line));
+}
+.panel{box-shadow:0 10px 30px rgba(15,23,42,.055)}
+
+.eyebrow,.section-kicker{
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+.eyebrow{
+  background:color-mix(in srgb,var(--brand) 10%,#fff);
+  color:color-mix(in srgb,var(--brand) 84%,#111827);
+  border:1px solid color-mix(in srgb,var(--brand) 14%,#fff);
+}
+.section-title,.admin-header h1,.store-section-head h2,.panel-head h2{letter-spacing:-.035em}
+
+.hero{
+  background:
+    radial-gradient(circle at 8% 8%,color-mix(in srgb,var(--brand) 15%,transparent),transparent 34%),
+    radial-gradient(circle at 92% 8%,color-mix(in srgb,var(--brand2) 12%,transparent),transparent 32%),
+    linear-gradient(180deg,#fff 0%,rgba(247,248,252,.86) 100%);
+}
+.hero-card{border:1px solid rgba(255,255,255,.12);box-shadow:0 34px 80px rgba(30,41,59,.24)}
+
+.admin-shell{background:transparent}
+.sidebar{
+  background:linear-gradient(180deg,#101828 0%,#111827 55%,#172033 100%);
+  border-right:1px solid rgba(255,255,255,.06);
+  box-shadow:14px 0 40px rgba(15,23,42,.07);
+}
+.sidebar .brand-mark{box-shadow:0 10px 26px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.1)}
+.side-store{
+  background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.035));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+.side-btn{
+  position:relative;
+  border:1px solid transparent;
+  border-radius:12px;
+  transition:background var(--duration-fast) var(--ease),color var(--duration-fast) var(--ease),border-color var(--duration-fast) var(--ease),transform var(--duration-fast) var(--ease);
+}
+.side-btn:hover{transform:translateX(2px);background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.06)}
+.side-btn.active{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 55%,#111827),color-mix(in srgb,var(--brand2) 42%,#111827));
+  color:#fff;
+  border-color:rgba(255,255,255,.1);
+  box-shadow:0 10px 24px rgba(0,0,0,.18),inset 3px 0 0 rgba(255,255,255,.75);
+}
+.admin-main{background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(247,248,252,.72));}
+.admin-header{
+  padding:4px 0 8px;
+}
+.admin-header small{color:var(--muted);font-weight:650}
+
+.stats{gap:16px}
+.stat-card{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(145deg,#fff,#fbfcff);
+}
+.stat-card::after{
+  content:"";
+  position:absolute;
+  width:110px;height:110px;border-radius:50%;
+  right:-55px;top:-55px;
+  background:color-mix(in srgb,var(--brand) 7%,transparent);
+  pointer-events:none;
+}
+.stat-card strong{letter-spacing:-.04em}
+
+.table{border-collapse:separate;border-spacing:0}
+.table th{
+  background:#f7f6f3;
+  border-bottom-color:#e5e7eb;
+  color:#667085;
+  font-weight:800;
+}
+.table tbody tr{transition:background var(--duration-fast) var(--ease)}
+.table tbody tr:hover{background:color-mix(in srgb,var(--brand) 3.5%,#fff)}
+.table td{border-bottom-color:#edf0f4}
+
+.status,.badge{
+  border:1px solid rgba(15,23,42,.055);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
+}
+.notice{border:1px solid #dbeafe;box-shadow:var(--shadow-xs)}
+
+.modal-backdrop{backdrop-filter:blur(6px);background:rgba(15,23,42,.52)}
+.modal{border:1px solid rgba(255,255,255,.72);box-shadow:var(--shadow-lg)}
+.close-btn{transition:transform var(--duration-fast) var(--ease),background var(--duration-fast) var(--ease)}
+.close-btn:hover{transform:rotate(3deg);background:#e9edf3}
+
+.auth-page{
+  background:var(--bg);
+}
+.login-box{box-shadow:var(--shadow-lg);border:1px solid rgba(255,255,255,.85)}
+
+.store-nav-v2,.store-nav{box-shadow:0 8px 20px rgba(15,23,42,.045)}
+.tab-btn{border:1px solid transparent;transition:all var(--duration-fast) var(--ease)}
+.tab-btn:hover{background:#f3efe8;color:var(--ink)}
+.tab-btn.active{background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 8px 20px color-mix(in srgb,var(--brand) 20%,transparent)}
+
+.billing-plan-card,.billing-usage-card,.billing-command-hero,.billing-provider-card{
+  box-shadow:var(--shadow-sm);
+}
+.billing-command-hero{border-color:color-mix(in srgb,var(--brand) 14%,var(--line))}
+
+.ds-toast-region{
+  position:fixed;
+  z-index:140;
+  right:18px;
+  bottom:max(18px,env(safe-area-inset-bottom));
+  display:grid;
+  gap:10px;
+  width:min(360px,calc(100vw - 36px));
+  pointer-events:none;
+}
+.ds-toast{
+  pointer-events:auto;
+  display:grid;
+  gap:3px;
+  padding:13px 15px;
+  border-radius:14px;
+  background:rgba(17,24,39,.96);
+  color:#fff;
+  box-shadow:var(--shadow-lg);
+  border:1px solid rgba(255,255,255,.09);
+  transform:translateY(10px);
+  opacity:0;
+  transition:opacity var(--duration) var(--ease),transform var(--duration) var(--ease);
+}
+.ds-toast.show{opacity:1;transform:translateY(0)}
+.ds-toast strong{font-size:.9rem}.ds-toast span{font-size:.82rem;color:#d0d5dd}
+.ds-toast.success{background:rgba(20,83,45,.97)}
+.ds-toast.error{background:rgba(127,29,29,.97)}
+.ds-toast.warning{background:rgba(120,53,15,.97)}
+
+.ds-skeleton{
+  position:relative;
+  overflow:hidden;
+  min-height:14px;
+  border-radius:999px;
+  background:#eceff4;
+}
+.ds-skeleton::after{
+  content:"";position:absolute;inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),transparent);
+  animation:dsShimmer 1.35s infinite;
+}
+@keyframes dsShimmer{100%{transform:translateX(100%)}}
+
+.ui-v20 body{opacity:0}
+.ui-v20 body.ui-ready{opacity:1;transition:opacity 220ms var(--ease)}
+.ui-v20 .ds-reveal{opacity:0;transform:translateY(8px)}
+.ui-v20 .ds-reveal.ds-visible{opacity:1;transform:none;transition:opacity 420ms var(--ease),transform 420ms var(--ease)}
+
+@media(max-width:900px){
+  .admin-main{background:var(--bg)}
+  .mobile-admin-menu{border-bottom:1px solid var(--line);box-shadow:0 8px 20px rgba(15,23,42,.04)}
+}
+@media(max-width:560px){
+  .ds-toast-region{right:10px;bottom:max(10px,env(safe-area-inset-bottom));width:calc(100vw - 20px)}
+  .panel,.stat-card,.store-card,.product-card,.service-card{box-shadow:0 7px 20px rgba(15,23,42,.055)}
+}
+@media(prefers-reduced-motion:reduce){
+  .ui-v20 body,.ui-v20 .ds-reveal,.ui-v20 .ds-reveal.ds-visible{opacity:1;transform:none;transition:none}
+  .ds-skeleton::after{animation:none}
+}
+
+/* Ajuste pré-lançamento — botões com mais vida, feedback e sensação tátil */
+:where(.btn,.tab-btn,.side-btn,.super-quick-action,button[data-action]){
+  -webkit-tap-highlight-color:transparent;
+}
+
+.btn{
+  position:relative;
+  isolation:isolate;
+  will-change:transform;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(1px) scale(.972);box-shadow:var(--shadow-xs)}
+.btn.primary:hover{filter:saturate(1.08) brightness(1.025)}
+.btn.primary:active{filter:saturate(.98) brightness(.98)}
+.btn:where(:hover,:focus-visible) svg{transform:translateX(1px) rotate(-2deg)}
+.btn svg{transition:transform var(--duration-fast) var(--ease)}
+
+.tab-btn,.side-btn,.super-quick-action{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  will-change:transform;
+}
+.tab-btn:hover{transform:translateY(-1px)}
+.tab-btn:active{transform:translateY(0) scale(.975)}
+.side-btn:hover{transform:translateX(4px)}
+.side-btn:active{transform:translateX(2px) scale(.985)}
+.super-quick-action:hover{transform:translateY(-2px) scale(1.006)}
+.super-quick-action:active{transform:translateY(0) scale(.985)}
+
+/* O ripple é criado por ui-system.js e funciona com mouse, toque e caneta. */
+.ds-ripple{
+  position:absolute;
+  z-index:5;
+  width:14px;
+  height:14px;
+  margin:-7px 0 0 -7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.52);
+  pointer-events:none;
+  transform:scale(0);
+  opacity:.78;
+  animation:ds-ripple-pop 560ms var(--ease) forwards;
+  mix-blend-mode:soft-light;
+}
+.btn.ghost .ds-ripple,.tab-btn .ds-ripple{background:color-mix(in srgb,var(--brand) 28%,#fff)}
+.side-btn .ds-ripple,.super-quick-action .ds-ripple{background:rgba(255,255,255,.42)}
+@keyframes ds-ripple-pop{
+  55%{opacity:.38}
+  100%{transform:scale(18);opacity:0}
+}
+
+@media (hover:none){
+  .btn:hover,.tab-btn:hover,.super-quick-action:hover{transform:none}
+  .side-btn:hover{transform:none}
+  .btn:active{transform:scale(.972)}
+  .tab-btn:active,.side-btn:active,.super-quick-action:active{transform:scale(.98)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .btn,.btn::before,.btn svg,.tab-btn,.side-btn,.super-quick-action{transition:none!important;transform:none!important}
+  .ds-ripple{display:none!important}
+}
+
+
+/* Ajuste pré-lançamento — tema expandido por loja */
+:root{
+  --theme-soft:color-mix(in srgb,var(--brand) 7%,#fff);
+  --theme-soft-2:color-mix(in srgb,var(--brand2) 7%,#fff);
+  --theme-soft-strong:color-mix(in srgb,var(--brand) 13%,#fff);
+  --theme-line:color-mix(in srgb,var(--brand) 17%,#e8eaf0);
+  --theme-ink:color-mix(in srgb,var(--brand) 18%,#211d19);
+}
+.panel,.stat-card,.store-card,.product-card,.service-card,.legal-card{
+  border-color:var(--theme-line);
+}
+.input:focus,.select:focus,.textarea:focus{
+  border-color:color-mix(in srgb,var(--brand) 45%,var(--line));
+  box-shadow:var(--focus-ring);
+}
+.badge,.category-chip{
+  border-color:var(--theme-line);
+}
+.category-chip:hover,.category-chip.active{
+  background:var(--theme-soft);
+  color:var(--theme-ink);
+}
+.table thead th{background:linear-gradient(180deg,var(--theme-soft),#fff)}
+.table tbody tr:hover{background:color-mix(in srgb,var(--brand) 5%,#fff)}
+
+
+/* Fase 24.7 — tipografia mais robusta e comercial */
+body{font-family:var(--font-body,Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif);font-weight:500}
+h1,h2,h3,h4,h5,h6,.brand,.store-header-copy strong,.side-btn,.tab-btn,.btn,.table th,.eyebrow{font-weight:800}
+h1,h2,.hero h1,.store-hero-copy h1,.plan-price,.super-plan-price strong{font-weight:900}
+.input,.select,.textarea{font-weight:600}
+.field label,.nav-links,.store-nav-v2,.billing-choice-head b{font-weight:750}
+small,.section-copy,.metric-note,.stock{font-weight:500}

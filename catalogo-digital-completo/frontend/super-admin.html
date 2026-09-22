@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Super Admin — Catálogo Digital</title>
+  <meta name="theme-color" content="#101828">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/super-admin-premium.css">
+  <link rel="stylesheet" href="css/premium-polish.css">
+  <link rel="stylesheet" href="css/assistant.css">
+</head>
+<body>
+<section id="superLoginView" class="auth-page super-login-page">
+  <div class="super-login-shell">
+    <div class="super-login-showcase">
+      <a class="brand super-login-brand" href="index.html"><span class="brand-mark">CD</span><span>Catálogo Digital<small>PLATAFORMA SAAS</small></span></a>
+      <div class="super-login-copy">
+        <span class="eyebrow">CENTRAL DE COMANDO</span>
+        <h2>Visão total da sua plataforma.</h2>
+        <p>Gerencie lojas, planos, assinaturas e crescimento do Catálogo Digital em uma experiência centralizada, rápida e segura.</p>
+        <div class="super-login-preview">
+          <div class="super-login-preview-card"><span>Lojas</span><b>Gestão central</b><small>Ativação, plano e operação</small></div>
+          <div class="super-login-preview-card"><span>Receita</span><b>Cobrança SaaS</b><small>Faturas e assinaturas</small></div>
+          <div class="super-login-preview-card"><span>Escala</span><b>Multi-tenant</b><small>Uma plataforma, várias empresas</small></div>
+        </div>
+      </div>
+      <div class="super-login-orb super-login-orb-a"></div>
+      <div class="super-login-orb super-login-orb-b"></div>
+    </div>
+
+    <div class="panel login-box super-login-box">
+      <div class="brand super-login-mobile-brand"><span class="brand-mark">CD</span>Catálogo Digital</div>
+      <span class="eyebrow">ACESSO RESTRITO</span>
+      <h1>Super Admin</h1>
+      <p>Entre para administrar toda a operação da plataforma.</p>
+      <form id="superLoginForm" class="super-login-form">
+        <div class="field"><label>E-mail</label><input class="input" name="email" type="email" autocomplete="username" required placeholder="seu@email.com"></div>
+        <div class="field"><label>Senha</label><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
+        <button class="btn primary super-login-submit" type="submit">Entrar no painel</button>
+      </form>
+      <div class="notice super-demo-note">Ambiente local de demonstração disponível apenas para desenvolvimento.</div>
+      <a href="index.html" class="btn ghost super-back-btn">Voltar ao início</a>
+    </div>
+  </div>
+</section>
+
+<section id="superView" class="admin-shell super-shell hidden">
+  <aside class="sidebar super-sidebar">
+    <a class="brand super-sidebar-brand" href="index.html"><span class="brand-mark">CD</span><span>Catálogo Digital<small>SUPER ADMIN</small></span></a>
+
+    <div class="super-profile-card">
+      <div class="super-profile-avatar" id="superProfileAvatar">SA</div>
+      <div class="super-profile-copy"><b id="superProfileName">Super Admin</b><small>Controle da plataforma</small></div>
+      <span class="super-online" title="Plataforma online"></span>
+    </div>
+
+    <nav class="side-menu super-side-menu" aria-label="Navegação do Super Admin">
+      <div class="super-menu-group">
+        <span class="super-menu-label">Visão geral</span>
+        <button class="side-btn active" data-super-section="dashboard">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span>Dashboard</span>
+        </button>
+        <button class="side-btn" data-super-section="stores">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 10h16M6 10v9h12v-9M5 5h14l1 5H4l1-5Zm5 9h4v5h-4v-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span>Lojas</span>
+        </button>
+      </div>
+      <div class="super-menu-group">
+        <span class="super-menu-label">Comercial</span>
+        <button class="side-btn" data-super-section="plans">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5V5Zm3 3h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>Planos</span>
+        </button>
+        <button class="side-btn" data-super-section="billing">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v10H4V7Zm0 3h16M8 14h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Cobrança</span>
+        </button>
+      </div>
+      <div class="super-menu-group">
+        <span class="super-menu-label">Conta</span>
+        <button class="side-btn" data-super-section="profile">
+          <span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>Perfil e segurança</span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="super-sidebar-footer">
+      <div class="super-platform-card"><span class="super-platform-icon">CD</span><div><b>Plataforma ativa</b><small>Ambiente de produção</small></div></div>
+      <button id="superLogoutBtn" class="side-btn super-logout"><span class="super-side-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4M9 12h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Sair</span></button>
+    </div>
+  </aside>
+
+  <main class="admin-main super-main">
+    <div class="mobile-admin-menu super-mobile-menu">
+      <button class="tab-btn active" data-super-section="dashboard">Dashboard</button>
+      <button class="tab-btn" data-super-section="stores">Lojas</button>
+      <button class="tab-btn" data-super-section="plans">Planos</button>
+      <button class="tab-btn" data-super-section="billing">Cobrança</button>
+      <button class="tab-btn" data-super-section="profile">Conta</button>
+    </div>
+
+    <header class="admin-header super-header">
+      <div class="super-heading">
+        <div class="super-breadcrumb"><span class="super-header-dot"></span><small>Catálogo Digital / <span id="superBreadcrumbCurrent">Dashboard</span></small></div>
+        <h1 id="superTitle">Dashboard</h1>
+      </div>
+      <div class="super-header-actions">
+        <button class="btn ghost super-header-refresh" type="button" onclick="refreshCurrentSuperSection()">Atualizar</button>
+        <button class="btn primary" onclick="openSuperModal()">+ Nova loja</button>
+        <div class="super-user-chip"><div class="super-user-avatar" id="superUserAvatar">SA</div><div><b id="superUserName">Super Admin</b><small>Administrador da plataforma</small></div></div>
+      </div>
+    </header>
+
+    <section id="super-dashboard" class="admin-section active">
+      <div class="super-welcome-card">
+        <div class="super-welcome-copy">
+          <span class="eyebrow">PAINEL EXECUTIVO</span>
+          <h2 id="superWelcomeTitle">Visão completa do Catálogo Digital</h2>
+          <p>Acompanhe operação, crescimento, assinaturas e saúde da plataforma em um único lugar.</p>
+          <div class="super-welcome-meta"><span>Ambiente: <b>Produção</b></span><span class="super-meta-separator">•</span><span id="superTodayLabel">Hoje</span></div>
+        </div>
+        <div id="platformHealth" class="super-health-grid">
+          <div class="super-health-item"><span class="super-health-dot good"></span><div><b>API</b><small>Operacional</small></div></div>
+          <div class="super-health-item"><span class="super-health-dot good"></span><div><b>Banco</b><small>Conectado</small></div></div>
+          <div class="super-health-item"><span class="super-health-dot good"></span><div><b>Storage</b><small>Persistente</small></div></div>
+        </div>
+      </div>
+
+      <div id="superStats" class="stats super-stats-premium"></div>
+
+      <div class="super-dashboard-grid">
+        <div class="panel super-overview-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">OPERAÇÃO</span><h2>Resumo da plataforma</h2><small>Indicadores calculados a partir das lojas e assinaturas atuais.</small></div></div>
+          <div id="superPlatformInsights" class="super-insights-grid"></div>
+        </div>
+        <div class="panel super-actions-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">ATALHOS</span><h2>Ações rápidas</h2><small>Acesse as tarefas mais frequentes.</small></div></div>
+          <div class="super-quick-actions">
+            <button class="super-quick-action" type="button" onclick="openSuperModal()"><span class="super-action-icon">+</span><div><b>Nova loja</b><small>Cadastrar empresa e administrador</small></div><span>→</span></button>
+            <button class="super-quick-action" type="button" onclick="switchSuperSection('plans')"><span class="super-action-icon">P</span><div><b>Gerenciar planos</b><small>Preços, limites e recursos</small></div><span>→</span></button>
+            <button class="super-quick-action" type="button" onclick="switchSuperSection('billing')"><span class="super-action-icon">R$</span><div><b>Central de cobrança</b><small>Faturas e assinaturas SaaS</small></div><span>→</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="super-stores" class="admin-section">
+      <div class="super-section-hero">
+        <div><span class="eyebrow">GESTÃO MULTI-LOJA</span><h2>Empresas da plataforma</h2><p>Controle status, plano, administrador e indicadores de cada estabelecimento.</p></div>
+        <button class="btn primary" onclick="openSuperModal()">+ Nova loja</button>
+      </div>
+      <div class="panel super-section-panel">
+        <div class="panel-head super-toolbar-head"><div><h2>Lojas e assinaturas</h2><small>As alterações de plano preservam o store_id e o histórico da loja.</small></div><div class="super-toolbar"><input id="superStoreSearch" class="input" placeholder="Buscar loja, segmento ou admin" oninput="renderSuperStores()"><select id="superStoreStatus" class="select" onchange="renderSuperStores()"><option value="">Todos os status</option><option value="active">Ativas</option><option value="inactive">Inativas</option></select></div></div>
+        <div id="superStoresTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="super-plans" class="admin-section">
+      <div class="super-section-hero">
+        <div><span class="eyebrow">ESTRATÉGIA COMERCIAL</span><h2>Planos do Catálogo Digital</h2><p>Organize preços, limites, recursos e posicionamento comercial.</p></div>
+        <button class="btn primary" onclick="openPlanModal()">+ Novo plano</button>
+      </div>
+      <div class="panel super-section-panel">
+        <div class="panel-head"><div><h2>Portfólio de planos</h2><small>Os planos ativos ficam disponíveis para novas lojas e alterações de assinatura.</small></div></div>
+        <div id="plansTable" class="super-plan-grid"></div>
+      </div>
+    </section>
+
+    <section id="super-billing" class="admin-section">
+      <div class="billing-command-hero super-billing-hero">
+        <div><span class="eyebrow">CENTRAL FINANCEIRA</span><h2>Cobrança das assinaturas</h2><p>Controle mensalidades do Catálogo Digital sem misturar com pagamentos feitos pelos clientes das lojas.</p></div>
+        <div class="billing-command-actions"><button class="btn ghost" type="button" onclick="loadBillingCenter()">Atualizar</button><button class="btn primary" type="button" onclick="processDueBilling()">Processar vencimentos</button></div>
+      </div>
+      <div id="billingStats" class="stats billing-stats super-billing-stats"></div>
+      <div class="panel billing-provider-panel super-section-panel">
+        <div class="panel-head"><div><span class="super-panel-kicker">INTEGRAÇÕES</span><h2>Gateways de cobrança</h2><small>A arquitetura está pronta; a disponibilidade real depende das credenciais e do adaptador configurado.</small></div></div>
+        <div id="billingProviders" class="billing-provider-grid"></div>
+      </div>
+      <div class="panel super-section-panel">
+        <div class="panel-head responsive-head"><div><span class="super-panel-kicker">PROMOÇÕES DO SAAS</span><h2>Cupons para planos</h2><small>Crie cupons que o administrador da loja pode aplicar ao escolher um plano do Catálogo Digital.</small></div><button class="btn primary small" type="button" onclick="openBillingCouponModal()">+ Novo cupom de plano</button></div>
+        <div id="billingCouponsTable" class="table-wrap"></div>
+      </div>
+      <div class="panel super-section-panel">
+        <div class="panel-head responsive-head"><div><h2>Assinaturas</h2><small>Visão atual por loja, plano, vencimento e situação financeira.</small></div><div class="billing-filters"><input id="billingSearch" class="input" placeholder="Buscar loja ou plano" oninput="renderBillingSubscriptions()"><select id="billingStatusFilter" class="select" onchange="renderBillingSubscriptions()"><option value="">Todos os status</option><option value="ACTIVE">Ativa</option><option value="TRIAL">Teste</option><option value="PAST_DUE">Em atraso</option><option value="EXPIRED">Expirada</option><option value="CANCELED">Cancelada</option></select></div></div>
+        <div id="billingSubscriptionsTable" class="table-wrap"></div>
+      </div>
+      <div class="panel super-section-panel">
+        <div class="panel-head responsive-head"><div><h2>Faturas</h2><small>Histórico financeiro da mensalidade SaaS.</small></div><select id="invoiceStatusFilter" class="select billing-status-select" onchange="renderBillingInvoices()"><option value="">Todos os status</option><option value="PENDING">Pendente</option><option value="PAID">Pago</option><option value="FAILED">Falhou</option><option value="CANCELED">Cancelado</option></select></div>
+        <div id="billingInvoicesTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="super-profile" class="admin-section">
+      <div class="super-section-hero super-profile-hero">
+        <div>
+          <span class="eyebrow">CONTA DO SUPER ADMIN</span>
+          <h2>Perfil e segurança</h2>
+          <p>Atualize seus dados de acesso e controle as sessões abertas da conta principal da plataforma.</p>
+        </div>
+        <div class="super-security-badge"><span class="super-security-shield">✓</span><div><b>Conta protegida</b><small>Alterações sensíveis exigem sua senha atual</small></div></div>
+      </div>
+
+      <div class="super-profile-grid">
+        <div class="panel super-section-panel super-account-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">IDENTIDADE</span><h2>Dados da conta</h2><small>Nome e e-mail usados para entrar no Super Admin.</small></div></div>
+          <form id="superProfileForm" class="super-account-form">
+            <div class="field"><label>Nome</label><input id="superAccountName" class="input" name="name" minlength="2" maxlength="120" required autocomplete="name"></div>
+            <div class="field"><label>E-mail</label><input id="superAccountEmail" class="input" name="email" type="email" required autocomplete="email"></div>
+            <div class="field full"><label>Senha atual <small>(obrigatória apenas ao trocar o e-mail)</small></label><input class="input" name="current_password" type="password" autocomplete="current-password" placeholder="Confirme sua senha se alterar o e-mail"></div>
+            <div class="super-account-actions"><button class="btn primary" type="submit">Salvar dados</button></div>
+          </form>
+        </div>
+
+        <div class="panel super-section-panel super-account-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">SENHA</span><h2>Alterar senha</h2><small>Ao trocar a senha, as outras sessões serão encerradas automaticamente.</small></div></div>
+          <form id="superPasswordForm" class="super-account-form">
+            <div class="field full"><label>Senha atual</label><input class="input" name="current_password" type="password" required autocomplete="current-password"></div>
+            <div class="field"><label>Nova senha</label><input class="input" name="new_password" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
+            <div class="field"><label>Confirmar nova senha</label><input class="input" name="confirm_password" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
+            <div class="super-password-rules full"><span>Use pelo menos 10 caracteres</span><span>Maiúscula e minúscula</span><span>Número</span><span>Símbolo</span></div>
+            <div class="super-account-actions"><button class="btn primary" type="submit">Alterar senha</button></div>
+          </form>
+        </div>
+
+        <div class="panel super-section-panel super-account-panel super-session-panel">
+          <div class="panel-head"><div><span class="super-panel-kicker">SESSÕES</span><h2>Segurança da conta</h2><small>Revogue tokens antigos se você entrou em outro computador ou suspeitar de acesso indevido.</small></div></div>
+          <div class="super-security-facts">
+            <div><span>Último acesso</span><b id="superLastLogin">—</b></div>
+            <div><span>Senha alterada</span><b id="superPasswordChanged">—</b></div>
+            <div><span>E-mail da conta</span><b id="superSecurityEmail">—</b></div>
+            <div><span>Perfil</span><b>Super Administrador</b></div>
+          </div>
+          <form id="superRevokeSessionsForm" class="super-revoke-form">
+            <div class="field"><label>Confirme sua senha atual</label><input class="input" name="current_password" type="password" required autocomplete="current-password" placeholder="Senha atual"></div>
+            <button class="btn danger" type="submit">Encerrar outras sessões</button>
+          </form>
+          <div class="notice super-session-note">Sua sessão atual continuará ativa com um novo token. As sessões antigas deixam de ter acesso à API.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</section>
+
+<div id="superStoreModal" class="modal-backdrop">
+  <div class="modal super-modal">
+    <div class="modal-head"><div><span class="super-panel-kicker">NOVA EMPRESA</span><h2>Criar nova loja</h2><small>Cadastre a empresa, escolha o plano e crie o primeiro administrador.</small></div><button class="close-btn" onclick="closeSuperModal()">×</button></div>
+    <form id="superStoreForm" class="form-grid super-form-grid">
+      <div class="field full"><label>Nome da empresa</label><input class="input" name="name" required></div>
+      <div class="field full"><label>Segmento</label><select class="select" name="business_category_id" id="businessCategorySelect" required></select></div>
+      <div class="field full"><label>Plano inicial</label><select class="select" name="plan_id" id="newStorePlanSelect"></select></div>
+      <div class="field"><label>Cor principal</label><input class="input" name="primary_color" type="color" value="#7C3AED"></div>
+      <div class="field"><label>Cor secundária</label><input class="input" name="secondary_color" type="color" value="#4F46E5"></div>
+      <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3"></textarea></div>
+      <div class="field"><label>WhatsApp</label><input class="input" name="whatsapp"></div>
+      <div class="field"><label>Telefone</label><input class="input" name="phone"></div>
+      <div class="field full super-form-divider"><span>Administrador da loja</span></div>
+      <div class="field full"><label>Nome do administrador</label><input class="input" name="admin_name" required placeholder="Nome do administrador"></div>
+      <div class="field"><label>E-mail</label><input class="input" name="admin_email" type="email" required></div>
+      <div class="field"><label>Senha inicial</label><input class="input" name="admin_password" type="password" minlength="8" required></div>
+      <div class="field full"><button class="btn primary super-modal-submit" type="submit">Criar loja e administrador</button></div>
+    </form>
+  </div>
+</div>
+
+
+<div id="editStoreModal" class="modal-backdrop">
+  <div class="modal super-modal super-edit-store-modal">
+    <div class="modal-head">
+      <div>
+        <span class="super-panel-kicker">GESTÃO DA LOJA</span>
+        <h2>Editar loja</h2>
+        <small>Atualize os dados do estabelecimento sem alterar o histórico nem o store_id.</small>
+      </div>
+      <button class="close-btn" onclick="closeEditStoreModal()">×</button>
+    </div>
+    <form id="editStoreForm" class="form-grid super-form-grid">
+      <input type="hidden" name="id">
+      <div class="field"><label>Nome da empresa</label><input class="input" name="name" required></div>
+      <div class="field"><label>Slug / endereço público</label><input class="input" name="slug" required placeholder="nome-da-loja"></div>
+      <div class="field full"><label>Segmento</label><select class="select" name="business_category_id" id="editBusinessCategorySelect" required></select></div>
+      <div class="field"><label>Cor principal</label><input class="input" name="primary_color" type="color" value="#7C3AED"></div>
+      <div class="field"><label>Cor secundária</label><input class="input" name="secondary_color" type="color" value="#4F46E5"></div>
+      <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3"></textarea></div>
+      <div class="field full super-form-divider"><span>Contato da loja</span></div>
+      <div class="field"><label>WhatsApp</label><input class="input" name="whatsapp"></div>
+      <div class="field"><label>Telefone</label><input class="input" name="phone"></div>
+      <div class="field full"><label>E-mail da loja</label><input class="input" name="email" type="email"></div>
+      <div class="field full super-form-divider"><span>Endereço</span></div>
+      <div class="field full"><label>Endereço</label><input class="input" name="address"></div>
+      <div class="field"><label>Cidade</label><input class="input" name="city"></div>
+      <div class="field"><label>Estado (UF)</label><input class="input" name="state" maxlength="2" placeholder="SP"></div>
+      <div class="field full"><label>CEP</label><input class="input" name="zip_code"></div>
+      <div class="field full super-form-divider"><span>Administrador principal <small>não altera a senha</small></span></div>
+      <div class="field"><label>Nome do administrador</label><input class="input" name="admin_name"></div>
+      <div class="field"><label>E-mail do administrador</label><input class="input" name="admin_email" type="email"></div>
+      <div class="field full super-edit-store-note">
+        <strong>O que não muda</strong>
+        <span>Pedidos, clientes, produtos, agendamentos, assinatura e histórico da loja continuam vinculados ao mesmo store_id.</span>
+      </div>
+      <div class="field full"><button class="btn primary super-modal-submit" type="submit">Salvar alterações da loja</button></div>
+    </form>
+  </div>
+</div>
+
+
+<div id="storeCouponsModal" class="modal-backdrop">
+  <div class="modal super-modal super-coupon-modal">
+    <div class="modal-head">
+      <div><span class="super-panel-kicker">CUPONS DA LOJA</span><h2 id="storeCouponsTitle">Cupons</h2><small>Crie e edite os cupons da loja e defina quais aparecem no site público.</small></div>
+      <button class="close-btn" onclick="closeStoreCouponsModal()">×</button>
+    </div>
+
+    <div id="storeCouponsListView">
+      <div class="super-coupon-toolbar"><p>Cupons públicos aparecem para o cliente. Cupons ocultos continuam válidos quando o código é informado no checkout.</p><button class="btn primary" type="button" onclick="openSuperCouponEditor()">+ Novo cupom</button></div>
+      <div id="storeCouponsTable" class="table-wrap"></div>
+    </div>
+
+    <div id="storeCouponEditorView" class="hidden">
+      <div class="super-coupon-editor-head"><button class="btn ghost small" type="button" onclick="backToStoreCouponList()">← Voltar</button><div><span class="super-panel-kicker">EDIÇÃO</span><h3 id="superCouponEditorTitle">Novo cupom</h3></div></div>
+      <form id="superCouponForm" class="form-grid super-form-grid">
+        <input type="hidden" name="id">
+        <div class="field"><label>Código</label><input class="input" name="code" maxlength="40" required placeholder="BEMVINDO10"></div>
+        <div class="field"><label>Tipo</label><select class="select" name="discount_type"><option value="PERCENT">Percentual</option><option value="FIXED">Valor fixo</option></select></div>
+        <div class="field"><label>Valor do desconto</label><input class="input" name="value" type="number" min="0" step="0.01" required value="10"></div>
+        <div class="field"><label>Onde o cupom vale</label><select class="select" name="scope"><option value="ORDER">Pedido inteiro</option><option value="PRODUCTS">Produtos selecionados</option></select></div>
+        <div class="field full hidden" id="superCouponProductsScope"><label>Produtos válidos</label><div id="superCouponProductsGrid" class="check-grid"></div><small>Selecione os produtos que receberão o desconto deste cupom.</small></div>
+        <div class="field"><label>Pedido mínimo</label><input class="input" name="min_order_value" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label>Desconto máximo</label><input class="input" name="max_discount" type="number" min="0" step="0.01" placeholder="Opcional"></div>
+        <div class="field"><label>Limite de usos</label><input class="input" name="usage_limit" type="number" min="1" placeholder="Ilimitado"></div>
+        <div class="field"><label>Início da validade</label><input class="input" name="starts_at" type="datetime-local"></div>
+        <div class="field"><label>Fim da validade</label><input class="input" name="ends_at" type="datetime-local"></div>
+        <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3" placeholder="Ex.: 10% de desconto na primeira compra"></textarea></div>
+        <div class="field checkbox-field"><label><input type="checkbox" name="is_public"> Exibir no site público da loja</label></div>
+        <div class="field checkbox-field"><label><input type="checkbox" name="is_active" checked> Cupom ativo</label></div>
+        <div class="field full notice">Para aparecer no site, o cupom precisa estar ativo, dentro da validade, com usos disponíveis e com “Exibir no site” marcado.</div>
+        <div class="field full form-actions"><button class="btn ghost" type="button" onclick="backToStoreCouponList()">Cancelar</button><button class="btn primary" type="submit">Salvar cupom</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="billingCouponModal" class="modal-backdrop">
+  <div class="modal super-modal super-billing-coupon-modal">
+    <div class="modal-head"><div><span class="super-panel-kicker">CUPOM DE ASSINATURA</span><h2 id="billingCouponModalTitle">Novo cupom de plano</h2><small>Este cupom é usado na cobrança do SaaS e não interfere nos cupons de pedidos das lojas.</small></div><button class="close-btn" type="button" onclick="closeBillingCouponModal()">×</button></div>
+    <form id="billingCouponForm" class="form-grid super-form-grid">
+      <input type="hidden" name="id">
+      <div class="field"><label>Código</label><input class="input" name="code" maxlength="40" required placeholder="PROFISSIONAL20"></div>
+      <div class="field"><label>Tipo</label><select class="select" name="discount_type"><option value="PERCENT">Percentual</option><option value="FIXED">Valor fixo</option></select></div>
+      <div class="field"><label>Valor do desconto</label><input class="input" name="value" type="number" min="0" step="0.01" required value="10"></div>
+      <div class="field"><label>Desconto máximo</label><input class="input" name="max_discount" type="number" min="0" step="0.01" placeholder="Opcional"></div>
+      <div class="field"><label>Duração</label><select class="select" name="duration"><option value="FIRST_INVOICE">Somente nesta cobrança</option><option value="RECURRING">Recorrente enquanto válido</option></select></div>
+      <div class="field"><label>Limite de usos</label><input class="input" name="usage_limit" type="number" min="1" placeholder="Ilimitado"></div>
+      <div class="field"><label>Início da validade</label><input class="input" name="starts_at" type="datetime-local"></div>
+      <div class="field"><label>Fim da validade</label><input class="input" name="ends_at" type="datetime-local"></div>
+      <div class="field full"><label>Planos válidos</label><div id="billingCouponPlansGrid" class="check-grid"></div><small>Se nenhum plano for marcado, o cupom valerá para todos os planos ativos.</small></div>
+      <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3" placeholder="Ex.: 20% de desconto no Plano Profissional"></textarea></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="is_active" checked> Cupom ativo</label></div>
+      <div class="field full notice">O administrador da loja poderá informar o código ao escolher um plano em “Meu plano”. O valor final ficará registrado na fatura.</div>
+      <div class="field full form-actions"><button class="btn ghost" type="button" onclick="closeBillingCouponModal()">Cancelar</button><button class="btn primary" type="submit">Salvar cupom</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="planModal" class="modal-backdrop">
+  <div class="modal super-modal">
+    <div class="modal-head"><div><span id="planModalEyebrow" class="super-panel-kicker">PLANOS</span><h2 id="planModalTitle">Novo plano</h2><small>Defina preço, limites e recursos do plano comercial.</small></div><button class="close-btn" onclick="closePlanModal()">×</button></div>
+    <form id="planForm" class="form-grid super-form-grid">
+      <input type="hidden" name="id">
+      <div class="field"><label>Nome</label><input class="input" name="name" required></div>
+      <div class="field"><label>Código</label><input class="input" name="code" required placeholder="BASICO"></div>
+      <div class="field"><label>Preço mensal</label><input class="input" name="monthly_price" type="number" min="0" step="0.01" value="0"></div>
+      <div class="field"><label>Preço anual <small>(opcional)</small></label><input class="input" name="yearly_price" type="number" min="0" step="0.01"></div>
+      <div class="field"><label>Dias de teste grátis</label><input class="input" name="trial_days" type="number" min="0" max="90" value="7"></div>
+      <div class="field"><label>Tolerância após vencimento</label><input class="input" name="grace_days" type="number" min="0" max="60" value="5"></div>
+      <div class="field"><label>Selo / destaque</label><input class="input" name="badge" maxlength="60" placeholder="Ex.: Mais escolhido"></div>
+      <div class="field"><label>Ordem de exibição</label><input class="input" name="sort_order" type="number" min="0" value="0"></div>
+      <div class="field full"><label>Descrição</label><textarea class="textarea" name="description" rows="3"></textarea></div>
+      <div class="field full super-form-divider"><span>Limites do plano <small>(-1 = ilimitado)</small></span></div>
+      <div class="field"><label>Produtos</label><input class="input" name="limit_products" type="number" value="20"></div>
+      <div class="field"><label>Serviços</label><input class="input" name="limit_services" type="number" value="10"></div>
+      <div class="field"><label>Profissionais</label><input class="input" name="limit_professionals" type="number" value="1"></div>
+      <div class="field full super-form-divider"><span>Recursos</span></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="feature_coupons"> Cupons</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="feature_promotions"> Promoções</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="feature_custom_branding"> Personalização visual</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="feature_reports"> Relatórios</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="feature_priority_support"> Suporte prioritário</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="feature_custom_domain"> Domínio personalizado</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="feature_online_payments"> Pagamentos online</label></div>
+      <div class="field full super-form-divider"><span>Disponibilidade comercial</span></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="is_active" checked> Plano ativo</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="is_public" checked> Disponível para contratação</label></div>
+      <div class="field checkbox-field"><label><input type="checkbox" name="is_featured"> Destacar como recomendado</label></div>
+      <div class="field full"><button class="btn primary super-modal-submit" type="submit">Salvar plano</button></div>
+    </form>
+  </div>
+</div>
+
+<script src="js/runtime-config.js"></script>
+<script src="js/shared/dom-utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/super-admin.js"></script>
+<script src="js/ui-system.js"></script>
+<script src="js/assistant-knowledge.js"></script><script src="js/assistant.js"></script><script src="js/pwa.js"></script>
+</body>
+</html>

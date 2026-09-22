@@ -1,0 +1,27 @@
+CATÁLOGO DIGITAL — FASE 23.3
+
+Este pacote é CUMULATIVO a partir da Fase 23.1.
+Se você ainda NÃO instalou a Fase 23.2, não precisa instalar: a Fase 23.3 já inclui a edição de lojas do Super Admin.
+
+Também adiciona:
+- gestão de cupons por loja no Super Admin;
+- edição completa de cupons no Admin;
+- validade, limite, pedido mínimo, desconto máximo e visibilidade pública;
+- opção “Exibir no site”;
+- seção pública de cupons na loja;
+- botão para copiar/usar cupom no checkout.
+
+INSTALAÇÃO
+1. Extraia este ZIP.
+2. Copie o conteúdo para a raiz do projeto.
+3. Substitua os arquivos existentes.
+4. git status
+5. git add .
+6. git commit -m "Fase 23.3 - lojas e cupons"
+7. git push
+
+MIGRATION
+A migration 014_public_coupons será aplicada pelo start-render.sh no deploy.
+
+VERSÃO ESPERADA
+/api/health -> 23.3.0

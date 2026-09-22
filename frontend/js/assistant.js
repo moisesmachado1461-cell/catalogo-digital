@@ -63,7 +63,7 @@
   }
 
   function entryText(item) {
-    return normalize([item.title, item.answer, ...(item.keywords || [])].join(' '));
+    return normalize([item.title, item.answer, ...(item.keywords || []), ...(item.steps || [])].join(' '));
   }
 
   function rankKnowledge(query, ctx) {

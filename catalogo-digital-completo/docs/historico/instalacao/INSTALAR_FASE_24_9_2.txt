@@ -1,0 +1,9 @@
+CATÁLOGO DIGITAL — FASE 24.9.2
+
+Correção oficial do parâmetro PKCE do OAuth Mercado Pago Marketplace.
+
+Mudança:
+- code_method=S256 -> code_challenge_method=S256
+
+Não há migration nova.
+Após copiar os arquivos, rode o release gate, faça commit/push e aguarde o Render.

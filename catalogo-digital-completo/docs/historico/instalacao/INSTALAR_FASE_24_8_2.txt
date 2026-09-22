@@ -1,0 +1,13 @@
+CATÁLOGO DIGITAL — FASE 24.8.2
+
+1. Copie/substitua os arquivos deste pacote na raiz do projeto.
+2. Rode: python backend\scripts\phase24_5_release_gate.py
+3. Se aprovado: git add .
+4. git commit -m "Fase 24.8.2 - base automatica da IA"
+5. git push
+6. Espere o Render ficar Live.
+7. Confirme /api/health = 24.8.2.
+8. Confirme /api/assistant/knowledge/status = status ok e version 24.8.2.
+
+Sem migration nova.
+Sem biblioteca nova.

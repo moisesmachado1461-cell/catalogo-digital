@@ -1,0 +1,20 @@
+CATÁLOGO DIGITAL — FASE 24.6.2
+
+Novo segmento: Estamparia / Personalizados / Brindes.
+Modelo: HÍBRIDO (produtos + serviços + orçamento).
+
+1. Extraia o ZIP.
+2. Copie todo o conteúdo para a pasta principal do projeto e substitua os arquivos solicitados.
+3. Com a .venv ativa, rode:
+
+   python backend\scripts\phase24_5_release_gate.py
+
+4. Se aparecer RELEASE GATE APROVADO:
+
+   git add .
+   git commit -m "Fase 24.6.2 - segmento estamparia e personalizados"
+   git push
+
+5. Aguarde o Render ficar Live e confirme /api/health = 24.6.2.
+
+A migration 018 é aplicada automaticamente pelo Render durante o deploy.
